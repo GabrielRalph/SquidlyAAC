@@ -122,5 +122,4 @@ async function onUserChange(user) {
     console.log("Loaded");
 }
 
-await userLoadedPromise;
 FB.addAuthChangeListener(onUserChange);

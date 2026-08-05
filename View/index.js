@@ -4,6 +4,7 @@ import * as FB from "../src/Firebase/firebase.js";
 
 FB.initialise();
 
+let styleLoadPromise = AACBoard.loadStyleSheets();
 async function setupBoard(rootID) {
     AACBoard.defineHTMLElement(AACBoard, "aac-board");
 
@@ -125,6 +126,7 @@ export async function setup() {
     } else if (mode === "preview-draft") {
         await setupPreview(rootID, true);
     }
+    await styleLoadPromise;
     document.body.toggleAttribute("loaded", true);    
 }
 
