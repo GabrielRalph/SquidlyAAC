@@ -49,6 +49,10 @@ export class AACFinder extends ShadowElement {
 	}
 }
 
+const styleLoadPromise = await Promise.all([
+	AACFinder.loadStyleSheets(),
+	LoginPage.loadStyleSheets(),
+])
 
 AACFinder.defineHTMLElement(AACFinder, "aac-finder");
 const finder = document.querySelector("aac-finder");
@@ -70,6 +74,7 @@ addAuthChangeListener(async (user) => {
 	} else {
 		finder.removeUser();
 	}
+	await styleLoadPromise;
 	document.body.toggleAttribute("loaded", true);
 });
 initialise();
