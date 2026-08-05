@@ -1,0 +1,18 @@
+board-finder {
+    display: grid;
+    grid-template-rows: 1fr auto;
+}
+
+.finder-options {
+    padding: 0.5em;
+    border-top: 1px solid var(--border-color);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5em;
+}
+
+.finder-options > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}

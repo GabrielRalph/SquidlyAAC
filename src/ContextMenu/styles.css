@@ -1,0 +1,59 @@
+
+context-menu {
+    position: fixed;
+    z-index: 1000;
+    padding: 0.5em;
+    font-size: 0.9em;
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+    transform: translate(-0.7em, -0.7em);
+}
+
+context-menu[hide] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+context-menu-seperator {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.3em 0;
+}
+
+context-menu > div {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.794);
+    border-radius: 0.8em;
+    box-shadow: 0 0 10px var(--border-color);
+    border: 1px solid var(--border-color);
+    padding: 0.3em;
+    min-width: 13em;
+    backdrop-filter: blur(8px);
+}
+
+context-menu-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    cursor: pointer;
+    padding: 0.3em 0.8em;
+    border-radius: 0.5em;
+    align-items: center;
+    gap: 0.3em;
+}
+context-menu-item .icon {
+    display: flex;
+    align-items: center;
+}
+context-menu-item:hover {
+    background-color: rgb(62, 123, 253);
+    color: var(--selected-fg);
+}
+
+context-menu-item .binding {
+    font-size: 0.95em;
+    color: #666666;
+}
+context-menu-item:hover .binding {
+    color: var(--selected-fg);
+}

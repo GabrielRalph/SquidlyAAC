@@ -1,0 +1,125 @@
+
+:host,
+:root {
+    --color-primary: #7380ec;
+    --color-danger: #8f53c9;
+    --color-danger-hover: #843ac9;
+    --color-great: #ff7782;
+    --color-great-light: #ff778284;
+    --color-great-hover: #ff6874;
+    --color-success-hover: #05db94;
+    --color-success: #41f1b6;
+    --color-success-text: #006240;
+    --color-warning: #ffbb55;
+    --color-warning-hover: #ffb34d;
+    --color-warning-text: #6f4c00;
+    --color-error: #ff4d4d;
+    --color-error-hover: #ff0000;
+    --color-error-text: #6f0000;
+    --color-wanring: var(--color-warning);
+    --color-white: #fff;
+    --color-info-dark: #7d8da1;
+    --color-info-light: #dce1eb;
+    --color-dark: #363949;
+    --color-light: rgba(132, 139, 200, 0.18);
+    --table-head: #eaeef5;
+
+    --color-light-op: rgba(132, 139, 200, 0.4);
+    --color-disabled-wash: #a6a8c591;
+
+    --color-primary-variant: #111e88;
+    --color-dark-variart: #677483;
+    --color-background: #f6f6f9;
+
+    --input-bg: hsla(208, 50%, 50%, 6.5%);
+    --input-bg-hover: hsla(208, 50%, 50%, 14%);
+    --input-text: #8c9aaf;
+    --input-shadow: hsla(208, 92%, 54%, 0.169);
+
+    font-family: 'Poppins', sans-serif;
+}
+
+
+a, .btn-text {
+    color: var(--color-primary);
+    transition: 0.3s ease-in-out color;
+    cursor: pointer;
+}
+a:hover, .btn-text:hover {
+    color: var(--color-primary-variant);
+    transition: 0.3s;
+}
+
+
+.btn {
+    display: inline-block;
+    padding: 1.1em 2em;
+    --color: var(--color-danger);
+    --hover-color: var(--color-danger-hover);
+    background-color: var(--color);
+    color: var(--color-white);
+    border-radius: 40px;
+    border: none;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s ease-in-out background-color;
+}
+
+.btn:hover {
+    background-color: var(--hover-color);
+}
+
+.btn[color='gray'] {
+    --color: var(--input-bg);
+    --hover-color: var(--input-bg-hover);
+    color: var(--color-dark);
+}
+
+.btn[color='red'] {
+    --color: var(--color-great);
+    --hover-color: var(--color-great-hover);
+}
+
+.c-align {
+    align-items: center;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 1.7em;
+}
+
+.row, .row-center, .row-stretch, .row-slider, .row-space {
+    gap: 1.3em;
+    display: flex;
+}
+.row {
+    align-items: center;
+}
+.row-center {
+    justify-content: center;
+    align-items: center;
+}
+.row-stretch {
+    align-items: stretch;
+}
+.row-slider {
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.row-space {
+    justify-content: space-between;
+    align-items: center;
+}
+.no-gap {
+    gap: 0 !important;
+}
+
+.ctext{
+    text-align: center;
+}
+

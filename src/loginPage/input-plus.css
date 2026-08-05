@@ -1,0 +1,269 @@
+input-plus {
+    --background-color: var(--input-bg);
+    --background-color-hover: var(--input-bg-hover);
+    --text-color: var(--color-dark);
+    --label-text-color: var(--color-info-dark);
+    --icon-color: var(--input-text);
+    --slider-color: rgb(122, 162, 255);
+    display: contents;
+}
+
+.error-container .error-message{
+    display: none;
+}
+.error-container[invalid] .error-message {
+    display: flex;
+    position: absolute;
+    bottom: -1.4em;
+    left: 1.35em;
+    gap: 0.5em;
+    align-items: center;
+    font-size: 0.8em;
+    color: var(--color-great);
+}
+
+
+.text-input-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+}
+.text-input-wrapper  input, 
+.text-input-wrapper  textarea,
+.text-input-wrapper  select {
+    width: 100%;
+    background-color: var(--background-color);
+    padding: 1.5em 1.35em calc(0.75em - 2px) 1.35em;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95em;
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 0px var(--input-shadow);
+    transition: 0.3s;
+    color: var(--text-color);
+}
+.text-input-wrapper textarea {
+    resize: none;
+    width: 100%;
+    min-height: 150px;
+}
+.text-input-wrapper textarea ~ label {
+    top: 1.2em;
+    transform: none;
+}
+.text-input-wrapper textarea ~ .icon {
+    top: 1.3em;
+    transform: none;
+}
+.text-input-wrapper  input:hover, 
+.text-input-wrapper  textarea:hover, 
+.text-input-wrapper  select:hover {
+    background-color: var(--background-color-hover);
+}
+.text-input-wrapper label {
+    position: absolute;
+    top: 50%;
+    left: calc(1.35em + 2px);
+    transform: translateY(-50%);
+    color: var(--label-text-color);
+    pointer-events: none;
+    transition: 0.25s;
+    font-size: 0.95em;
+}
+.text-input-wrapper > .icon {
+    position: absolute;
+    right: calc(1.35em + 2px);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--icon-color);
+    font-size: 1.25em;
+    transition: 0.3s;
+}
+.text-input-wrapper.focus input, 
+.text-input-wrapper.focus textarea,
+.text-input-wrapper.focus select {
+    background-color: var(--color-white);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 0 0 5px var(--input-shadow);
+}
+.text-input-wrapper.focus label {
+    color: var(--color-primary);
+}
+.text-input-wrapper.focus .icon {
+    color: var(--color-primary);
+}
+.text-input-wrapper[type="datetime-local"] label,
+.text-input-wrapper.not-empty label {
+    font-size: 0.66em;
+    top: 0.75em;
+    transform: translateY(0);
+}
+.text-input-wrapper[invalid] input, 
+.text-input-wrapper[invalid] textarea,
+.text-input-wrapper[invalid] select {
+    border: 2px solid var(--color-great);
+}
+.text-input-wrapper[invalid] label {
+    color: var(--color-great);
+}
+.text-input-wrapper .icon {
+    position: absolute;
+    right: calc(1.35em + 2px);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--icon-color);
+    font-size: 1.25em;
+    transition: 0.3s;
+}
+.text-input-wrapper input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    background: none;
+    width: 35px;
+    cursor: pointer;
+}
+.text-input-wrapper input[type="datetime-local"]:required:invalid::-webkit-datetime-edit,
+.text-input-wrapper input[type="time"]:required:invalid::-webkit-datetime-edit {
+    color: transparent;
+}
+.text-input-wrapper input[type="datetime-local"]:focus::-webkit-datetime-edit,
+.text-input-wrapper input[type="time"]:focus::-webkit-datetime-edit {
+    color: inherit !important;
+}
+.text-input-wrapper input[type="time"]::-webkit-calendar-picker-indicator {
+    background: none;
+    cursor: pointer;
+}
+.text-input-wrapper input[type="time"]::-webkit-clear-button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -o-appearance: none;
+    -ms-appearance:none;
+    appearance: none;
+    margin: -10px; 
+}
+/* .text-input-wrapper input[type=number] {
+  -moz-appearance: textfield;
+} */
+.text-input-wrapper input::-webkit-outer-spin-button,
+.text-input-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+
+.file-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+}
+.file-input-wrapper .file-button {
+    gap: 0.5em;
+    width: 100%;
+}
+.file-input-wrapper .file-button[color="gray"] {
+    justify-content: center;
+    display: flex;
+    color: var(--color-info-dark);
+}
+.file-input-wrapper .file-name {
+    display: none;
+    cursor: pointer;
+}
+.file-input-wrapper[file] .file-name {
+    display: flex;
+    position: absolute;
+    bottom: -1.4em;
+    left: 1.35em;
+    gap: 0.5em;
+    align-items: center;
+    font-size: 0.8em;
+}
+
+
+.checkbox-wrapper {
+    position: relative;
+    display: inline-block;
+    --s: 1.5em;
+    --p: 0.2em;
+    width: calc(var(--s)*2 + var(--p)*2);
+    height: calc(var(--s) + var(--p)*2);
+}
+.checkbox-wrapper input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.checkbox-wrapper  .slider {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    cursor: pointer;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+.checkbox-wrapper .slider:before {
+    position: absolute;
+    content: "";
+    height: var(--s);
+    width: var(--s);
+    left: var(--p);
+    bottom: var(--p);
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+.checkbox-wrapper[locked], 
+.checkbox-wrapper[locked] .slider {
+    opacity: 0.7;
+    cursor: no-drop;
+}
+.checkbox-wrapper[round] .slider {
+    border-radius: calc(var(--s) + 2 * var(--p));
+}
+.checkbox-wrapper[round] .slider:before {
+    border-radius: var(--s);
+}
+.checkbox-wraper input:checked + .slider {
+    background-color: #2196F3;
+}
+.checkbox-wraper input:focus + .slider {
+    filter: drop-shadow(0px 0px 1px #2196F3);
+}
+.checkbox-wraper input:checked + .slider:before {
+    -webkit-transform: translateX(var(--s));
+    -ms-transform: translateX(var(--s));
+    transform: translateX(var(--s));
+}
+
+
+/* One Time Password */
+
+otp-input {
+    display: flex;
+    gap: 0.5em;
+    justify-content: center;
+}
+
+otp-input input {
+    width: 1em;
+    height: 1.5em;
+    font-size: 2.5em;
+    text-align: center;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: black;
+}
+otp-input input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+

@@ -1,0 +1,624 @@
+/* ~~~~~~~~~~~~~~ Root component styles ~~~~~~~~~~~~~~ */
+
+:root,:host {
+    --fill-transparent: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="5" height="5" fill="%23fff" opacity="0.7"/><rect y="5" width="5" height="5" fill="%23fff" opacity=".15"/><rect x="5" width="5" height="5" fill="%23fff" opacity=".15"/><rect x="5" y="5" width="5" height="5" fill="%23fff" opacity="0.7"/></svg>');
+    --up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolyline points='15,70, 50,30, 85,70' stroke='%23FFFA' fill='none' stroke-width='15' /%3E%3C/svg%3E");
+    --down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolyline points='15,30, 50,70, 85,30' stroke='%23FFFA' fill='none' stroke-width='15' /%3E%3C/svg%3E");
+    --c-bg: #636363;
+
+
+    --input-color: #00000062;
+
+    --border-color-light: rgba(255, 255, 255, 0.294);
+    --input-border-color: rgba(255, 255, 255, 0.523);
+    --border-color: #181818;
+
+    --input-border: 1px solid var(--input-border-color);
+    --panel-border: 1px solid var(--border-color);
+    --border-light: 1px solid var(--border-color-light);
+
+    --c-lighter: #5b5a5a;
+    --c-darker: #262625;
+    --c-dark: #424141;
+    --c-light: #4f4f4e;
+    --c-text: #fffb;
+
+/* 
+    --c-lighter: #f2f2f5;
+    --c-darker: #dbdbdf;
+    --c-dark: #e9e9ec;
+    --c-light: #eaeaed;
+    --c-text: #141415; */
+}
+
+editor-root {
+    font-family: "system-ui", sans-serif;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    font-size: clamp(7px, 1.3vw, 14px);
+    background: var(--c-bg);
+}
+
+editor-root grid-layout {
+    background-color: transparent
+}
+
+.logo {
+    position: absolute;
+    top: 0;
+    left: .3em;
+    bottom: 0;
+    height: 100%;
+    width: 5em;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~ Main Layout ~~~~~~~~~~~~~~~~~~~~~ */
+
+.editor-main {
+    height: 100%;
+    display: flex;
+}
+
+.panel.side {
+    display: flex;
+    width: 26vw;
+}
+
+.panel.side > .main {
+    width: 100%;
+    display: grid;
+    grid-template-rows: 1fr 16em;
+}
+
+.panel.side .slider {
+    width: 0.4em;
+    cursor: ew-resize;
+    background-color: var(--c-dark);
+}
+
+.editor-main grid-layout {
+    padding: var(--gap);
+    box-sizing: border-box;
+}
+
+image-finder {
+    --columns: 8;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: 5em;
+    z-index: 1000;
+    border-radius: 0.5em;
+    position: absolute;
+    overflow: hidden;
+    box-shadow: 0 0 20px var(--c-darker);
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~ Icon Styles ~~~~~~~~~~~~~~~~~~~~~ */
+
+[up] {
+    --i-bg: var(--up);
+}
+[down] {
+    --i-bg: var(--down);
+}
+
+i-bw {
+    background-color: currentColor;
+    mask-image: var(--i-bg);
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+}
+
+/* ~~~~~~~ Fill unknown/transparent background ~~~~~~~ */
+
+.fill-unknown {
+    background-image: var(--i-e-fill-unknown);
+    background-position: center;
+    color: var(--c-darker);
+    background-size: contain;
+}
+.fill-unknown[e-border] {
+    background-image: var(--i-e-border-unknown);
+}
+.fill-unknown[e-letter-b] {
+    background-image: var(--i-e-letter-b-unknown);
+}
+.fill-transparent {
+    background-image: var(--fill-transparent);
+    background-position: center;
+    background-repeat: repeat;
+    background-color: transparent;
+    background-size: 0.4em 0.4em;
+}
+
+
+/* ~~~~~~~~~~~~~~ Grid Icon "hidden" style ~~~~~~~~~~~~~~ */
+
+.grid-icon[color-theme = "hidden"] {
+    --main: transparent;
+    --tab: transparent;
+    --text: black;
+    --main-hover: white;
+    --tab-hover: transparent;
+    --main-active: white;
+    --tab-active: grey;
+    --outline: hsla(0, 1%, 14%, 1.00);
+    --icon-color: black;
+    --icon-color-hover: black;
+}
+
+
+/* ~~~~~~~~~~~~~~ Some generic styles ~~~~~~~~~~~~~~ */
+
+.centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.pad {
+    padding: 0.4em 1em;
+}
+.pad-even {
+    padding: 0.4em;
+}
+.p-top {
+    padding-top: 0.4em;
+}
+.p-bottom {
+    padding-bottom: 0.4em;
+}
+.contents {
+    display: contents;
+}
+.contents[hidden] {
+    display: none;
+}
+
+.panel {
+    color: var(--c-text);
+    background-color: var(--c-light);
+}
+.darker {
+    background-color: var(--c-darker);
+}
+.dark {
+    background-color: var(--c-dark);
+}
+.light {
+    background-color: var(--c-light);
+}
+.b-bottom-hover,
+.b-bottom {
+    border-bottom: var(--panel-border);
+}
+.b-top-hover,
+.b-top {
+    border-top: var(--panel-border);
+}
+.b-left-hover,
+.b-left {
+    border-left: var(--panel-border);
+}
+.b-right-hover,
+.b-right {
+    border-right: var(--panel-border);
+}
+.b-all-hover,
+.b-all {
+    border: var(--panel-border);
+}
+
+.b-bottom-hover,
+.b-all-hover,
+.b-right-hover,
+.b-left-hover,
+.b-top-hover {
+    /* transition: 0.2s ease border-color; */
+    border-color: transparent;
+}
+
+.b-bottom-hover:hover ,
+.b-all-hover:hover ,
+.b-right-hover:hover ,
+.b-left-hover:hover ,
+.b-top-hover:hover {
+    border-color: var(--border-color);
+}
+.col,
+.row {
+    display: flex;
+    gap: 0.3em;    
+}
+.col {
+    flex-direction: column;
+}
+.space-between {
+    justify-content: space-between;
+}
+
+.wh-fill {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* ~~~~~~~~~~~~~~~~~~~ Button Styles ~~~~~~~~~~~~~~~~~~ */
+
+.btn {
+    padding: 0.3em 0.8em;
+    border-radius: 0.4em;
+    border: var(--input-border);
+    cursor: pointer;
+}
+
+.btn-plain {
+    cursor: pointer;
+}
+
+.btn-plain:hover,
+.i-btn:hover,
+.btn:hover {
+    background-color: var(--c-dark);
+}
+.btn[selected] {
+    background-color: var(--c-darker);
+}
+
+/* ~~~~~~~~~~~~~~~~~~~ Input Styles ~~~~~~~~~~~~~~~~~~ */
+select,
+input {
+    background: var(--c-dark);
+    border: var(--input-border);
+    outline: none;
+    border-radius: 0.4em;
+    color: white;
+    font-size: 1.3em;
+    padding: 0.2em 0.2em;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input:focus {
+    background-color: var(--c-darker);
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~~~~~ Editor Tools ~~~~~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/* ~~~~~~~~~~~~~~~~ Top Category Selection ~~~~~~~~~~~~~~~~ */
+
+.editor-tools {
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.selection-options {
+    display: flex;
+    align-items: center;
+}
+.selection-options .category {
+    cursor: pointer;
+    display: flex;
+    gap: 1.3em
+}
+
+.selection-options .category[selected] {
+    background-color: var(--c-light);
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~ Main Tools ~~~~~~~~~~~~~~~~~~~~~~ */
+
+.tools {
+    display: flex;
+    padding: 0.2em;
+    gap: 0.2em;
+}
+.tool-separator {
+    width: 0px;
+    margin: 0.4em 0.7em;
+    border-right: var(--panel-border);
+}
+
+.tool-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.4em 0em;
+    border-radius: 0.7em;
+    cursor: pointer;
+    aspect-ratio: 0.85;
+    height: 5.6em;
+}
+.tool-icon:hover {
+        background-color: #0004;
+}
+.tool-icon[selected] {
+    background-color: #0002;
+}
+.tool-icon > i-bw {
+    font-size: 2.4em;
+}
+.tool-icon .label {
+    white-space: pre;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.tool-icon .label > i-bw {
+    font-size: 0.7em;
+}
+
+.tool-icon[disabled] {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* ~~~~~~~~~~~~~~ Image List (in Tool Bar) ~~~~~~~~~~~~~~ */
+
+.image-list {
+    display: flex;
+    padding: 0.4em;
+    margin: 0.4em 0.4em;
+    border: var(--panel-border);
+    border-radius: 0.7em;
+    background: var(--c-lighter);
+    overflow-x: auto;
+    width: 100%;
+}
+
+/* ~~~~~~~~~~~~~~~~ Drop Down Generic ~~~~~~~~~~~~~~~~ */
+
+
+.drop-down {
+    color: var(--c-text);
+    background-color: var(--c-light);
+    border: var(--panel-border);
+    box-shadow: 0px 0px 10px 2px #000000a1;
+}
+
+/* ~~~~~~~~~~~~~~~~ Color Picker Styles ~~~~~~~~~~~~~~~~ */
+
+color-picker {
+    padding: 0.5em;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 0.5em;
+}
+color-picker .swatches { 
+    display: flex;
+    gap: 0.4em;
+    flex-direction: column;
+    transition: 0.2s ease opacity;
+    opacity: 1;
+}
+color-picker[sampler] .swatches {
+    opacity: 0;
+    pointer-events: none;
+}
+
+color-picker .swatch-grid {
+    font-size: 2.9em;
+}
+color-picker .swatch {
+    margin: 2px;
+    cursor: pointer;
+}
+
+color-picker  .swatch:hover,
+color-picker  .swatch[selected] {
+    border: 1px solid var(--border-color);
+    outline: 1px solid white;
+    margin: 1px;
+}
+color-picker  .buttons-row {
+    display: flex;
+    gap: 0.4em;
+}
+color-picker  .h-separator {
+    border-bottom: var(--panel-border);
+    margin-top: 0.2em;
+}
+
+color-picker[sampler] .color-sampler{
+    opacity: 1;
+    pointer-events: all;
+}
+
+color-picker .color-sampler {
+    position: absolute;
+    top: 0; 
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s ease opacity;
+    gap: 0.5em;
+}
+
+color-picker .color-sampler canvas {
+    width: 100%;
+}
+
+color-picker canvas {
+    border-radius: 0.3em;
+}
+color-picker .inputs {
+    display: flex;
+    gap: 0.5em;
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~ Selection List ~~~~~~~~~~~~~~~~~~ */
+
+.selection-list {
+    min-width: 10em;
+}
+.selection-list > div:hover,
+.selection-list > div[selected] {
+    background-color: var(--c-dark);
+    cursor: pointer;
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~ Linked Board Tools ~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.navigation.panel {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.navigation.panel > .main {
+    --panel-border: var(--border-light);
+    position: relative;
+}
+.navigation.panel > .main > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+
+.navigation-preview {
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.navigation-preview > .row{
+    display: grid;
+    grid-template-columns: 1fr auto;
+}
+
+.navigation-preview > .row .label {
+    position: relative;
+}
+.navigation-preview > .row .label > div {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0.4em;
+    right: 0;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* Reverse the ellipsis to the start */
+    direction: rtl;
+    text-align: left; 
+}
+
+.navigation-preview iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    box-sizing: border-box;
+    min-width: 0;   
+    min-height: 0; 
+}
+
+
+
+board-finder  {
+    --a: 1.8;
+    --w: min(calc(100vw - 2em), calc((100vh - 2em) * var(--a)));
+    --h: min(calc(100vh - 2em), calc((100vw - 2em) / var(--a)));
+    width: var(--w);
+    height: var(--h);
+    display: grid;
+    grid-template-rows: 1fr auto;
+    position: absolute;
+    left: calc((100vw - var(--w))/2);
+    top: calc((100vh - var(--h))/2);
+    border-radius: 1em;
+    background: white;
+    box-shadow: 0 0 1em #0000002c;
+    z-index: 1000;
+}
+aac-finder {
+    display: block;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~ Actions Board Tools ~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.actions {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 0 0.5em;
+    --panel-border: var(--border-light);
+}
+
+.actions > .main {
+    position: relative;
+}
+.actions > .main > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: scroll;
+}
+.action .checkbox {
+    padding: 0;
+}
+
+.action {
+    padding: 0.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+}
+.action .label {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.action > .main {
+    display: none;
+}
+.action[on] > .main {
+   display: contents;
+}
+
+
+.key-grid {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4em;
+}
+.key-grid > div:first-child {
+    grid-column: 2;
+    grid-row: 1
+}
+.key-grid > div {
+    grid-row: 2;
+    text-align: center;
+}
+
+.key-grid > div[selected] {
+    background-color:var(--input-border-color);
+    color: var(--c-darker);
+}

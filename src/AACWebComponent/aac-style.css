@@ -1,0 +1,89 @@
+[shadow] {
+    --border: .25vw;
+    --gap: .125vw;
+    --pad: var(--gap);
+}
+grid-layout {
+    width: 100%;
+    height: 100%;
+}
+
+access-textarea {
+    --caret-color: #9b0000;
+    pointer-events: none;
+    font-size: 1.6em;
+}
+
+aac-board-contents grid-layout {
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+
+access-button.grid-icon  {
+    --shadow-color: #565048cf
+
+}
+
+access-button.grid-icon:not([label-at-bottom]) .content {
+    flex-direction: column-reverse !important;
+}
+
+access-button.grid-icon .content .symbol {
+    height: 100% !important;
+    position: relative;
+}
+
+
+access-button.grid-icon .symbol img {
+    max-width: unset;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+access-button.grid-icon[card="folder"] .content {
+    padding-top: calc(var(--pad) + var(--height) / 10);
+}
+
+
+access-button.grid-icon .content {
+    padding: var(--pad);
+    box-sizing: border-box;
+}
+
+.grid-icon .outline {
+    stroke-linecap: round;
+}
+
+.grid-icon .content .display-value {
+    width: 100%;
+}
+
+.grid-icon[bold] .content .display-value span{
+    font-weight: bold;
+}
+.grid-icon[italic] .content .display-value span{
+    font-style: italic;
+}
+
+.grid-icon[font-size="giant"] .content .display-value span{
+    font-size: 4em;
+}
+.grid-icon[font-size="huge"] .content .display-value span{
+    font-size: 3em;
+}
+.grid-icon[font-size="large"] .content .display-value span{
+    font-size: 2em;
+}
+.grid-icon[font-size="medium"] .content .display-value span{
+    font-size: 1em;
+}
+.grid-icon[font-size="small"] .content .display-value span{
+    font-size: 0.85em;
+}
+.grid-icon[font-size="tiny"] .content .display-value span{
+    font-size: 0.7em;
+}
