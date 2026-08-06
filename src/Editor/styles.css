@@ -376,6 +376,7 @@ input:focus {
     background: var(--c-lighter);
     overflow-x: auto;
     width: 100%;
+    overflow-y: hidden;
 }
 
 /* ~~~~~~~~~~~~~~~~ Drop Down Generic ~~~~~~~~~~~~~~~~ */

@@ -1,4 +1,4 @@
-import { OBAction, OBBoard, OBButton } from "./openboard.js";
+import { OBAction, OBBoard, OBButton, OBImage } from "./openboard.js";
 
 class ActionsSimple {
     clearText = { 
@@ -414,6 +414,17 @@ class OBBoardEditable extends OBBoard {
         this.images = Object.values(imagesByID).filter(({img, used}) => used).map(({img}) => img);
     }
 
+
+    addImages(images) {
+        console.log("Adding images", images)
+        for (let image of images) {
+            if (!this.images.some(img => img.id === image.id)) {
+                this.images.push(OBImage.make(image));
+            }
+        }
+        console.log("Images after adding", this.images)
+        this.cleanUpImages();
+    }
 
 
     /**

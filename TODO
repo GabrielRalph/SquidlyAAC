@@ -1,0 +1,16 @@
+EDITOR 
+
+- when editor is opened without board id
+- write action issue
+
+- r,c input to set grid size
+- %s for save
+- %+ \ %- for text size change 
+- when you start on a new cell maybe it could go straight back to content 
+- when you press find image the scroll bar to start at the top 
+- copy accross tabs
+
+FINDER
+
+- can't name folder and grid the same thing
+- updates from one tab don't properly propergate to another (try drag folder)

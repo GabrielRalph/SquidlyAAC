@@ -650,6 +650,8 @@ class SidePanel extends SvgPlus {
 
 class OpenBoardEditor extends ShadowElement {
 
+    static CLIPBOARD_PREFIX = "SQUIDLY_AAC_JSON:";
+
     /** @type {OBBoardEditable} */
     #board = null;
 
@@ -664,6 +666,7 @@ class OpenBoardEditor extends ShadowElement {
     #history = [];
     #historyIndex = 1;
     #coppiedButtons = [];
+    #clipboardFallbackJSON = null;
     #imageLists = [];
     #imageUpdateTimeout = null;
     constructor(el = "open-board-editor") {
@@ -1028,38 +1031,138 @@ class OpenBoardEditor extends ShadowElement {
      * available for pasting, false otherwise.
      */
     get canPaste() {
-        return this.#coppiedButtons.length > 0;
+        return true;
     }
 
     /**
      * Copies the currently selected buttons in the board and stores their 
      * data for later pasting.
      */
-    copy() {
-        this.#coppiedButtons = this.#board.getButtonsByID(this.orderedSelection).map(b => b.toJSON());
+    async copy() {
+        const coppiedButtons = this.#board.getButtonsByID(this.orderedSelection);
+        const imageIds = coppiedButtons.map(b => b.image_id).filter(id => id !== undefined && id !== null);
+        const requiredImages = [...new Set(imageIds)].map(id => this.#board.getImageByID(id));
+        const copyData = {
+            buttons: coppiedButtons,
+            images: requiredImages
+        }
+        this.#clipboardFallbackJSON = copyData;
+        let copyJSON = JSON.stringify(copyData);
+        const taggedText = OpenBoardEditor.CLIPBOARD_PREFIX + copyJSON;
+        console.log("copying json", copyJSON);
+
+        if (navigator.clipboard) {
+            try {
+                const blob = new Blob([copyJSON], { type: "application/json" });
+                const textBlob = new Blob([taggedText], { type: "text/plain" });
+    
+                // Keep rich clipboard data for browsers that support custom types,
+                // and plain text for Safari compatibility.
+                const item = new ClipboardItem({
+                    "web application/json": blob,
+                    "application/json": blob,
+                    "text/plain": textBlob,
+                });
+    
+                let res = await navigator.clipboard.write([item]);
+                console.log("Copied to clipboard");
+            } catch (e) {
+                console.warn("clipboard.write failed, falling back to writeText", e);
+                try {
+                    await navigator.clipboard.writeText(taggedText);
+                    console.log("Copied to clipboard using writeText fallback");
+                } catch (e2) {
+                    console.warn("clipboard.writeText failed; in-memory fallback clipboard is still available.", e2);
+                }
+            }
+        } else {
+            console.warn("Clipboard API not available. Using in-memory fallback clipboard.");
+        }
     }
 
     /**
      * Pastes the copied buttons onto the currently selected buttons in the board.
      */
-    paste(onlyStyles = false) {
-        const n = this.#coppiedButtons.length;
-        if (n > 0) {
-            let selectedButtons = this.#board.getButtonsByID(this.orderedSelection)
-            if (selectedButtons.length > 0) {
-                for (let i = 0; i < selectedButtons.length; i++) {
-                    const ci = i % n;
-                    const id = selectedButtons[i].id;
-                    const copyValue = this.#coppiedButtons[ci]
-                    if (onlyStyles) {
-                        selectedButtons[i].assignStyles(copyValue)
-                    } else {
-                        selectedButtons[i].assign(copyValue);
+    async paste(onlyStyles = false) {
+        try {
+            const payload = await this.#readClipboardPayload();
+            if (payload) {
+                const {buttons, images = []} = payload;
+                const n = buttons.length;
+                let selectedButtons = this.#board.getButtonsByID(this.orderedSelection)
+                if (n > 0 && selectedButtons.length > 0) {
+                    for (let i = 0; i < selectedButtons.length; i++) {
+                        const ci = i % n;
+                        const copyValue = buttons[ci]
+                        if (onlyStyles) {
+                            selectedButtons[i].assignStyles(copyValue)
+                        } else {
+                            selectedButtons[i].assign(copyValue);
+                        }
+                    }
+                    this.#board.addImages(images);
+                    this.#updateBoard();
+                }
+            } else {
+                console.warn("No copied buttons found in clipboard.");
+            }
+        } catch (e) {
+            console.error("Error pasting buttons:", e);
+        }
+    }
+
+    #extractClipboardPayloadFromText(text) {
+        if (typeof text !== "string" || text.length === 0) return null;
+        let raw = text;
+        if (raw.startsWith(OpenBoardEditor.CLIPBOARD_PREFIX)) {
+            raw = raw.slice(OpenBoardEditor.CLIPBOARD_PREFIX.length);
+        }
+        try {
+            const data = JSON.parse(raw);
+            if (data && Array.isArray(data.buttons)) {
+                return data;
+            }
+        } catch {}
+        return null;
+    }
+
+    async #readClipboardPayload() {
+        if (!navigator.clipboard) {
+            return this.#clipboardFallbackJSON;
+        }
+
+        if (typeof navigator.clipboard.read === "function") {
+            try {
+                const items = await navigator.clipboard.read();
+                const typesInPriorityOrder = ["web application/json", "application/json", "text/plain"];
+                for (const item of items) {
+                    for (const type of typesInPriorityOrder) {
+                        if (!item.types.includes(type)) continue;
+
+                        const blob = await item.getType(type);
+                        const text = await blob.text();
+                        const payload = this.#extractClipboardPayloadFromText(text);
+                        if (payload) {
+                            return payload;
+                        }
                     }
                 }
-                this.#updateBoard();
+            } catch (e) {
+                console.warn("clipboard.read failed", e);
             }
         }
+
+        if (typeof navigator.clipboard.readText === "function") {
+            try {
+                const text = await navigator.clipboard.readText();
+                const payload = this.#extractClipboardPayloadFromText(text);
+                if (payload) return payload;
+            } catch (e) {
+                console.warn("clipboard.readText failed", e);
+            }
+        }
+
+        return this.#extractClipboardPayloadFromText(this.#clipboardFallbackJSON);
     }
 
 
