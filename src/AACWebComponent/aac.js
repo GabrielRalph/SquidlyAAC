@@ -251,12 +251,14 @@ class AACBoard extends ShadowElement {
             accessGroup: "apps"
         });
         this.#closeButton.toggleAttribute("hide-for-squidly", true);
+       
         this.#backspaceButton = this.#rootGrid.addGridIcon({
             symbol: "leftArrow",
             type: "action",
             events: {"access-click": (e) => this.#ACTION_SET.delete_word.call(this, e)},
             accessGroup: "apps"
         });
+       
         this.#textArea = this.#rootGrid.createChild(AccessTextArea, {
             placeholder: "Output will appear here",
             readonly: true,
@@ -273,6 +275,9 @@ class AACBoard extends ShadowElement {
         EventTarget.prototype.addEventListener.call(this, type, listener, options);
     }
 
+    /**
+     * @param {AACClick} e
+     */
     #runActions(e, actions, button) {
         let proms = []
         for (const action of actions) {
@@ -286,6 +291,9 @@ class AACBoard extends ShadowElement {
         return Promise.all(proms);
     }
 
+    /**
+     * @param {AACClick} e
+     */
     async #onButtonClick(e) {
         const {element, button} = e;
         const {actions, load_board} = button;
@@ -335,19 +343,24 @@ class AACBoard extends ShadowElement {
             this.#textArea.insert(" ");
             this.#onStateChange(e, "text", "caretPosition");
         },
+
         return(e) {
             return this.gotoBoard(null, e);
         },
+
         home(e) {
             return this.gotoBoard(this.#manager.rootBoardID, e);
         },
+
         back(e) {
             return this.gotoBoard(this.#history[this.#history.length - 2], e);
         },
+
         clear(e) {
             this.#textArea.clear();
             this.#onStateChange(e, "text", "caretPosition");
         },
+
         delete_word(e) {
             let valueUpToCaret = this.#textArea.valueUpToCaret.trimEnd();
             let valueAfterCaret = this.#textArea.valueAfterCaret.trimStart();
@@ -361,27 +374,28 @@ class AACBoard extends ShadowElement {
             }
             this.#onStateChange(e, "text", "caretPosition");
         },
+
+        /**  @this {AACBoard} */
         backspace(e) {
-            let valueUpToCaret = this.#textArea.valueUpToCaret;
-            let valueAfterCaret = this.#textArea.valueAfterCaret;
-            if (valueUpToCaret.length > 0) {
-                this.#textArea.value = valueUpToCaret.slice(0, -1) + valueAfterCaret;
-                this.#textArea.caretPosition = valueUpToCaret.length - 1;
-            }
+            this.#textArea.backspace();
             this.#onStateChange(e, "text", "caretPosition");
         },
+
         hold(e) {
             this.#ACTION_SET.hold_page.call(this, e);
         },
+
         hold_page(e) {
             this.#holdBoard = this.currentBoardID;
             this.#onStateChange(e, "holdBoard");
         },
+
         append_text(e, s, button) {
             s = s || button.label || "";
             this.#textArea.insert(s);
             this.#onStateChange(e, "text", "caretPosition");
         },
+
         insert_text(e, s, button) {
             s = s || button.label || "";
             let charBeforeCursor = this.#textArea.valueUpToCaret;
@@ -395,6 +409,29 @@ class AACBoard extends ShadowElement {
             this.#textArea.insert(s);
             this.dispatchEvent(new AACInsert(e, s));
             this.#onStateChange(e, "text", "caretPosition");
+        },
+
+        cursor_left(e) {
+            this.#textArea.moveCaret(-1);
+            this.#onStateChange(e, "caretPosition");
+        },
+
+        /**  @this {AACBoard} */
+        cursor_right(e) {
+            this.#textArea.moveCaret(1);
+            this.#onStateChange(e, "caretPosition");
+        },
+
+        /**  @this {AACBoard} */
+        cursor_down(e) {
+            this.#textArea.moveCaretVertically(1);
+            this.#onStateChange(e, "caretPosition");
+        },
+
+        /**  @this {AACBoard} */
+        cursor_up(e) {
+            this.#textArea.moveCaretVertically(-1);
+            this.#onStateChange(e, "caretPosition");
         }
     }
 
