@@ -4,6 +4,7 @@ import { OBLoadBoard } from "../src/OpenBoard/openboard.js";
 import { ShadowElement } from "../src/Utilities/utils.js";
 import { initialise, addAuthChangeListener, signOut } from "../src/Firebase/firebase.js";
 import { LoginPage } from "../src/loginPage/login-page.js";
+import { openEditor } from "../src/shared.js";
 
 LoginPage.define();
 
@@ -15,6 +16,9 @@ export class AACFinder extends ShadowElement {
 	constructor(el) {
 		super(el, "board-finder");
 		this.fsUI = this.createChild(OBFinder)
+		this.fsUI.onDoubleClick = (_, __, stat) => {
+			openEditor(stat.boardID);
+		}
 	}
 
 	onconnect() {

@@ -396,6 +396,7 @@ class ImageFinder extends SvgPlus {
 
 class FastFindImageList extends SvgPlus {
     #lastQuery = "";
+    #numberOfImages = 16;
     constructor() {
         super("div");
         this.styles = {display: "contents"};
@@ -403,7 +404,7 @@ class FastFindImageList extends SvgPlus {
 
     set images(images) {
         this.innerHTML = "";
-        images.slice(0, 8).map(img =>
+        images.slice(0, this.#numberOfImages).map(img =>
             this.createChild(ImageBox, {}, img, (i) => this.#selectImage(i))
         )
         this.createChild("div", {class: "loader"});
@@ -425,7 +426,7 @@ class FastFindImageList extends SvgPlus {
 
                 // If there are less than 8 results, 
                 // perform a semantic search
-                if (images.length < 8) {
+                if (images.length < this.#numberOfImages) {
                     let imagesScemantic = await semanticSearch(query);
 
                     // Only update the list if the query hasn't changed

@@ -1,27 +1,28 @@
 EDITOR 
 
 - when editor is opened without board id
-- write action copy issue
-- save file
-- actions add space
+- save file loader
 - r,c input to set grid size
-
 - %s for save
 - %+ \ %- for text size change 
-
 - when you press find image the scroll bar to start at the top 
-- copy accross tabs
+- If search then close, keep search results until a label is edited
 
+- DONE: write action copy issue
+- DONE: actions add space
+- DONE: copy accross tabs
 - DONE: edit label -> go to content
 
 FINDER
-
+- buttons to open view/editor
 - can't name folder and grid the same thing
 - updates from one tab don't properly propergate to another (try drag folder)
+- double click opens the editor
+- adding file thumbnails
+
 
 
 AAC GENERIC
  - font size shared between all three
-
-
+ - text area to scroll into view
  - migrate all boards

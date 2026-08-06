@@ -5,6 +5,7 @@ import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js
 import { getBoard } from "../Firebase/boards.js";
 import { OBFStat } from "./OBFileSystem.js";
 import { registerKeyBindings } from "../Utilities/keybindings.js";
+import { openDraftPreview, openEditor, openViewer } from "../shared.js";
 
 class OBFSColumn extends FSColumn {
     constructor(...args) {
@@ -103,8 +104,6 @@ class OBFileIcon extends FSFileIcon {
     }
 
     onContextMenu(event, root, fstat) {
-        let userParam = new URLSearchParams(window.location.search).get("user");
-        userParam = userParam ? `&user=${userParam}` : "";
         root.addContextMenu(
             [
                 {
@@ -171,21 +170,19 @@ class OBFileIcon extends FSFileIcon {
                     {
                         label: "Open Editor",
                         icon: "<i-bw edit></i-bw>",
-                        action: () => window.open(`../Editor/?board=${fstat.boardID}${userParam}`, "_blank")
+                        action: () => openEditor(fstat.boardID)
                     },
                     {
                         label: "Open Viewer",
                         icon: "<i-bw view></i-bw>",
-                        action: () => window.open(`../View/?board=${fstat.boardID}`, "_blank")
+                        action: () => openViewer(fstat.boardID)
                     },
                     {
                         label: "Open Draft Preview",
                         icon: "<i-bw draft-view></i-bw>",
-                        action: () => window.open(`../View/?board=${fstat.boardID}&mode=preview-draft`, "_blank")
+                        action: () => openDraftPreview(fstat.boardID)
                     },
                 ] : [])
-                
-
             ], event
         );
         return true;

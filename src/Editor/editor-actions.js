@@ -1,4 +1,5 @@
 import { ActionsSimple } from "../OpenBoard/openboard-editable.js";
+import { openEditor } from "../shared.js";
 import { Icon } from "../Utilities/icons.js";
 import { SvgPlus } from "../Utilities/utils.js";
 
@@ -99,10 +100,18 @@ class NavPreview extends SvgPlus {
         this.class = "navigation-preview"
         let row = this.createChild("div", {class: "row b-bottom"})
         this.label = row.createChild("div", {class: "label"}).createChild("div", {content: "Board to load"});
-        row.createChild("div", {
-            class: "pad-even btn-plain b-left-hover",
+       
+		row.createChild("div", {
+            class: "pad-even btn-plain b-left-hover b-right-hover",
             events: { click: () => onDelete() }
         }).createChild(Icon, {}, "trash")
+
+		row.createChild("div", {
+            class: "pad-even btn-plain b-left-hover",
+            events: { click: () => openEditor(this.boardID) }
+        }).createChild(Icon, {}, "edit")
+
+
         this.viewer = this.createChild("iframe", {
 			class: "viewer",
 			src: "../View/?board=123&mode=preview",
@@ -110,6 +119,7 @@ class NavPreview extends SvgPlus {
     }
 
     setBoard(id, path) {
+		this.boardID = id;
         this.label.innerHTML = path;
         this.viewer.contentWindow.postMessage({
             type: "updateBoard",

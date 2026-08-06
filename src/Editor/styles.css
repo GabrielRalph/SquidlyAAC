@@ -491,6 +491,7 @@ color-picker .inputs {
 }
 
 .navigation.panel > .main {
+    --border-color: var(--border-color-light);
     --panel-border: var(--border-light);
     position: relative;
 }
@@ -511,9 +512,8 @@ color-picker .inputs {
 
 .navigation-preview > .row{
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
 }
-
 .navigation-preview > .row .label {
     position: relative;
 }
