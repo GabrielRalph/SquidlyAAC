@@ -335,7 +335,6 @@ class AACBoard extends ShadowElement {
             this.#textArea.insert(" ");
             this.#onStateChange(e, "text", "caretPosition");
         },
-       
         return(e) {
             return this.gotoBoard(null, e);
         },

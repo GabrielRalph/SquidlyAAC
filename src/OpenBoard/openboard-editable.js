@@ -13,6 +13,7 @@ class ActionsSimple {
     }
 
     holdPage = { on: false }
+    space = { on: false }
     speak = { on: false }
     openWordFinder = { on: false }
 
@@ -36,6 +37,9 @@ class ActionsSimple {
         },
         "speak": (action) => {
             this.speak.on = true;
+        },
+        "space": (action) => {
+            this.space.on = true;
         },
         "insert_text": (action) => {
             this.addText.on = true;
@@ -149,8 +153,13 @@ class ActionsSimple {
             actions.push({mode: "speak"});
         }
 
+
         if (this.openWordFinder.on) {
             actions.push({mode: "open_word_finder"});
+        }
+
+        if (this.space.on) {
+            actions.push({mode: "space"});
         }
 
         if (this.navigation.mode === "load_board") {
@@ -171,7 +180,7 @@ class ActionsSimple {
     }
 
     static get basicActions() {
-        return ["holdPage", "speak", "openWordFinder", "clearText", "navigation", "moveCursor"];
+        return ["holdPage", "speak", "openWordFinder", "clearText", "navigation", "moveCursor", "space"];
     }
 
     static make(value, button) {

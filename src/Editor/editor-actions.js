@@ -432,6 +432,7 @@ class ActionsPanel extends SvgPlus {
 				this.main.createChild(AddTextAction, {},  action, editor),
 				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak"),
 				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage"),
+				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space"),
 				this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder"),
 				this.main.createChild(MoveCursorAction, {},  action, editor),
 			];
