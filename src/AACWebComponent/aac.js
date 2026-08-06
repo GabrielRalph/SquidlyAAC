@@ -277,7 +277,7 @@ class AACBoard extends ShadowElement {
         let proms = []
         for (const action of actions) {
             if (action.mode in this.#ACTION_SET) {
-                const prom = this.#ACTION_SET[action.mode].call(this, e, action.value);
+                const prom = this.#ACTION_SET[action.mode].call(this, e, action.value, button);
                 if (prom instanceof Promise) {
                     proms.push(prom);
                 }
@@ -362,6 +362,15 @@ class AACBoard extends ShadowElement {
             }
             this.#onStateChange(e, "text", "caretPosition");
         },
+        backspace(e) {
+            let valueUpToCaret = this.#textArea.valueUpToCaret;
+            let valueAfterCaret = this.#textArea.valueAfterCaret;
+            if (valueUpToCaret.length > 0) {
+                this.#textArea.value = valueUpToCaret.slice(0, -1) + valueAfterCaret;
+                this.#textArea.caretPosition = valueUpToCaret.length - 1;
+            }
+            this.#onStateChange(e, "text", "caretPosition");
+        },
         hold(e) {
             this.#ACTION_SET.hold_page.call(this, e);
         },
@@ -369,11 +378,13 @@ class AACBoard extends ShadowElement {
             this.#holdBoard = this.currentBoardID;
             this.#onStateChange(e, "holdBoard");
         },
-        append_text(e, s) {
+        append_text(e, s, button) {
+            s = s || button.label || "";
             this.#textArea.insert(s);
             this.#onStateChange(e, "text", "caretPosition");
         },
-        insert_text(e, s) {
+        insert_text(e, s, button) {
+            s = s || button.label || "";
             let charBeforeCursor = this.#textArea.valueUpToCaret;
             let charAfterCursor = this.#textArea.valueAfterCaret;
             if (charBeforeCursor.length > 0 && !charBeforeCursor.endsWith(" ")) {

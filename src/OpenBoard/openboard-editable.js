@@ -157,9 +157,13 @@ class ActionsSimple {
             if (!button.load_board) {
                 button.setProperty("load_board", this.navigation.value);
             }
-        } else if (this.navigation.mode && !button.load_board) {
-            actions.push({mode: this.navigation.mode, value: null});
+        } else {
+            button.load_board = null;
+            if (this.navigation.mode) {
+                actions.push({mode: this.navigation.mode, value: null});
+            }
         }
+
         if (this.addText.utterance) {
             button.setProperty("vocalization", this.addText.utterance);
         }
@@ -253,7 +257,6 @@ class OBButtonEditable extends OBButton {
     get actionsSimple() {
         let actions = new ActionsSimple();
         actions.updateFrom(this);
-        console.log(actions, this)
         return actions;
     } 
 
@@ -268,6 +271,9 @@ class OBButtonEditable extends OBButton {
     }
 }
 
+/**
+ * @extends OBBoard<OBButtonEditable>
+ */
 class OBBoardEditable extends OBBoard {
     static buttons_parser(buttons) {
         return buttons.map(button => OBButtonEditable.make(button));
@@ -397,9 +403,15 @@ class OBBoardEditable extends OBBoard {
      */
     getSelectionProperty(selection, property) {
         const buttons = this.getButtonsByID(selection);
-        const values = new Set(buttons.map(b => b[property]));
+        const values = new Set(buttons.map(b => {
+            let value = b[property];
+            if (value && typeof value === "object") {
+                value = JSON.stringify(value);
+            }
+            return value;
+        }));
         if (values.size === 1) {
-            return values.values().next().value;
+            return buttons[0][property];
         } else {
             return undefined;
         }
@@ -541,4 +553,4 @@ class OBBoardEditable extends OBBoard {
     }
 }
 
-export { OBBoardEditable }
+export { OBBoardEditable, ActionsSimple }

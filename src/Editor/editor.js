@@ -581,7 +581,7 @@ class GridTools extends SvgPlus {
         let dynamicTools = mainPanel.createChild("div", {class: "contents"});
         for (let cat of TOP_TOOLS) {
             let catEl = this.selectionOptions.createChild("div", {
-                class: "category pad b-right", 
+                class: "category no-select pad b-right", 
                 content: toLabel(cat.category),
                 title: toLabel(cat.category, " ") + (cat.binding ? ` [${cat.binding}]` : ""),
                 events: {click: () => this.selectCategory(cat.category)}
@@ -772,8 +772,8 @@ class OpenBoardEditor extends ShadowElement {
      * @param {string} key 
      * @return {any|undefined}
      */
-    getSelectionProperty(key) {
-        return this.#board.getSelectionProperty(this.selection, key);
+    getSelectionProperty(key, selection = this.selection) {
+        return this.#board.getSelectionProperty(selection, key);
     }
 
     /**
@@ -811,11 +811,38 @@ class OpenBoardEditor extends ShadowElement {
     }
 
 
+    updateSelectionActionsSimple(update) {
+        for (let buttonID of this.selection) {
+            const button = this.#board.getButtonByID(buttonID);
+            if (button && !button.hidden) {
+                let newActions = button.actionsSimple;
+                for (let key in update) {
+                    for (let subKey in update[key]) {
+                        if (update[key][subKey] !== undefined) {
+                            newActions[key][subKey] = update[key][subKey];
+                        }
+                    }
+                }
+                button.actionsSimple = newActions;
+            }
+        }
+        this.#updateBoard();
+    }
+
+
     clearSelectedButtons() {
         let ids = this.selection;
         let buttons = this.#board.getButtonsByID(ids);
         buttons.forEach(b => b.clear())
         this.#updateBoard()
+    }
+
+    getButtonProperty(buttonID, prop) {
+        let button = this.#board.getButtonByID(buttonID);
+        if (button) {
+            return button[prop];
+        }
+        return undefined;
     }
 
 

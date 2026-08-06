@@ -432,6 +432,9 @@ class OBGrid extends DataClass {
 
 }
 
+/**
+ * @template {OBButton} ButtonClass
+ */
 class OBBoard extends OpenBoardObject {
     /** 
      * The grid layout of the board.
@@ -471,7 +474,7 @@ class OBBoard extends OpenBoardObject {
     /**
      * The list of buttons on the board, 
      * where each button is an instance of OBButton.
-     *  @type {OBButton[]} */
+     *  @type {ButtonClass[]} */
     buttons = [];      
     static buttons_parser(value) { 
         let buttons = []
@@ -495,7 +498,7 @@ class OBBoard extends OpenBoardObject {
     /**
      * Gets a button by its ID from the board's buttons list.
      * @param {string} id - The ID of the button to retrieve.
-     * @returns {?OBButton} The button with the specified ID, or undefined if not found.
+     * @returns {?ButtonClass} The button with the specified ID, or undefined if not found.
      */
     getButtonByID(id) {
         return this.buttons.find(b => b.id == id);

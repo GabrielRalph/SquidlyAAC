@@ -244,15 +244,19 @@ image-finder .finder .panel input:focus {
     text-align: center;
 }
 
+.checkbox[undefined] .box,
 .checkbox[checked] .box {
     background-color: var(--c-text);
 }
 
+.checkbox[undefined] .box::after,
 .checkbox[checked] .box::after {
     color: var(--c-darker);
     font-weight: bold;
     content: "✓";
-    
+}
+.checkbox[undefined] .box::after {
+    content: "?";
 }
 
 .upload-form[invalid] .upload-btn{

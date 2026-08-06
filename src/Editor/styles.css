@@ -250,6 +250,11 @@ i-bw {
     width: 100%;
     box-sizing: border-box;
 }
+.no-select,
+.label {
+    user-select: none;
+}
+
 /* ~~~~~~~~~~~~~~~~~~~ Button Styles ~~~~~~~~~~~~~~~~~~ */
 
 .btn {
