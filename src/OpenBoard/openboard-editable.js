@@ -14,7 +14,6 @@ class ActionsSimple {
 
     holdPage = { on: false }
     speak = { on: false }
-
     openWordFinder = { on: false }
 
     navigation =  {
@@ -95,78 +94,109 @@ class ActionsSimple {
                 parser(action);
             }
         }
+        
         let navAction = button.navigationAction;
         if (navAction) {
             this.navigation.mode = navAction.mode;
             this.navigation.value = navAction.value;
         }
 
-        let label = button.label || "";
+        let label = (button.label || "").trim();
         if (this.addText.on) {
-            if (label === this.addText.value) {
+            // If the addText value is the same as the 
+            // button label, clear it to avoid duplication
+            let addTextValue = (this.addText.value || "").trim();
+            if (label === addTextValue) {
                 this.addText.value = null;
             }
-        }
-
-        if (!this.navigation.mode) {
-            this.navigation.mode = "return";
         }
 
         if (button.vocalization) {
             this.addText.utterance = button.vocalization;
         }
-
-        if (allActions.length === 0 && label.length > 0 && !button.load_board) {
-            this.addText.on = true;
-        }
     }
 
+    /** @param {OBButtonEditable} button */
     applyTo(button) {
-        button.actions = [];
+        let actions = []
         if (this.clearText.on) {
             if (this.clearText.mode === "word") {
-                button.actions.push({mode: "delete_word"});
+                actions.push({mode: "delete_word"});
             } else if (this.clearText.mode === "backspace") {
-                button.actions.push({mode: "backspace"});
+                actions.push({mode: "backspace"});
             } else {
-                button.actions.push({mode: "clear"});
+                actions.push({mode: "clear"});
             }
         }
         
         if (this.addText.on) {
-            let value = this.addText.value || button.label || "";
+            let value = this.addText.value;
+            value = ActionsSimple.sameAsLabel(value, button) ? null : value;
             let mode = this.addText.newWord ? "insert_text" : "append_text";
-            button.actions.push({mode, value: value});
+            actions.push({mode, value: value});
         }
 
         if (this.holdPage.on) {
-            button.actions.push({mode: "hold_page"});
+            actions.push({mode: "hold_page"});
         }
 
         if (this.moveCursor.on && this.moveCursor.direction) {
             let mode = `cursor_${this.moveCursor.direction}`;
-            button.actions.push({mode});
+            actions.push({mode});
         }
 
         if (this.speak.on) {
-            button.actions.push({mode: "speak"});
+            actions.push({mode: "speak"});
         }
 
         if (this.openWordFinder.on) {
-            button.actions.push({mode: "open_word_finder"});
+            actions.push({mode: "open_word_finder"});
         }
 
         if (this.navigation.mode === "load_board") {
             if (!button.load_board) {
-                button.load_board = this.navigation.value;
+                button.setProperty("load_board", this.navigation.value);
             }
         } else if (this.navigation.mode && !button.load_board) {
-            button.actions.push({mode: this.navigation.mode, value: null});
+            actions.push({mode: this.navigation.mode, value: null});
         }
-        button.actions = button.actions.map(a => (new OBAction(a)).toJSON());
         if (this.addText.utterance) {
-            button.vocalization = this.addText.utterance;
+            button.setProperty("vocalization", this.addText.utterance);
         }
+        button.setProperty("actions", actions);
+    }
+
+    static get basicActions() {
+        return ["holdPage", "speak", "openWordFinder", "clearText", "navigation", "moveCursor"];
+    }
+
+    static make(value, button) {
+        let actions = new ActionsSimple();
+
+        if (value && typeof value === "object") {
+            for (let key of this.basicActions) {
+                if (key in value) {
+                    actions[key] = value[key];
+                }
+            }
+
+            if ("addText" in value) {
+                actions.addText = value.addText;
+                if (button) {
+                    if (ActionsSimple.sameAsLabel(actions.addText.value, button)) {
+                        actions.addText.value = null;
+                    }
+                } 
+            }
+        }
+        return actions;
+    }
+
+    static sameAsLabel(text, button) {
+        if (!text || !button) return false;
+        let label = (button.label || "").trim();
+        let value = (text || "").trim();
+        return label === value;
     }
 }
 
@@ -180,31 +210,32 @@ class OBButtonEditable extends OBButton {
         this.assign(OBButtonEditable.make({
             id: "x",
             label: "",
+            actions: ["&", ":return"],
             image_id: null,
             load_board: null,
         }))
     }
 
-
     refreshID() {
         this.id = OBButton.newID();
     }
 
-
     setProperty(prop, value) {
-        // check to see if property has a static parser 
         let parserKey = prop + "_parser";
         if (parserKey in this.constructor) {
             value = this.constructor[parserKey](value);
         }
         this[prop] = value;
+        if (prop === "label") {
+            this.actionsSimple = this.actionsSimple; // Refresh addText value if it matches the label
+        }
     }
 
     assign(obj) {
          for (const key in this) {
             if (!(this[key] instanceof Function) && key !== "id") {
                 if (key in obj) {
-                    this[key] = obj[key];
+                    this.setProperty(key, obj[key]);
                 }
             }
         }
@@ -214,28 +245,25 @@ class OBButtonEditable extends OBButton {
         let props = OBButton.styleProperties;
         for (let prop of props) {
             if (prop in obj) {
-                this[prop] = obj[prop]
+                this.setProperty(prop, obj[prop]);
             }
         }
     }
 
     get actionsSimple() {
-        if (this.#storedActionsSimple === null) {
-            let actions = new ActionsSimple();
-            actions.updateFrom(this);
-            return actions;
-        } else {
-            return this.#storedActionsSimple;
-        }
+        let actions = new ActionsSimple();
+        actions.updateFrom(this);
+        console.log(actions, this)
+        return actions;
     } 
 
     set actionsSimple(actions) {
-        this.#storedActionsSimple = actions;
+        actions = ActionsSimple.make(actions, this);
+        actions.applyTo(this);
     }
 
     toJSON() {
         const json = super.toJSON();
-        this.actionsSimple.applyTo(json);
         return json;
     }
 }

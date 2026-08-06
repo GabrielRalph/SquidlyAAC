@@ -116,8 +116,10 @@ class OBAction {
                 if (this.mode === "action") {
                     this.mode = value.slice(1);
                     this.value = null;
+                } else if (value.length > 1) {
+                        this.value = value.slice(1);
                 } else {
-                    this.value = value.slice(1);
+                    this.value = null;
                 }
             } else {
                 this.mode = "unknown";
@@ -359,6 +361,7 @@ class OBButton extends OpenBoardObject {
     static makeEmptyButton() {
         return this.make({
             id: OBButton.newID(),
+            actions: ["&", ":return"],
             label: "",
             image_id: null,
             load_board: null,

@@ -367,7 +367,7 @@ const TOP_TOOLS_STATIC = [
     },
 	{
 		name: "clearChanges",
-		icon: "e-delete",
+		icon: "trash",
 		onSelection(editor) {
 			this.toggleAttribute("disabled", !editor.isSaveable);	
 		},
@@ -1043,14 +1043,12 @@ class OpenBoardEditor extends ShadowElement {
         const imageIds = coppiedButtons.map(b => b.image_id).filter(id => id !== undefined && id !== null);
         const requiredImages = [...new Set(imageIds)].map(id => this.#board.getImageByID(id));
         const copyData = {
-            buttons: coppiedButtons,
-            images: requiredImages
+            buttons: coppiedButtons.map(b => b.toJSON()),
+            images: requiredImages.map(img => img.toJSON())
         }
         this.#clipboardFallbackJSON = copyData;
         let copyJSON = JSON.stringify(copyData);
         const taggedText = OpenBoardEditor.CLIPBOARD_PREFIX + copyJSON;
-        console.log("copying json", copyJSON);
-
         if (navigator.clipboard) {
             try {
                 const blob = new Blob([copyJSON], { type: "application/json" });
@@ -1060,7 +1058,6 @@ class OpenBoardEditor extends ShadowElement {
                 // and plain text for Safari compatibility.
                 const item = new ClipboardItem({
                     "web application/json": blob,
-                    "application/json": blob,
                     "text/plain": textBlob,
                 });
     
@@ -1134,7 +1131,7 @@ class OpenBoardEditor extends ShadowElement {
         if (typeof navigator.clipboard.read === "function") {
             try {
                 const items = await navigator.clipboard.read();
-                const typesInPriorityOrder = ["web application/json", "application/json", "text/plain"];
+                const typesInPriorityOrder = ["web application/json", "text/plain"];
                 for (const item of items) {
                     for (const type of typesInPriorityOrder) {
                         if (!item.types.includes(type)) continue;
@@ -1297,15 +1294,15 @@ class OpenBoardEditor extends ShadowElement {
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT LABEL METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-
     async editLabel(id) {
 		this.#editingLabel = true;
+        this.selectCategory("content");
         let newValue = await this.grid.editLabel(id, (value) => {
             this.#triggerImageSearchUpdate(value);
         });
         this.#editingLabel = false;
         if (newValue !== undefined) {
-            this.#board.getButtonByID(id).label = newValue;
+            this.setSelectionProperty("label", newValue);
             this.#updateBoard();
         }
     }
