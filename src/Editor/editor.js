@@ -336,10 +336,14 @@ const TOP_TOOLS_STATIC = [
         icon: "e-save",
 		onSelection(editor) {
 			this.toggleAttribute("disabled", !editor.isSaveable);
+            this.toggleAttribute("loading", editor.isSaving);
 		},
 		onClick(editor) {
 			editor.save();
-		}
+		},
+        build(element, editor) {
+            element.createChild("loader", {class: "loader"})
+        }
     },
     {
         name: "undo",
@@ -545,6 +549,9 @@ class ToolIcon extends SvgPlus {
             }
             if (tool.onSelection instanceof Function) {
                 this.#onSelection = tool.onSelection.bind(this);
+            }
+            if (tool.build instanceof Function) {
+                tool.build(this, openBoardEditor);
             }
             this.#tool = tool;
         }
@@ -772,6 +779,10 @@ class OpenBoardEditor extends ShadowElement {
 		this.tools.updateSelection(this.selection);
 		this.sidePanel.updateSelection();
 	}
+
+    forceToolUpdate() {
+        this.tools.updateSelection(this.selection);
+    }
 
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ HELPER METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1384,6 +1395,14 @@ class OpenBoardEditor extends ShadowElement {
 	get editingLabel() {
 		return this.#editingLabel;
 	}
+
+
+    get isSaving() {
+        if (this.getIsSaving instanceof Function) {
+			return this.getIsSaving();
+		}
+		return false;
+    }
 
 	get isSaveable() {
 		if (this.getIsSaveable instanceof Function) {

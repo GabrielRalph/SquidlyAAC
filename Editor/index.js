@@ -62,6 +62,10 @@ async function editBoard(boardID) {
         return canSave;
     }
 
+    editor.getIsSaving = () => {
+        return boardWatcher?.isSaving;
+    }
+
     editor.onBeforeUpdate = () => {
         updateSaveStatus();
     }
@@ -74,9 +78,13 @@ async function editBoard(boardID) {
     }
 
     editor.save = async () => {
+        
         if (boardWatcher && canSave) {
-            await boardWatcher.save(editor.board);
+            let promise = boardWatcher.save(editor.board);
+            editor.forceToolUpdate();
+            await promise;
             updateSaveStatus();
+            editor.forceUpdate();
         }
     }
 

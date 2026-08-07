@@ -368,6 +368,10 @@ class BoardWatcher {
         }
     }
 
+    get isSaving() {
+        return this.#saving;
+    }
+
     get id() {
         return this.#id;
     }
