@@ -1,7 +1,7 @@
 [shadow] {
     --border: .25vw;
     --gap: .125vw;
-    --pad: var(--gap);
+    --pad: var(--border);
 }
 grid-layout {
     width: 100%;
@@ -15,7 +15,7 @@ access-textarea {
 }
 
 aac-board-contents grid-layout {
-    padding: 2px;
+    padding: var(--gap);
     box-sizing: border-box;
 }
 
@@ -51,6 +51,7 @@ access-button.grid-icon[card="folder"] .content {
 
 access-button.grid-icon .content {
     padding: var(--pad);
+    padding-top: calc(var(--pad) * 2);
     box-sizing: border-box;
 }
 
@@ -73,10 +74,10 @@ access-button.grid-icon .content {
     font-size: 4em;
 }
 .grid-icon[font-size="huge"] .content .display-value span{
-    font-size: 3em;
+    font-size: 2.5em;
 }
 .grid-icon[font-size="large"] .content .display-value span{
-    font-size: 2em;
+    font-size: 1.5em;
 }
 .grid-icon[font-size="medium"] .content .display-value span{
     font-size: 1em;

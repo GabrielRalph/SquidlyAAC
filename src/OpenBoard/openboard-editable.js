@@ -233,6 +233,24 @@ class OBButtonEditable extends OBButton {
         this.id = OBButton.newID();
     }
 
+    increaseFontSize() {
+        let sizes = OBButton.fontSizes;
+        let currentSize = this.font_size || "medium";
+        let index = sizes.indexOf(currentSize);
+        if (index < sizes.length - 1) {
+            this.font_size = sizes[index + 1];
+        }
+    }
+
+    decreaseFontSize() {
+        let sizes = OBButton.fontSizes;
+        let currentSize = this.font_size || "medium";
+        let index = sizes.indexOf(currentSize);
+        if (index > 0) {
+            this.font_size = sizes[index - 1];
+        }
+    }
+
     setProperty(prop, value) {
         let parserKey = prop + "_parser";
         if (parserKey in this.constructor) {
@@ -446,7 +464,6 @@ class OBBoardEditable extends OBBoard {
        this.cleanUpImages();
     }
 
-
     cleanUpImages() {
         // Remove any images that are no longer used by any button
         // And remove links to images that are not in the list.
@@ -463,7 +480,6 @@ class OBBoardEditable extends OBBoard {
         this.images = Object.values(imagesByID).filter(({img, used}) => used).map(({img}) => img);
     }
 
-
     addImages(images) {
         console.log("Adding images", images)
         for (let image of images) {
@@ -474,7 +490,6 @@ class OBBoardEditable extends OBBoard {
         console.log("Images after adding", this.images)
         this.cleanUpImages();
     }
-
 
     /**
      * @param {number} index
@@ -545,20 +560,17 @@ class OBBoardEditable extends OBBoard {
         }
     }
 
-
     validate() {
         // Turn null spaces to empty buttons
         this.grid.order = this.grid.order.map((r, ri) => r.map((buttonID, ci) => {
             if (!buttonID) {
                 let button = OBButtonEditable.makeEmptyButton()
-                button.id = `empty_${ri}_${ci}`;
                 this.buttons.push(button)
                 buttonID = button.id
             } 
             return buttonID
         }))
         this.removeUnusedButtons();
-
     }
 }
 

@@ -16,34 +16,36 @@ let boardWatcher = null;
 
 
 let updateTimeout = null;
+let timeOfLastSave = null;
 async function editBoard(boardID) {
     if (boardWatcher) {
-        if (updateTimeout) {
-            clearTimeout(updateTimeout);
-            updateTimeout = null;
-        }
         boardWatcher.stop();
         boardWatcher = null;
     }
 
     let canSave = false;
     let canSaveDraft = false;
+    let isChange = false;
+
     function updateSaveStatus() {
         const editorBoard = editor.board;
         const draftBoard = boardWatcher?.draft;
         const savedBoard = boardWatcher?.board;
 
-
         let newCanSave = !editorBoard.same(savedBoard);
         let change = newCanSave !== canSave;
-        // console.log(editorBoard.diff(savedBoard), editorBoard, savedBoard)
         canSave = newCanSave;
         canSaveDraft = !editorBoard.same(draftBoard);
         console.log(`update status: canSave=${canSave}, canSaveDraft=${canSaveDraft}`)
-		editor.titleNote.innerHTML = canSave ? (canSaveDraft ? "*" : "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Draft Saved") : ""
-        if (change) {
-            editor.forceUpdate();
+
+        if (!updateTimeout) {
+            updateTimeout = true;
+            window.requestAnimationFrame(() => {
+                editor.titleNote.innerHTML = canSave ? (canSaveDraft ? "*" : "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Draft Saved") : ""
+                updateTimeout = null;
+            });
         }
+        return !editorBoard.same(boardWatcher?.currentBoard) 
     }
 
     function updateTitle() {
@@ -60,16 +62,15 @@ async function editBoard(boardID) {
         return canSave;
     }
 
-    editor.onUpdate = () => {
+    editor.onBeforeUpdate = () => {
         updateSaveStatus();
-        if (updateTimeout) {
-            clearTimeout(updateTimeout);
+    }
+
+    editor.onUpdate = () => {
+        if (canSaveDraft && !editor.editingLabel) {
+            boardWatcher.updateDraft(editor.board);
+            timeOfLastSave = Date.now();
         }
-        updateTimeout = setTimeout(() => {
-            if (boardWatcher && canSaveDraft && !editor.editingLabel) {
-                boardWatcher.updateDraft(editor.board);
-            }
-        }, 10000);
     }
 
     editor.save = async () => {
@@ -80,12 +81,12 @@ async function editBoard(boardID) {
     }
 
     let started = false;
-    boardWatcher = new BoardWatcher(boardID, () => {
+    boardWatcher = new BoardWatcher(boardID, (isChange) => {
         const { currentBoard, board, metadata, draft } = boardWatcher;
         if (!started) {
             started = true;
             editor.board = currentBoard;
-        } else {
+        } else if (updateSaveStatus()) {
             editor.updateBoard(currentBoard);
         }
         updateTitle();

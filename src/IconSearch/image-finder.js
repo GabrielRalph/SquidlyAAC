@@ -283,6 +283,10 @@ class Searcher extends SvgPlus {
         this.main.onImageSelected = (image) => this.#selectImage(image);
     }
 
+    resetScroll() {
+        this.main.scrollTop = 0;
+    }
+
     async initialiseTop() {
         let myIcons = await getNumberOfOwnedImages();
         console.log("My Icons", myIcons);
@@ -316,6 +320,7 @@ class Searcher extends SvgPlus {
 }
 
 class ImageFinder extends SvgPlus {
+    #lastMode = null;
     constructor() {
         super("image-finder");
         const head = this.createChild("div", {class: "panel header", innerHTML: "Search for Images"});
@@ -350,6 +355,10 @@ class ImageFinder extends SvgPlus {
         }
     }
 
+    resertScroll() {
+        this.searcher.resetScroll();
+        this.recent.scrollTop = 0;
+    }
 
     search(text) {
         this.selectMode("search");
@@ -365,16 +374,18 @@ class ImageFinder extends SvgPlus {
     }
 
     selectMode(mode) {
-        if (mode === "recent") { 
-            this.recent.images = getRecentImages();
+        if (this.#lastMode !== mode) {
+            if (mode === "recent") { 
+                this.recent.images = getRecentImages();
+            }
+            this.resertScroll();
+            [...this.tabs.children].forEach(tab => 
+                tab.toggleAttribute("selected", tab.mode === mode)
+            );
+            [...this.main.children].forEach(child => 
+                child.toggleAttribute("hidden", child.mode !== mode)
+            );
         }
-
-        [...this.tabs.children].forEach(tab => 
-            tab.toggleAttribute("selected", tab.mode === mode)
-        );
-        [...this.main.children].forEach(child => 
-            child.toggleAttribute("hidden", child.mode !== mode)
-        );
     }
 
     hide() {
@@ -386,6 +397,7 @@ class ImageFinder extends SvgPlus {
     }
 
     show() {
+        this.resertScroll();
         this.styles = {
             opacity: 1,
             transition: "opacity 0.2s ease-in-out",

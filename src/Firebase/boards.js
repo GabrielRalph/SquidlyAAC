@@ -271,7 +271,7 @@ class BoardWatcher {
             throw new Error("Board does not exist");
         }
         this.#initalised = true;
-        this.call();
+        this.call(true);
     }
 
     async #forceMetadataUpdate() {
@@ -320,7 +320,6 @@ class BoardWatcher {
         }
     }
 
-
     async save(data) {
         this.log("Saving board");
         if (this.#saving) return;
@@ -343,9 +342,10 @@ class BoardWatcher {
     }
 
     async updateDraft(data) {
+        this.version = (this.version || 0) + 1;
         let update = {
             board: JSON.stringify(OBBoard.make(data)),
-            version: (this.version || 0) + 1
+            version: this.version,
         }
         this.log("Updating draft");
         await DRAFTS.set(this.id, update);

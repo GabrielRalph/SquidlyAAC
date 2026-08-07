@@ -144,7 +144,12 @@ class NavigationPanel extends SvgPlus {
         this.modes = {
             options: this.main.createChild(NavOptions),
             preview: this.main.createChild(NavPreview, {}, () => {
-                editor.setSelectionProperty("load_board", null);
+                editor.updateSelectionActionsSimple({
+					navigation: {
+						mode: "return",
+						value: null
+					}
+				})
             }),
             multi: this.main.createChild("div", {
                 class: "wh-fill no-select centered", 
@@ -157,7 +162,6 @@ class NavigationPanel extends SvgPlus {
         }
 
         this.modes.preview.viewer.addEventListener("dblclick", async () => {
-            console.log("DOUBLE CLICK")
             editor.getLinkedBoard();
         })
 
@@ -167,7 +171,6 @@ class NavigationPanel extends SvgPlus {
             if (selected === "load_board") {
                 editor.getLinkedBoard()
             } else {
-				console.log("UPDATE NAVIGATION", selected)
 				editor.updateSelectionActionsSimple({navigation: {
 					mode: selected,
 					value: null

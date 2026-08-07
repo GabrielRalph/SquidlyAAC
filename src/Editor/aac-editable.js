@@ -93,6 +93,7 @@ class AACEditorGrid extends AACGrid {
             }
             dragStarted = null;
         }
+
         this.events = {
             mousemove(e) {
                 if (e.buttons === 1) {
@@ -185,11 +186,6 @@ class AACEditorGrid extends AACGrid {
     }
 
 
-    // set board(value) {
-    //     // super.board = value
-    //     console.log("hello world")
-    // }
-
     onBoardSet(){  
         this.#updateSelection();
     }
@@ -253,6 +249,17 @@ class AACEditorGrid extends AACGrid {
 
     get selection() {
         return [...this.#selectedButtonIDs];
+    }
+
+    set selection(value) {
+        if (Array.isArray(value)) {
+            this.#selectedButtonIDs = new Set(value);
+            this.#updateSelection();
+        } else {
+            throw new Error("Selection must be an array of button IDs");
+        }
+
+        this.#updateSelection();
     }
 }
 

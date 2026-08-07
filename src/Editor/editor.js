@@ -407,8 +407,10 @@ const KEY_BINDINGS = {
 
     "Meta+m": (editor) => editor.toggleMerge(),
     "Shift+Meta+m": (editor) => editor.unMergeSelected(),
+    "Meta+s": (editor) => editor.save(),
 
-
+    "Meta+=": (editor) => editor.increaseFontSize(),
+    "Meta+-": (editor) => editor.decreaseFontSize(),
 }
 
 
@@ -742,7 +744,12 @@ class OpenBoardEditor extends ShadowElement {
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ UDPATE METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
        
     #updateBoard(commitToHistory = true) {
+        if (this.onBeforeUpdate instanceof Function) {
+            this.onBeforeUpdate();
+        }
+        
         this.grid.board = this.#board;
+
         if (commitToHistory) {
             const lastState = this.#history[this.#historyIndex - 1];
             const state = JSON.stringify(this.#board);
@@ -752,6 +759,7 @@ class OpenBoardEditor extends ShadowElement {
                 this.#historyIndex = this.#history.length;
             }
         }
+
         this.tools.updateSelection(this.selection);
 		this.sidePanel.updateSelection();
 		if (this.onUpdate instanceof Function) {
@@ -874,6 +882,7 @@ class OpenBoardEditor extends ShadowElement {
 
 
     updateImageLists(value) {
+        this.lastFastSearchQuery = value;
         for (let imageList of this.#imageLists) {
             imageList.search(value);
         }
@@ -925,9 +934,19 @@ class OpenBoardEditor extends ShadowElement {
 			this.finder.styles = {opacity: 0, "pointer-events": "none"};
 			setActiveKeyBindingSet("ob-editor");
 			if (board instanceof OBLoadBoard) {
-				this.setSelectionProperty("load_board", board);
+				this.updateSelectionActionsSimple({
+                    navigation: {
+                        mode: "load_board",
+                        value: board
+                    }
+                })
 			} else {
-				this.setSelectionProperty("load_board", null);
+				this.updateSelectionActionsSimple({
+                    navigation: {
+                        mode: "return",
+                        value: null
+                    }
+                })
 			}
 		}
 	}
@@ -1050,6 +1069,22 @@ class OpenBoardEditor extends ShadowElement {
     async pickFontSize(tool, key) {
         await this.#createDropDown(tool, key, FontSizeList);
     }
+
+    increaseFontSize() {
+        const buttons = this.#board.getButtonsByID(this.selection);
+        for (let button of buttons) {
+            button.increaseFontSize();
+        }
+        this.#updateBoard();
+    }
+
+    decreaseFontSize() {
+        const buttons = this.#board.getButtonsByID(this.selection);
+        for (let button of buttons) {
+            button.decreaseFontSize();
+        }
+        this.#updateBoard();
+    }   
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ COPY/PASTE METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -1254,7 +1289,7 @@ class OpenBoardEditor extends ShadowElement {
     get canMerge() {
         let ids = this.orderedSelection;
         if (ids.length > 1) {
-            return this.#board.canMerge(ids);
+            return !this.getButtonProperty(ids[0], "hidden") && this.#board.canMerge(ids);
         } else {
             return false;
         }
@@ -1273,9 +1308,8 @@ class OpenBoardEditor extends ShadowElement {
     }
 
     mergeSelected() {
-        let ids = this.orderedSelection;
-        if (this.#board.canMerge(ids)) {
-            this.#board.merge(ids);
+        if (this.canMerge) {
+            this.#board.merge(this.orderedSelection);
         }
         this.#updateBoard();
     }
@@ -1335,11 +1369,8 @@ class OpenBoardEditor extends ShadowElement {
     }
 
 	updateBoard(board) {
-		let json = JSON.stringify(board);
-		if (json !== this.#history[this.#historyIndex - 1]) {
-			this.#board = OBBoardEditable.make(board);
-			this.#updateBoard();
-		}
+        this.#board = OBBoardEditable.make(board);
+        this.#updateBoard();
 	}
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~ UNIMPLEMENTED METHODS ~~~~~~~~~~~~~~~~~~~~~~~~ */

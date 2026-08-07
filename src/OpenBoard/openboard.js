@@ -100,9 +100,6 @@ class OBImage extends OpenBoardObject {
     }
 }
 
-/**
- * This class represents an action associated with a button.
- */
 
 /**
  * This class represents an action associated with a button.
@@ -386,6 +383,10 @@ class OBButton extends OpenBoardObject {
             "back": "back", 
             "return": "return", 
         }
+    }
+
+    static get fontSizes() {
+        return ["tiny", "small", "medium", "large", "huge", "giant"];
     }
 }
 

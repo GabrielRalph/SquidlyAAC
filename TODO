@@ -1,12 +1,24 @@
 EDITOR 
+    fast-fixes:
+        <!-- - when you press find image the scroll bar to start at the top  -->
+        <!-- - hidden cells slightly opaque  -->
 
-- when editor is opened without board id
-- save file loader
-- r,c input to set grid size
-- %s for save
-- %+ \ %- for text size change 
-- when you press find image the scroll bar to start at the top 
-- If search then close, keep search results until a label is edited
+    bugs: 
+        - DONE: load_board broken
+        - DONE: odd merge bug 
+        - upload image function is broken
+
+    feature updates: 
+        - more info with regards to actions 
+        - advanced hints similar ()
+
+        - If search then close, keep search results until a label is edited
+        - save file loader
+        - when editor is opened without board id
+        - r,c input to set grid size
+        - upload image auto resize 
+        - text 2 speach preview
+        - actions information 
 
 - DONE: write action copy issue
 - DONE: actions add space
@@ -14,15 +26,33 @@ EDITOR
 - DONE: edit label -> go to content
 
 FINDER
-- buttons to open view/editor
-- can't name folder and grid the same thing
-- updates from one tab don't properly propergate to another (try drag folder)
-- double click opens the editor
-- adding file thumbnails
+fast-fixes:
+    - buttons to add new board
+    - information when files is blank
 
+    - root doesn't need delete,rename
+    - change the word favourite to featured
+    - buttons to open view/editor
+
+bugs:
+    - updates from one tab don't properly propergate to another (try drag folder)
+    - can't name folder and grid the same thing*
+
+feature updates:
+    - adding file thumbnails
+    - Favorite root boards automatically
+
+- DONE: double click opens the editor
 
 
 AAC GENERIC
  - font size shared between all three
  - text area to scroll into view
  - migrate all boards
+
+
+ VIEWER 
+ - Permision denied fix
+        - text 2 speach in preview
+
+
