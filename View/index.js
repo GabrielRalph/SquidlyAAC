@@ -33,7 +33,6 @@ async function setupBoard(rootID) {
         window.SquidlyAPI.firebaseSet("value1", JSON.stringify(aacBoard.state));
 
         if (e.changes.indexOf("history") !== -1) {
-            console.log("HISTORY CHANGED. CURRENT BOARD:", aacBoard.currentBoardID);
             let board = await manager.getBoard(aacBoard.currentBoardID);
             const utterances = board.buttons.map(button => {
                 return button.textInserted ? button.utterance : null;

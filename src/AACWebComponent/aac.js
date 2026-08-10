@@ -1,6 +1,13 @@
 import { OBBoard, OBButton, OBImage } from "../OpenBoard/openboard.js";
-import { AccessEvent, AccessTextArea, GridIcon, GridLayout, ShadowElement, SvgPlus } from "../Utilities/utils.js";
+import { AccessEvent, AccessTextArea, delay, GridIcon, GridLayout, ShadowElement, SvgPlus } from "../Utilities/utils.js";
 import { Color } from "../Utilities/color.js";
+import { Debugger } from "../shared.js";
+
+const debug = new Debugger(
+    "AACBoard",
+    "background: #b43113; color: white; padding: 5px; border-radius: 5px;"
+);
+
 function relTo(path, from = "../Utilities", base = "https://session.squidly.com.au/main/") {
     return path.replace(import.meta.resolve(from) + "/", base)
 }
@@ -165,7 +172,6 @@ class AACGrid extends GridLayout {
     constructor() {
         super(1,1);
         this.toggleAttribute("aac", true);
-        console.log(this)
     }
 
     /**
@@ -284,6 +290,7 @@ class AACBoard extends ShadowElement {
         let proms = []
         for (const action of actions) {
             if (action.mode in this.#ACTION_SET) {
+                debug.log("action " + action.mode, action.value, this.historyString);
                 const prom = this.#ACTION_SET[action.mode].call(this, e, action.value, button);
                 if (prom instanceof Promise) {
                     proms.push(prom);
@@ -299,12 +306,15 @@ class AACBoard extends ShadowElement {
     async #onButtonClick(e) {
         const {element, button} = e;
         const {actions, load_board} = button;
+        debug.logStart("button click", button.id, button)
         let gotoProm = null;
         if (load_board) {
             const id = load_board.id;
             gotoProm = this.gotoBoard(id, e);
+            debug.log("gotoBoard", id, this.historyString);
         }
         let actionPorm = this.#runActions(e, actions, button);
+        debug.logEnd();
         await e.waitFor(Promise.all([gotoProm, actionPorm]));
     }
 
@@ -335,9 +345,16 @@ class AACBoard extends ShadowElement {
             }
             this.#rootGrid.add(grid, [1, rows], [0, columns-1]);
             this.#renderedBoardID = board.id;
-
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await delay();
+            this.#textArea.updateCaretPosition(true);
+            await delay(200)
         }
+    }
+
+    get historyString() {
+        const holdBoard = this.#holdBoard || this.#manager.rootBoardID;
+        let historyStr = this.#history.map(id => id === holdBoard ? `[${id}]` : id).join(" -> ");
+        return historyStr;
     }
 
     #ACTION_SET = {
@@ -347,21 +364,23 @@ class AACBoard extends ShadowElement {
         },
 
         return(e) {
+            debug.log("return", this.historyString);
             return this.gotoBoard(null, e);
         },
 
         home(e) {
+            debug.log("home", this.historyString);
             return this.gotoBoard(this.#manager.rootBoardID, e);
         },
 
         back(e) {
+            debug.log("back", this.historyString);
             return this.gotoBoard(this.#history[this.#history.length - 2], e);
         },
 
         /**  @this {AACBoard} */
         clear(e) {
             this.#textArea.clear();
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
 
         },
@@ -374,17 +393,15 @@ class AACBoard extends ShadowElement {
                 this.#textArea.value = valueAfterCaret;
                 this.#textArea.caretPosition = 0;
             } else {
-                this.#textArea.value = valueUpToCaret.slice(0, lastSpaceIndex + 1) + valueAfterCaret;
-                this.#textArea.caretPosition = lastSpaceIndex + 1;
+                this.#textArea.value = valueUpToCaret.slice(0, lastSpaceIndex) + valueAfterCaret;
+                this.#textArea.caretPosition = lastSpaceIndex;
             }
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
         /**  @this {AACBoard} */
         backspace(e) {
             this.#textArea.backspace();
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
@@ -400,7 +417,6 @@ class AACBoard extends ShadowElement {
         append_text(e, s, button) {
             s = s || button.label || "";
             this.#textArea.insert(s);
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
@@ -415,7 +431,6 @@ class AACBoard extends ShadowElement {
                 s = s + " ";
             }
             this.#textArea.insert(s);
-            this.#textArea.scrollToCaret();
             this.dispatchEvent(new AACInsert(e, s));
 
             this.#onStateChange(e, "text", "caretPosition");
@@ -423,28 +438,24 @@ class AACBoard extends ShadowElement {
 
         cursor_left(e) {
             this.#textArea.moveCaret(-1);
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_right(e) {
             this.#textArea.moveCaret(1);
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_down(e) {
             this.#textArea.moveCaretVertically(1);
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_up(e) {
             this.#textArea.moveCaretVertically(-1);
-            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         }
     }
@@ -508,7 +519,7 @@ class AACBoard extends ShadowElement {
 
             transistionPromise = this.#setBoard(boardID);
             if (boardID === homeID) {
-                this.#history = [];
+                this.#history = [homeID];
                 this.#holdBoard = null;
             } else  {
                 let i = this.#history.indexOf(boardID);

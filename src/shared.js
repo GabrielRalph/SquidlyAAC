@@ -1,5 +1,5 @@
 const POPUP_CACHE = {};
-
+const DEBUG = (new URLSearchParams(window.location.search).get("debug") === "true")
 function openWindow(name, board, other, extraKey = "") {
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set("board", board);
@@ -30,4 +30,36 @@ function openDraftPreview(board) {
     openWindow("View", board, {mode: "preview-draft"}, "-draft");
 }
 
-export { openWindow, openEditor, openViewer, openDraftPreview };
+class Debugger {
+    constructor(name, style = "background: #b43113; color: white; padding: 5px; border-radius: 5px;") {
+        this.name = name;
+        this.style = style;
+    }
+
+    logStart(mode, info, ...args) {
+        if (DEBUG) {
+            console.groupCollapsed(`%c${this.name}: ${mode}`, this.style, info);
+            if (args.length > 0) {
+                console.log(...args);
+            }
+        }
+    }
+
+    logEnd() {
+        console.groupEnd();
+    }
+
+    log(mode, info, ...args) {
+        if (DEBUG) {
+            this.logStart(mode, info);
+            let error = new Error();
+            let stack = error.stack.split("\n").slice(2).join("\n");
+            args.forEach(arg => console.log(arg));
+            console.log(stack);
+            this.logEnd();
+        }
+    }
+}
+
+
+export { Debugger, openWindow, openEditor, openViewer, openDraftPreview };

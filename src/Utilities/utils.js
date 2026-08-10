@@ -3253,6 +3253,7 @@ function wrapText(text, maxWidth, ctx) {
 
 class AccessTextArea extends GridCard {
     _tempCaret = 0;
+    scrollToCaretOnUpdate = true;
     constructor() {
         super("access-textarea", "normal");
         this.mirror = this.createChild("div", {class: "mirror"});
@@ -3582,6 +3583,10 @@ class AccessTextArea extends GridCard {
             this._lastCaretY = y;
         }
         this._lastLineCount = lineCount;
+
+        if (this.scrollToCaretOnUpdate) {
+            this.scrollToCaret();
+        }
     }
 
 

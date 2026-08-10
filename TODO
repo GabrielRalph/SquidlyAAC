@@ -8,6 +8,7 @@ EDITOR
         - DONE: odd merge bug 
 
         - upload image function is broken
+
         - Save causes old saved board to be drafted when two tabs open
 
 
@@ -18,11 +19,11 @@ EDITOR
         - advanced hints similar ()
 
         - If search then close, keep search results until a label is edited
+
         - when editor is opened without board id
         - r,c input to set grid size
         - upload image auto resize 
         - text 2 speach preview
-        - actions information 
 
         - DONE: write action copy issue
         - DONE: actions add space
@@ -34,11 +35,10 @@ FINDER
         - DONE: root doesn't need delete,rename
         - DONE: popups only open once 
         - DONE: double click opens the editor
+        - DONE: button to add new board
 
-        - buttons to add new board
         - information when files is blank
         - change the word favourite to featured
-        - buttons to open view/editor
 
     bugs:
         - updates from one tab don't properly propergate to another (try drag folder)
@@ -46,7 +46,6 @@ FINDER
 
     feature updates:
         - DONE: Favorite root boards automatically
-
         - adding file thumbnails
 
 
@@ -54,11 +53,12 @@ FINDER
 
  VIEWER 
     bugs:
-        - Permision denied fix
+        - Show message when permision is denied
 
     feature updates:
-        - text 2 speach in preview
         - DONE: text area to scroll into view
+
+        - text 2 speach in preview
 
 
 AAC GENERIC

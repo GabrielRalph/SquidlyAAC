@@ -3,17 +3,14 @@ import { OBBoard } from "../OpenBoard/openboard.js";
 import { FirestoreFrame } from "./firestore-frame.js";
 import { OBBoardManager } from "../OpenBoard/openboard-manager.js";
 import { DataClass } from "../OpenBoard/dataclass.js";
+import { Debugger } from "../shared.js";
 
 const BOARD_CACHE = {};
 const BOARD_LISTENERS = {}
 const BOARD_META_CACHE = {};
 const META = new FirestoreFrame("boards");
 const DRAFTS = new FirestoreFrame("draft-boards");
-
-function debug(...args) {
-    console.log("%cFB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;", ...args);
-}
-
+const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
 class ServerTimestamp {
     constructor(value) {
         this.value = value;
@@ -105,7 +102,7 @@ class BoardMetadata extends DataClass {
  */
 async function _loadBoard(id) {
     let board = null;
-    debug("Downloading board", id);
+    debug.log("download ", id);
     if (id.startsWith("http")) {
         const response = await fetch(id);
         const text = await response.text();
@@ -118,20 +115,26 @@ async function _loadBoard(id) {
     return board;
 }
 
-async function _getSquidlyBoard(id) {
+async function getBoardMetadata(id) {
+    let metadata = new BoardMetadata();
     if (!(id in BOARD_LISTENERS)) {
         try {
-            debug("Listening to board", id);
-            BOARD_LISTENERS[id] = await META.onValuePromise(id, async (data) => {
+            debug.log("listening", id);
+            BOARD_LISTENERS[id] = META.onValuePromise(id, async (data) => {
                 BOARD_META_CACHE[id] = BoardMetadata.make(data);
-                debug(`Meta data for board ${id}, updatedAt = ${BOARD_META_CACHE[id].updatedAt}`);
+                debug.log("metadata ", id, `updatedAt = ${BOARD_META_CACHE[id].updatedAt}`);
             });
         } catch (e) {
             console.warn(`Error listening to board ${id}:`, e);
         }
     }
+    await BOARD_LISTENERS[id];
+    return BOARD_META_CACHE[id] || metadata;
+}
 
+async function _getSquidlyBoard(id) {
     let board = null;
+    await getBoardMetadata(id);
     if (!BOARD_META_CACHE[id] || !BOARD_META_CACHE[id].valid) {
         // The doesn't board exists
         console.warn(`Board ${id} does not exist`);
@@ -143,13 +146,13 @@ async function _getSquidlyBoard(id) {
         // been updated since it was last cached, load it from the server
         if (!(id in BOARD_CACHE) 
             || BOARD_META_CACHE[id].newer(BOARD_CACHE[id].lastUpdated)) {
-            debug("Board", id, "is new or updated, loading from server");
+            debug.log("get board", id, "is new or updated, loading from server");
             BOARD_CACHE[id] = {
                 board: _loadBoard(id), 
                 lastUpdated: BOARD_META_CACHE[id].updatedAt
             };
         } else {
-            debug("Board", id, "is up to date, using cached version");
+            debug.log("get board", id, "is up to date, using cached version");
         }
         board = await BOARD_CACHE[id].board;
     }
@@ -200,19 +203,6 @@ async function downloadBoardSet(rootID) {
     return OBBoardManager.make(manager)
 }
 
-async function getBoardMetadata(id) {
-    let metadata = new BoardMetadata();
-    try {
-        debug("Listening to board", id);
-        BOARD_LISTENERS[id] = await META.onValuePromise(id, async (data) => {
-            BOARD_META_CACHE[id] = BoardMetadata.make(data);
-            debug(`Meta data for board ${id}, updatedAt = ${BOARD_META_CACHE[id].updatedAt}`);
-        });
-    } catch (e) {
-        console.warn(`Error listening to board ${id}:`, e);
-    }
-    return BOARD_META_CACHE[id] || metadata;
-}
 
 const DRAFT_VERSION_CACHE = {};
 class BoardWatcher {
@@ -402,9 +392,8 @@ class BoardSetWatcher {
      */
     async getBoard(id, waitForLinkedBoards = false) {
         const board = await this.#loadBoard(id);
-
-        if (!board) {
-
+        
+        if (board) {
             // Load all linked boards in the background
             let childrenBoards = board.linkedBoards.map(b => b.data_url || b.id)
             let proms = childrenBoards.map(id => this.#loadBoard(id));
@@ -419,7 +408,9 @@ class BoardSetWatcher {
      * @returns {Promise<OBBoard>} - A promise that resolves to the loaded board.
      */
     async #loadBoard (id) {
-        this.#boards[id] = await getBoard(id);
+        if (!(id in this.#boards)) {
+            this.#boards[id] = await getBoard(id);
+        }
         return this.#boards[id];
     }
     

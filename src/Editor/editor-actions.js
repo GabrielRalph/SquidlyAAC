@@ -217,8 +217,10 @@ class NavigationPanel extends SvgPlus {
 	}
 }
 
+
+
 class Action extends SvgPlus {
-	constructor(title) {
+	constructor(title, description) {
 		super("div");
 		this.class = "action b-bottom"
 		let r = this.createChild("div", {class: "row space-between"});
@@ -229,7 +231,9 @@ class Action extends SvgPlus {
 				this.onValueChange()
 			}
 		}});
+		this.createChild("div", {class: "info", content: description || ""});
 		this.main = this.createChild("div", {class: "main"});
+
 	}
 
 	onValueChange() {}
@@ -237,7 +241,7 @@ class Action extends SvgPlus {
 
 class AddTextAction extends Action {
 	constructor(actionsSimple, editor) {
-		super("Write");
+		super("Write", "Adds text to the text box. Select New word to start a new word, or Different Vocalisation to use different spoken text.");
 		let label = editor.getSelectionProperty("label") || "";
 
 		let addText = actionsSimple.addText;
@@ -295,7 +299,7 @@ class AddTextAction extends Action {
 
 class ClearTextAction extends Action {
 	constructor(actionsSimple, editor) {
-		super("Clear Text");
+		super("Clear Text", "Choose all, word, or backspace to remove text.");
 		let clearText = actionsSimple.clearText
 		this.on.checked = clearText.on;
 		this.select = this.main.createChild("select", {
@@ -325,10 +329,9 @@ class ClearTextAction extends Action {
 		return "clearText";
 	}
 }
-
 class SimpleAction extends Action {
-	constructor(actionsSimple, editor, title, key = title) {
-		super(title);
+	constructor(actionsSimple, editor, title, key = title, description = "") {
+		super(title, description);
 		this.on.checked = actionsSimple[key].on;
 		this._key = key;
 	}
@@ -355,7 +358,7 @@ class MoveCursorAction extends Action {
      * @param {ActionsSimple} actionsSimple
      */
     constructor(actionsSimple, editor) {
-        super("Move Cursor");
+        super("Move Cursor", "Moves the cursor in the selected direction.");
 		console.log("MOVE CURSOR ACTION", actionsSimple.moveCursor)
         let action = actionsSimple.moveCursor;
         let direction = action.direction || "left";
@@ -414,7 +417,6 @@ class ActionsPanel extends SvgPlus {
 		this.createChild("div", {class: "header no-select p-top p-bottom", content: "Actions"});
 		this.main = this.createChild("div", {class: "main b-all"}).createChild("div");
 		this.buttons = this.createChild("div", {class: "row", styles: {"padding": "0.25em"}});
-		// this.buttons.createChild("div", {class: "btn-plain b-right-hover b-left-hover pad-even"}).createChild(Icon, {}, "e-add")
 	}
 
 	/**
@@ -443,12 +445,13 @@ class ActionsPanel extends SvgPlus {
 			let actions = [
 				this.main.createChild(ClearTextAction, {},  action, editor),
 				this.main.createChild(AddTextAction, {},  action, editor),
-				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak"),
-				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage"),
-				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space"),
-				this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder"),
+				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak", "Speaks the text in the text box."),
+				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage", "Keeps the current or loaded board open after the button is selected."),
+				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space", "Adds a space to the text box."),
+				// this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder", "If enabled, will open the word finder when pressed."),
 				this.main.createChild(MoveCursorAction, {},  action, editor),
 			];
+
 			actions.map(a => {
 				a.onValueChange = () => this.onValueChange();
 			})
