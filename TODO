@@ -41,13 +41,13 @@ bugs:
 
 feature updates:
     - adding file thumbnails
-    - DON: Favorite root boards automatically
+    - DONE: Favorite root boards automatically
 
 - DONE: double click opens the editor
 
 
 AAC GENERIC
- - font size shared between all three
+ - DONE: font size shared between all three
  - text area to scroll into view
  - migrate all boards
 
