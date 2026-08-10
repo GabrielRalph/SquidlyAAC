@@ -6,6 +6,7 @@ import { initialise, addAuthChangeListener, signOut } from "../src/Firebase/fire
 import { LoginPage } from "../src/loginPage/login-page.js";
 import { openEditor } from "../src/shared.js";
 import { setActiveKeyBindingSet } from "../src/Utilities/keybindings.js";
+import { Icon } from "../src/Utilities/icons.js";
 
 LoginPage.define();
 setActiveKeyBindingSet("ob-finder");
@@ -18,6 +19,22 @@ export class AACFinder extends ShadowElement {
 	constructor(el) {
 		super(el, "board-finder");
 		this.fsUI = this.createChild(OBFinder)
+		let button = this.fsUI.head.createChild("button", {
+			events: {
+				click: () => {
+					let selected = "";
+					let selection = this.fsUI.selection;
+					if (selection.length > 1) {
+						selected = selection[0].parent
+					} else if (selection.length == 1) {
+						selected = selection[0];
+					}
+					this.fsUI.newBoard(selected);
+				}
+			}
+		});
+		button.createChild("span", {content: "New Board"});
+		button.createChild(Icon, {}, "new-grid");
 		this.fsUI.onDoubleClick = (_, __, stat) => {
 			openEditor(stat.boardID);
 		}

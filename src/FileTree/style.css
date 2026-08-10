@@ -24,6 +24,9 @@ button {
     border-radius: 0.5em;
     min-width: 7em;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
 }
 button[primary] {
     background-color: var(--selected-bg);
@@ -130,7 +133,11 @@ fs-head {
     padding: 0.5em;
     color: #4d4d4d;
     border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
+
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~ COLUMN STYLES ~~~~~~~~~~~~~~~~~~ */

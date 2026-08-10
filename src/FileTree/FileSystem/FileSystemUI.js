@@ -203,6 +203,7 @@ export class FileSystemUI extends SvgPlus {
         }});
         this.popup = this.createChild("fs-popup", {hidden: true});
         this.head = this.createChild("fs-head");
+        this.head.titleEl = this.head.createChild("div");
         this.main = this.createChild("fs-main").createChild("div");
         this.fileIconClass = fileIconClass || FSFileIcon;
         this.fileDisplayClass = fileDisplayClass || "div";
@@ -548,7 +549,7 @@ export class FileSystemUI extends SvgPlus {
         
         this.#captureColumnScrolls();
         this.main.innerHTML = "";
-        this.head.innerHTML = "";
+        this.head.titleEl.innerHTML = "";
         if (!this.fs) return;
         const Column = this.columnClass;
         let fileList = this.fs.readdir(this.root);
@@ -562,7 +563,7 @@ export class FileSystemUI extends SvgPlus {
         } 
         let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " ➤ " + this.selected.name;
         headerName ||= this.rootName;
-        this.head.createChild("span", {content: headerName});
+        this.head.titleEl.createChild("span", {content: headerName});
 
         let parts = this.selected.parts;
         let pslice = ["", ...parts];
