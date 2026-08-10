@@ -164,6 +164,8 @@ class AACGrid extends GridLayout {
      */
     constructor() {
         super(1,1);
+        this.toggleAttribute("aac", true);
+        console.log(this)
     }
 
     /**

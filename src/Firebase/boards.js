@@ -403,10 +403,13 @@ class BoardSetWatcher {
     async getBoard(id, waitForLinkedBoards = false) {
         const board = await this.#loadBoard(id);
 
-        // Load all linked boards in the background
-        let childrenBoards = board.linkedBoards.map(b => b.data_url || b.id)
-        let proms = childrenBoards.map(id => this.#loadBoard(id));
-        if (waitForLinkedBoards) await Promise.all(proms);
+        if (!board) {
+
+            // Load all linked boards in the background
+            let childrenBoards = board.linkedBoards.map(b => b.data_url || b.id)
+            let proms = childrenBoards.map(id => this.#loadBoard(id));
+            if (waitForLinkedBoards) await Promise.all(proms);
+        }
 
         return board;
     }

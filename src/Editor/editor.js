@@ -718,11 +718,19 @@ class OpenBoardEditor extends ShadowElement {
             tools.updateSelection(ids);
 			sidep.updateSelection(ids);
             this.#updateDropDown();
-        }   
-
+        }  
         this.grid.onDoubleClick = (id) => {
             this.editLabel(id);
         }
+
+        this.gridResizeObserver = new ResizeObserver((e) => {
+            let {width, height} = e[0].contentRect
+            this.grid.styles = {
+                "--width": width + "px",
+                "--height": height + "px"
+            }
+        });
+        this.gridResizeObserver.observe(this.grid);
 
         this.imageFinder = this.createChild(ImageFinder)
         this.imageFinder.onImageSelected = (image) => {

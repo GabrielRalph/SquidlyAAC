@@ -254,8 +254,8 @@ fs-file-display {
 
 fs-file-display > grid-layout {
     background-color: transparent;
-    font-size: calc(var(--width, 100vw) / 75);
 }
+
 fs-file-display > grid-layout .grid-icon {
     --shadow-color: #2725234c;
 }

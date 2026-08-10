@@ -193,6 +193,7 @@ class OBFileViewer extends SvgPlus {
         let resizeObserver = new ResizeObserver(() => {
             this.styles = {
                 "--width": `${this.clientWidth}px`,
+                "--height": `${this.clientHeight}px`
             }
         });
 
