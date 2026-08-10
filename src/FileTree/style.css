@@ -27,6 +27,7 @@ button {
     display: inline-flex;
     align-items: center;
     gap: 0.5em;
+    justify-content: center;
 }
 button[primary] {
     background-color: var(--selected-bg);
