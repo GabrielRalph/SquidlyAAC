@@ -71,6 +71,10 @@ export class Path {
         return parent;
     }
 
+    get isRoot() {
+        return this.#parts.length === 0;
+    }
+
     /**
      * @param {string|Path} other the other path to join with this path
      * @returns {Path} a new Path object representing the joined path

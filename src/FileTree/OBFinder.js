@@ -25,32 +25,32 @@ class OBFSColumn extends FSColumn {
                     icon: "<i-bw new-grid></i-bw>",
                     action: () => {root.newBoard(fstat.path)}
                 },
-                "seperator",
-                ...(fstat.isBoard ? [
-                    fstat.isFavourite ?  {
-                        label: "Unfavourite",
-                        icon: "<i-c not-favourite></i-c>",
-                        action: () => {root.favourite(fstat.path, false)},
-                        binding: "F"
-                    } : {
-                        label: "Favourite",
-                        icon: "<i-c favourite></i-c>",
-                        action: () => {root.favourite(fstat.path, true)},
-                        binding: "F"
-                    },
-                    fstat.public ? {
-                        label: "Make Private",
-                        icon: "<i-c not-favourite-public></i-c>",
-                        action: () => {root.makePublic(fstat.path, false)},
-                        binding: "P"
-                    } : {
-                        label: "Make Public",
-                        icon: "<i-c favourite-public></i-c>",
-                        action: () => {root.makePublic(fstat.path, true)},
-                        binding: "P"
-                    },
-                    "seperator"
-                ]: []),
+                
+                // ...(fstat.isBoard ? [
+                //     "seperator",
+                //     fstat.isFavourite ?  {
+                //         label: "Unfavourite",
+                //         icon: "<i-c not-favourite></i-c>",
+                //         action: () => {root.favourite(fstat.path, false)},
+                //         binding: "F"
+                //     } : {
+                //         label: "Favourite",
+                //         icon: "<i-c favourite></i-c>",
+                //         action: () => {root.favourite(fstat.path, true)},
+                //         binding: "F"
+                //     },
+                //     fstat.public ? {
+                //         label: "Make Private",
+                //         icon: "<i-c not-favourite-public></i-c>",
+                //         action: () => {root.makePublic(fstat.path, false)},
+                //         binding: "P"
+                //     } : {
+                //         label: "Make Public",
+                //         icon: "<i-c favourite-public></i-c>",
+                //         action: () => {root.makePublic(fstat.path, true)},
+                //         binding: "P"
+                //     },
+                // ]: []),
                 // TODO
                 // {
                 //     label: "Copy",
@@ -62,18 +62,6 @@ class OBFSColumn extends FSColumn {
                 //     icon: "<i-bw paste></i-bw>",
                 //     binding: "⌘V"
                 // },
-                {
-                    label: "Delete",
-                    icon: "<i-bw trash></i-bw>",
-                    binding: "<i-bw delete-key></i-bw>",
-                    action: () => root.delete(fstat.path)
-                },
-                {
-                    label: "Rename",
-                    icon: "<i-bw edit></i-bw>",
-                    binding: "⌘R",
-                    action: () => root.promtRename(fstat.path)
-                }
             ], event
         );
         return true;
@@ -177,11 +165,11 @@ class OBFileIcon extends FSFileIcon {
                         icon: "<i-bw view></i-bw>",
                         action: () => openViewer(fstat.boardID)
                     },
-                    {
-                        label: "Open Draft Preview",
-                        icon: "<i-bw draft-view></i-bw>",
-                        action: () => openDraftPreview(fstat.boardID)
-                    },
+                    // {
+                    //     label: "Open Draft Preview",
+                    //     icon: "<i-bw draft-view></i-bw>",
+                    //     action: () => openDraftPreview(fstat.boardID)
+                    // },
                 ] : [])
             ], event
         );

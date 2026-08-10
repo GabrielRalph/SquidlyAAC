@@ -5,8 +5,10 @@ import { ShadowElement } from "../src/Utilities/utils.js";
 import { initialise, addAuthChangeListener, signOut } from "../src/Firebase/firebase.js";
 import { LoginPage } from "../src/loginPage/login-page.js";
 import { openEditor } from "../src/shared.js";
+import { setActiveKeyBindingSet } from "../src/Utilities/keybindings.js";
 
 LoginPage.define();
+setActiveKeyBindingSet("ob-finder");
 
 export class AACFinder extends ShadowElement {
 	/** @type {OBFileSystem} */

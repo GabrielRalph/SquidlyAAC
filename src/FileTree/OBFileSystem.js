@@ -80,6 +80,7 @@ export class OBFileSystem extends FStoreFileSystem {
         super(user, "boards", OBFStat);
     }
 
+
     _parseNewItem(path, contents) {
         contents.favourite = contents.favourite || false;
         contents.public = contents.public || false;
@@ -105,8 +106,26 @@ export class OBFileSystem extends FStoreFileSystem {
         if (fstat !== null) {
             result.conflict = true;
         } else {
+            path = path instanceof Path ? path : new Path(path);
+
+            // Check if any parent directory is a board
+            let subPath = path.parent;
+            let isRootBoard = true;
+            for (let i = 0; i < path.length-1; i++) {
+                let subStat = this.stat(subPath);
+                if (subStat && subStat.isBoard) {
+                    isRootBoard = false;
+                    break
+                } else {
+                    subPath = subPath.parent;
+                }
+            }
+
             result.execute = async () => {
-                let values = { isDirectory: false }
+                let values = { 
+                    isDirectory: false,
+                    favourite: isRootBoard,
+                }
                 console.log("Creating board at path:", path, "with values:", values);
                 this._set(path, values);
                 this._commitHistory();

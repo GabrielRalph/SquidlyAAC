@@ -370,7 +370,13 @@ export class FileSystemUI extends SvgPlus {
 
     async newFolder(path) {
         path = path instanceof Path ? path : new Path(path);
-        let newName = await this.prompt(`New folder name:`, "New Folder", "Create", "Cancel");
+        let newName = await this.prompt({
+            message: `New folder name:`,
+            defaultValue: "New Folder",
+            validator: (value) => value.indexOf(PATH_SEPERATOR) !== -1 ? `Name cannot contain “${PATH_SEPERATOR}”` : true,
+            yesValue: "Create",
+            noValue: "Cancel"
+        });
         if (newName) {
             let newPath = path.join(newName);
 

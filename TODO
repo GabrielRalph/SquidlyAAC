@@ -9,11 +9,12 @@ EDITOR
         - upload image function is broken
 
     feature updates: 
+        - DONE: save file loader
+
         - more info with regards to actions 
         - advanced hints similar ()
 
         - If search then close, keep search results until a label is edited
-        - save file loader
         - when editor is opened without board id
         - r,c input to set grid size
         - upload image auto resize 
@@ -30,7 +31,7 @@ fast-fixes:
     - buttons to add new board
     - information when files is blank
 
-    - root doesn't need delete,rename
+    - DONE: root doesn't need delete,rename
     - change the word favourite to featured
     - buttons to open view/editor
 
@@ -40,7 +41,7 @@ bugs:
 
 feature updates:
     - adding file thumbnails
-    - Favorite root boards automatically
+    - DON: Favorite root boards automatically
 
 - DONE: double click opens the editor
 
