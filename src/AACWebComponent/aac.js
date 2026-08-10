@@ -358,9 +358,12 @@ class AACBoard extends ShadowElement {
             return this.gotoBoard(this.#history[this.#history.length - 2], e);
         },
 
+        /**  @this {AACBoard} */
         clear(e) {
             this.#textArea.clear();
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
+
         },
 
         delete_word(e) {
@@ -374,12 +377,14 @@ class AACBoard extends ShadowElement {
                 this.#textArea.value = valueUpToCaret.slice(0, lastSpaceIndex + 1) + valueAfterCaret;
                 this.#textArea.caretPosition = lastSpaceIndex + 1;
             }
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
         /**  @this {AACBoard} */
         backspace(e) {
             this.#textArea.backspace();
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
@@ -395,6 +400,7 @@ class AACBoard extends ShadowElement {
         append_text(e, s, button) {
             s = s || button.label || "";
             this.#textArea.insert(s);
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "text", "caretPosition");
         },
 
@@ -409,30 +415,36 @@ class AACBoard extends ShadowElement {
                 s = s + " ";
             }
             this.#textArea.insert(s);
+            this.#textArea.scrollToCaret();
             this.dispatchEvent(new AACInsert(e, s));
+
             this.#onStateChange(e, "text", "caretPosition");
         },
 
         cursor_left(e) {
             this.#textArea.moveCaret(-1);
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_right(e) {
             this.#textArea.moveCaret(1);
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_down(e) {
             this.#textArea.moveCaretVertically(1);
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         },
 
         /**  @this {AACBoard} */
         cursor_up(e) {
             this.#textArea.moveCaretVertically(-1);
+            this.#textArea.scrollToCaret();
             this.#onStateChange(e, "caretPosition");
         }
     }

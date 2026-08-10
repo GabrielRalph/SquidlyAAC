@@ -3308,47 +3308,19 @@ class AccessTextArea extends GridCard {
 
     /**
      * Scrolls the text area to the caret position, ensuring that the caret is visible.
-     * @param {boolean} force if true, forces the update even if the caret position hasn't changed.
      */
-    updateCaretPosition(force = false) {
-        if (!this._focused) {
-            this.textArea.selectionStart = this._tempCaret;
-            this.textArea.selectionEnd = this._tempCaret;
+    scrollToCaret() {
+        let cY = this._lastCaretY;
+        let scrollTop = this.textArea.scrollTop;
+        let scrollBottom = scrollTop + this.textArea.clientHeight;
+        if (cY < scrollTop) {
+            this.textArea.scrollTop = cY - this._lastFontSize * 0.8;
+        } else if (cY > scrollBottom) {
+            this.textArea.scrollTop = cY - this.textArea.clientHeight + this._lastFontSize * 0.8;
         }
-        const caretPosition = this.textArea.selectionStart;
-        if (caretPosition !== this.caret || force) {
-            this.caret = caretPosition;
-            const {valueUpToCaret, valueAfterCaret} = this;
-            const mirrorContent = valueUpToCaret + "<span class='caret'></span>" + valueAfterCaret;
-            this.mirror.innerHTML = mirrorContent;
-
-            const caretElement = this.mirror.querySelector(".caret");
-            if (caretElement) {
-                const caretRect = caretElement.getBoundingClientRect();
-                const textAreaRect = this.textArea.getBoundingClientRect();
-                const scrollTop = this.textArea.scrollTop;
-                const scrollLeft = this.textArea.scrollLeft;
-
-                // Calculate the position of the caret relative to the text area
-                const caretTop = caretRect.top - textAreaRect.top + scrollTop;
-                const caretBottom = caretRect.bottom - textAreaRect.top + scrollTop;
-                const caretLeft = caretRect.left - textAreaRect.left + scrollLeft;
-                const caretRight = caretRect.right - textAreaRect.left + scrollLeft;
-
-                // Adjust the scroll position to ensure the caret is visible
-                if (caretTop < scrollTop) {
-                    this.textArea.scrollTop = caretTop;
-                } else if (caretBottom > scrollTop + this.textArea.clientHeight) {
-                    this.textArea.scrollTop = caretBottom - this.textArea.clientHeight;
-                }
-
-                if (caretLeft < scrollLeft) {
-                    this.textArea.scrollLeft = caretLeft;
-                } else if (caretRight > scrollLeft + this.textArea.clientWidth) {
-                    this.textArea.scrollLeft = caretRight - this.textArea.clientWidth;
-                }
-            }
-        }
+        this.styles = {
+          "--caret-y": (cY - this.textArea.scrollTop) + "px",
+        };
     }
 
     /**
@@ -3593,6 +3565,7 @@ class AccessTextArea extends GridCard {
             this.styles = {
                 "--caret-x": x + "px",
             };
+            this._lastCaretX = x;
         }
         this._lastSubString = subString;
 
@@ -3601,10 +3574,12 @@ class AccessTextArea extends GridCard {
             if (!compStyles) {
                 compStyles = getComputedStyle(this.textArea);
             }
-            let y = (lineCount - 0.4) * parseFloat(compStyles.fontSize) * 1.5;
+            this._lastFontSize = parseFloat(compStyles.fontSize);
+            let y = (lineCount - 0.4) * this._lastFontSize * 1.5;
             this.styles = {
                 "--caret-y": (y - this.textArea.scrollTop) + "px",
             };
+            this._lastCaretY = y;
         }
         this._lastLineCount = lineCount;
     }

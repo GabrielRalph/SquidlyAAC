@@ -176,7 +176,8 @@ class OBButton extends OpenBoardObject {
     /** 
      * The text label to display on the button.
      * @type {?string} */
-    label = null;               
+    label = null;    
+    static label_parser(value) { return value ? String(value).trim() : null; }           
     
     /** 
      * The ID of an image to display on the button.

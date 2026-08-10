@@ -12,17 +12,24 @@ grid-layout {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-
     --_W: var(--width, 100vw);
     --_H: var(--height, 100vh);
     --_min: min(var(--_W), var(--_H));
-    font-size: calc(var(--_min) * 0.013);
+    --_fs_calc: calc(var(--_min) * 0.013);
+    --font-size: var(--_fs_calc);
+    font-size: var(--font-size);
 }
 
 access-textarea {
     --caret-color: #9b0000;
+    --fs: var(--font-size, 1.3vmin);
     pointer-events: none;
     font-size: 1.6em;
+    --margin-x: calc(var(--font-size) * 0.8);
+    --margin-y: calc(var(--font-size) * 0.4);
+}
+access-textarea textarea {
+    overflow: hidden;
 }
 
 access-button.grid-icon  {

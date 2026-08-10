@@ -1,12 +1,15 @@
 EDITOR 
     fast-fixes:
-        <!-- - when you press find image the scroll bar to start at the top  -->
-        <!-- - hidden cells slightly opaque  -->
+        - DONE: when you press find image the scroll bar to start at the top
+        - DONE: hidden cells slightly opaque 
 
     bugs: 
         - DONE: load_board broken
         - DONE: odd merge bug 
+
         - upload image function is broken
+        - Save causes old saved board to be drafted when two tabs open
+
 
     feature updates: 
         - DONE: save file loader
@@ -21,39 +24,46 @@ EDITOR
         - text 2 speach preview
         - actions information 
 
-- DONE: write action copy issue
-- DONE: actions add space
-- DONE: copy accross tabs
-- DONE: edit label -> go to content
+        - DONE: write action copy issue
+        - DONE: actions add space
+        - DONE: copy accross tabs
+        - DONE: edit label -> go to content
 
 FINDER
-fast-fixes:
-    - buttons to add new board
-    - information when files is blank
+    fast-fixes:
+        - DONE: root doesn't need delete,rename
+        - DONE: popups only open once 
+        - DONE: double click opens the editor
 
-    - DONE: root doesn't need delete,rename
-    - change the word favourite to featured
-    - buttons to open view/editor
+        - buttons to add new board
+        - information when files is blank
+        - change the word favourite to featured
+        - buttons to open view/editor
 
-bugs:
-    - updates from one tab don't properly propergate to another (try drag folder)
-    - can't name folder and grid the same thing*
+    bugs:
+        - updates from one tab don't properly propergate to another (try drag folder)
+        - can't name folder and grid the same thing*
 
-feature updates:
-    - adding file thumbnails
-    - DONE: Favorite root boards automatically
+    feature updates:
+        - DONE: Favorite root boards automatically
 
-- DONE: double click opens the editor
+        - adding file thumbnails
 
 
-AAC GENERIC
- - DONE: font size shared between all three
- - text area to scroll into view
- - migrate all boards
 
 
  VIEWER 
- - Permision denied fix
+    bugs:
+        - Permision denied fix
+
+    feature updates:
         - text 2 speach in preview
+        - DONE: text area to scroll into view
 
 
+AAC GENERIC
+    - DONE: font size shared between all three
+
+
+AAC SYSTEM
+    - migrate all boards
