@@ -2,7 +2,7 @@ import { SvgPlus } from "../Utilities/utils.js";
 import { OBImage } from "../OpenBoard/openboard.js";
 import { addRecentImage, getRecentImages, textSearch, semanticSearch, getNumberOfOwnedImages, addMyIconCountWatcher, uniqueImages, uploadImage } from "./images.js";
 
-const MAX_FILE_SIZE = 150 * 1024;
+const MAX_FILE_SIZE = 256 * 1024 ** 2;
 const STATUS_TEXT = {
     "0": "Starting",
     "1": "Converting to PNG",
@@ -194,6 +194,7 @@ class Uploader extends SvgPlus {
             this.toggleAttribute("invalid", true);
 
         } else {
+
             let fileName = file.name.replace(/\.[^/.]+$/, "");
             this.name.value = fileName;
 
@@ -203,6 +204,7 @@ class Uploader extends SvgPlus {
 
             this.file = file;
             this.toggleAttribute("invalid", !this.valid);
+
         }
     }
 
@@ -398,6 +400,7 @@ class ImageFinder extends SvgPlus {
 
     show() {
         this.resertScroll();
+        this.upload.reset();
         this.styles = {
             opacity: 1,
             transition: "opacity 0.2s ease-in-out",
