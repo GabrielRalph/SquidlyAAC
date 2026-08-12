@@ -98,7 +98,9 @@ async function setupPreview(rootID, isDraft) {
         document.body.toggleAttribute("loaded", true);  
     }
 
-    await setBoard(rootID);
+    if (rootID) {
+        await setBoard(rootID);
+    }
     window.addEventListener("message", async (event) => {
         console.log("MESSAGE RECEIVED", event.data)
         if (event.data.type === "updateBoard") {
@@ -112,11 +114,6 @@ export async function setup() {
     let urlParams = new URLSearchParams(window.location.search);
     let rootID = urlParams.get("board")
     let mode = urlParams.get("mode") || "default";
-
-    if (!rootID) {
-        console.error("No root board ID provided in URL parameters. Please provide an 'id' parameter.");
-        return;
-    }
 
     if (mode === "default") {
         await setupBoard(rootID);
