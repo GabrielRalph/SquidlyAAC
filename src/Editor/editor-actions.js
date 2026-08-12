@@ -114,7 +114,7 @@ class NavPreview extends SvgPlus {
 
         this.viewer = this.createChild("iframe", {
 			class: "viewer",
-			src: "../View/?board=123&mode=preview",
+			src: "../View/?mode=preview",
 		}) 
     }
 
