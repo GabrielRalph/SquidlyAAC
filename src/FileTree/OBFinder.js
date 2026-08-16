@@ -1,11 +1,15 @@
 import { AACBoard, AACGrid } from "../AACWebComponent/aac.js";
-import { SvgPlus } from "../Utilities/utils.js";
-import { Path } from "./FileSystem/path.js";
+import { Icon, SvgPlus } from "../Utilities/utils.js";
+import { Path, PATH_SEPERATOR } from "./FileSystem/Path.js";
 import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js";
 import { getBoard } from "../Firebase/boards.js";
-import { OBFStat } from "./OBFileSystem.js";
 import { registerKeyBindings } from "../Utilities/keybindings.js";
 import { openDraftPreview, openEditor, openViewer } from "../shared.js";
+import { OBFStats } from "./OBFileSystem.js";
+/**
+ * @typedef {import("./OBFileSystem.js").OBFileSystem} OBFileSystem
+ * @typedef {import("./OBFileSystem.js").OBFStats} OBFStats
+ */
 
 class OBFSColumn extends FSColumn {
     constructor(...args) {
@@ -31,23 +35,23 @@ class OBFSColumn extends FSColumn {
                 //     fstat.isFavourite ?  {
                 //         label: "Unfavourite",
                 //         icon: "<i-c not-favourite></i-c>",
-                //         action: () => {root.favourite(fstat.path, false)},
+                //         action: () => {root.toggleFavourite(fstat.path, false)},
                 //         binding: "F"
                 //     } : {
                 //         label: "Favourite",
                 //         icon: "<i-c favourite></i-c>",
-                //         action: () => {root.favourite(fstat.path, true)},
+                //         action: () => {root.toggleFavourite(fstat.path, true)},
                 //         binding: "F"
                 //     },
                 //     fstat.public ? {
                 //         label: "Make Private",
                 //         icon: "<i-c not-favourite-public></i-c>",
-                //         action: () => {root.makePublic(fstat.path, false)},
+                //         action: () => {root.togglePublic(fstat.path, false)},
                 //         binding: "P"
                 //     } : {
                 //         label: "Make Public",
                 //         icon: "<i-c favourite-public></i-c>",
-                //         action: () => {root.makePublic(fstat.path, true)},
+                //         action: () => {root.togglePublic(fstat.path, true)},
                 //         binding: "P"
                 //     },
                 // ]: []),
@@ -70,7 +74,7 @@ class OBFSColumn extends FSColumn {
 
 class OBFileIcon extends FSFileIcon {
     /**
-     * @param {OBFStat} fstat
+     * @param {OBFStats} fstat
      * @param {OBS} root
      */
     constructor(fstat, root) {
@@ -82,13 +86,22 @@ class OBFileIcon extends FSFileIcon {
         } else if (fstat.isPublic || fstat.isFavourite) {
             iconArea.createChild("fs-i", {[fstat.isPublic ? "favourite-public" : "favourite"]: ""});
         }
-        if (fstat.isDirectory && fstat.isBoard) {
-            iconArea.createChild("fs-i", {"f-grid": ""});
-        } else if (fstat.isDirectory) iconArea.createChild("fs-i")
-        else iconArea.createChild("fs-i", {grid: ""});
 
+
+        switch (fstat.mode) {
+            case OBFStats.MODES.Grid:
+                iconArea.createChild("fs-i", {"grid": ""});
+                break;
+            case OBFStats.MODES.GridSet:
+                iconArea.createChild("fs-i", {"grid-set": ""});
+                break;
+            case OBFStats.MODES.Folder:
+                iconArea.createChild("fs-i", {"folder": ""});
+                break;
+        }
+       
         this.createChild("span", {innerHTML: fstat.path.name});
-        if (fstat.isDirectory) this.createChild("fs-i", {"right-arrow": ""});
+        if (fstat.hasChildren) this.createChild("fs-i", {"right-arrow": ""});
     }
 
     onContextMenu(event, root, fstat) {
@@ -109,23 +122,23 @@ class OBFileIcon extends FSFileIcon {
                     fstat.isFavourite ?  {
                         label: "Unfavourite",
                         icon: "<i-c not-favourite></i-c>",
-                        action: () => {root.favourite(fstat.path, false)},
+                        action: () => {root.toggleFavourite(fstat.path, false)},
                         binding: "F"
                     } : {
                         label: "Favourite",
                         icon: "<i-c favourite></i-c>",
-                        action: () => {root.favourite(fstat.path, true)},
+                        action: () => {root.toggleFavourite(fstat.path, true)},
                         binding: "F"
                     },
                     fstat.public ? {
                         label: "Make Private",
                         icon: "<i-c not-favourite-public></i-c>",
-                        action: () => {root.makePublic(fstat.path, false)},
+                        action: () => {root.togglePublic(fstat.path, false)},
                         binding: "P"
                     } : {
                         label: "Make Public",
                         icon: "<i-c favourite-public></i-c>",
-                        action: () => {root.makePublic(fstat.path, true)},
+                        action: () => {root.togglePublic(fstat.path, true)},
                         binding: "P"
                     },
                     "seperator"
@@ -199,7 +212,7 @@ class OBFileViewer extends SvgPlus {
 
         resizeObserver.observe(this);
 
-        if (fstat.isBoard) {
+        if (fstat && fstat.isBoard) {
             this.loadBoard(fstat.boardID, root);
         }
     }
@@ -215,9 +228,9 @@ class OBFileViewer extends SvgPlus {
             let button = e.button;
             if (button.load_board) {
                 let id = button.load_board.id;
-                let files = root.fs.searchFiles(f => f.id === id);
-                if (files.length > 0) {
-                    root.select(new Path(files[0].path));
+                let path = root.fs.getPathByID(id);
+                if (path) {
+                    root.select(path);
                 }
             }
         })
@@ -225,6 +238,9 @@ class OBFileViewer extends SvgPlus {
 }
 
 export class OBFinder extends FileSystemUI {
+    /** @type {OBFileSystems} */
+    fs = null;
+
     constructor() {
         super(OBFileIcon, OBFileViewer, OBFSColumn);
         registerKeyBindings("ob-finder", this.KEY_BINDINGS);
@@ -233,22 +249,12 @@ export class OBFinder extends FileSystemUI {
     KEY_BINDINGS = {
         "f": e => {
             if (this.fs && this.selection.length > 0) {
-                for (let path of this.selection) {
-                    let stat = this.fs.stat(path);
-                    if (stat.isBoard) {
-                        this.favourite(path, !stat.isFavourite);
-                    }
-                }
+                this.fs.toggleFavourite(this.selection);
             }
         },
         "p": e => {
              if (this.fs && this.selection.length > 0) {
-                for (let path of this.selection) {
-                    let stat = this.fs.stat(path);
-                    if (stat.isBoard) {
-                        this.makePublic(path, !stat.isPublic);
-                    }
-                }
+                this.fs.togglePublic(this.selection);
             }
         },
         "Meta+r": e => {
@@ -258,6 +264,7 @@ export class OBFinder extends FileSystemUI {
             }
         },
         "Meta+z": e => {
+            console.log("Undo");
             if (this.fs) {
                 this.fs.undo();
             }
@@ -269,43 +276,114 @@ export class OBFinder extends FileSystemUI {
         }
     }
 
+    redo() {
 
-    async newBoard(path) {
-        path = path instanceof Path ? path : new Path(path);
-        let newName = await this.prompt({
-            message: `New board name:`, 
-            defaultValue: "New Board", 
-            yesValue: "Create", 
-            noValue: "Cancel",
-            validator: (value) => value.indexOf("\\") === -1 ? true : "Board name cannot contain '\\'"
-        });
-        if (newName) {
-            let newPath = path.join(newName);
-            const result = this.fs.getCreateBoardExecuter(newPath);
-            if (result.conflict) {
-                this.confirm(`An item named “${newName}” already exists in this location!`, [["Cancel"]])
-            } else {
-                result.execute();
+    }
+
+    undo() {
+
+    }
+
+    setRoot(fs, rootName) {
+        super.setRoot(fs, rootName);
+        fs.onAfterCommitHistory = () => {
+            console.log("History committed, re-rendering", this.selection);
+        }
+        this.fs = fs;
+    }
+
+    async newBoard(path, newName = null) {
+        if (!this.fs) return;
+        path = Path.parse(path);
+        if (newName === null) {
+            let name = await this.prompt({
+                message: "Enter a name for the new board:",
+                placeholder: "New Board",
+                validator: (name) => {
+                    if (!name) return "Name cannot be empty";
+                    if (name.includes(PATH_SEPERATOR)) return `Name cannot contain "${PATH_SEPERATOR}"`;
+                    if (this.fs.exists(path.join(name))) {
+                        return "A file or folder with this name already exists";
+                    }
+                    return true;
+                },
+                yesValue: "Create",
+                noValue: "Cancel"
+            })
+            if (!name) return;
+            newName = name;
+        }
+        let id = null;
+        const newPath = path.join(newName);
+        if (!this.fs.exists(newPath)) {
+            id = this.fs.newBoard(newPath);
+            if (id) {
+                this.select(newPath);
             }
         }
     }
 
-    isRootBoardSet(fstat) {
-        if (this.fs) {
-            return this.fs.isRootBoardSet(fstat.path);
+    async newFolder(path, newName = null) {
+        if (!this.fs) return;
+        path = Path.parse(path);
+        if (!newName) {
+            newName = await this.prompt({
+                message: "Enter a name for the new folder:",
+                defaultValue: "New Folder",
+                validator: (name) => {
+                    const newPath = path.join(name);
+                    if (!name) return "Name cannot be empty";
+                    if (name.includes(PATH_SEPERATOR)) return `Name cannot contain "${PATH_SEPERATOR}"`;
+                    if (this.fs.exists(newPath)) {
+                        return "A file or folder with this name already exists";
+                    }
+                    return true;
+                },
+                yesValue: "Create",
+                noValue: "Cancel"
+            })
         }
-        return false;
+
+        let id = null;
+        if (newName) {
+            const newPath = path.join(newName);
+            console.log("Creating new folder at path:", newPath.toString(), this.fs.exists(newPath));
+            if (!this.fs.exists(newPath)) {
+                id = this.fs.newFolder(newPath);
+                if (id) {
+                    this.select(newPath);
+                }
+            }
+        }
+        return id;
     }
 
-    favourite(path, bool) {
-        if (this.fs) {
-            this.fs.favourite(path, bool);
+    async delete(path) {
+        if (!this.fs) return;
+        let files = this.fs.readdir(path, true, true);
+        let includesBoards = files.some(f => f.isBoard);
+        let confirm = true;
+        if (includesBoards) {
+            confirm = await this.confirm(
+                `Are you sure you want to delete "${path.name}"?`,
+                [["Cancel", false], ["Delete", true]]
+            )
+        }
+
+        if (confirm) {
+            this.fs.delete(path);
         }
     }
 
-    makePublic(path, bool) {
+    toggleFavourite(path, bool) {
         if (this.fs) {
-            this.fs.makePublic(path, bool);
+            this.fs.toggleFavourite(path, bool);
+        }
+    }
+
+    togglePublic(path, bool) {
+        if (this.fs) {
+            this.fs.togglePublic(path, bool);
         }
     }
 
@@ -314,7 +392,7 @@ export class OBFinder extends FileSystemUI {
         let files = this.fs.readdir(this.selected);
         for (let file of files) {
             if (file.isBoard) {
-                getBoard(file.boardID, file.metadata.lastUpdated)
+                getBoard(file.boardID)
             }
         }
     }

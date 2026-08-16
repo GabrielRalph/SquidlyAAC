@@ -57,6 +57,23 @@ function toLabel(name, joiner = "\n") {
 
 const TOP_TOOLS = [
     {
+        category: "file",
+        binding: "f",
+        tools: [
+            {
+                name: "files",
+                icon: "folder",
+                onClick(editor) {
+                }
+            },
+            {
+                name: "new",
+                icon: "new-grid",
+                onClick(editor) {}
+            }
+        ]
+    },
+    {
         category: "content",
         binding: "c",
         tools: [

@@ -1,7 +1,7 @@
 
-export const PATH_SEPERATOR = "\\"
+const PATH_SEPERATOR = "\\"
 
-export class Path {
+class Path {
     #parts = [];
     #path = "";
 
@@ -13,22 +13,25 @@ export class Path {
 
         let pathString = path;
         let parts = [];
-        if (Array.isArray(path)) {
+        if (path instanceof Path) {
+            parts = path.parts;
+            pathString = path.path;
+        } if (Array.isArray(path)) {
             parts = path.map(p => String(p)).filter(p => p.length > 0);
             pathString = parts.join(PATH_SEPERATOR);
         } else if (typeof path !== "string" || path.length === 0) {
             if (throwError) {
                 throw new Error("Path must be a non-empty string");
             } else {
-                path = "";
+                pathString = "";
             }
         } else {
             parts = path.split(PATH_SEPERATOR).filter(p => p.length > 0);
             path = parts.join(PATH_SEPERATOR);
         }
 
-        this.#parts = parts;
-        this.#path = pathString;
+        this.#parts = parts
+        this.#path = pathString ?? "";
     }
 
     /**
@@ -66,7 +69,7 @@ export class Path {
         let parent = null;
         if (this.#parts.length > 0) {
             const parentPathArray = this.#parts.slice(0, this.#parts.length - 1);
-            parent = new Path(parentPathArray.join(PATH_SEPERATOR));
+            parent = new Path(parentPathArray);
         }
         return parent;
     }
@@ -83,8 +86,7 @@ export class Path {
         if (!(other instanceof Path)) {
             other = new Path(other);
         }
-        let newParts = [...this.#parts, ...other.parts];
-        return new Path(newParts.join(PATH_SEPERATOR));
+        return new Path([...this.#parts, ...other.parts]);
     }
 
     /**
@@ -103,6 +105,14 @@ export class Path {
             otherPath = new Path(otherPath);
         }
         return this.#parts.length < otherPath.parts.length && this.contains(otherPath);
+    }
+
+    relative(otherPath) {
+        otherPath = Path.parse(otherPath);
+        if (!otherPath.isParentOf(this)) {
+            throw new Error(`Path ${otherPath.path} is not a descendant of ${this.path}`);
+        }
+        return this.slice(otherPath.length)
     }
 
     same(otherPath) {
@@ -138,4 +148,15 @@ export class Path {
     clone() {
         return new Path(this.path);
     }
+
+
+    static parse(path, throwError = false) {
+        if (path instanceof Path) {
+            return path;
+        } else {
+            return new Path(path, throwError);
+        }
+    }
 }
+
+export { Path, PATH_SEPERATOR };

@@ -154,6 +154,7 @@ class TandC extends SvgPlus {
         this.content = `<a target="_blank" href ="https://policies.squidly.com.au/terms-of-use/" >Terms of Service</a> and <a target="_blank" href = "https://policies.squidly.com.au/privacy/" >Privacy Policy</a>.`
     }
 }
+
 class SignInContainer extends SvgPlus {
     constructor(root) {
         super("div");
@@ -208,7 +209,6 @@ class SignUpContainer extends SvgPlus {
             name: "firstName",
             type: "text",                        
             label: "First name",
-            icon: "person",
             autocomplete: "off",
             required: true
         }).build()
@@ -216,7 +216,6 @@ class SignUpContainer extends SvgPlus {
             name: "lastName",
             type: "text",
             label: "Last name",
-            icon: "person",
             autocomplete: "off",
             required: true
         }).build();    
@@ -380,7 +379,6 @@ class LoginPage extends ShadowElement {
             this.loading = false;
         }
     }
-
     
     async requestOTP(email = this.signIn.email.value) {
         if (isEmailFromDomains(email, ForceSignInWithMicrosoftEmails)) {
@@ -509,7 +507,6 @@ class LoginPage extends ShadowElement {
         }
     }
 
-    
     async onEmailNeedsVerification({email}) {
         console.log("Email needs verification for email: ", email)
         if (isEmailFromDomains(email, ForceSignInWithMicrosoftEmails)) {
@@ -527,6 +524,11 @@ class LoginPage extends ShadowElement {
             this.email = email;
             await this.requestOTP(email);
         }
+    }
+
+
+    reset() {
+        this.mode = "signIn";
     }
 
     static get usedStyleSheets() {

@@ -1,219 +1,387 @@
-import { ChangeExecuter, FStats } from "./FileSystem/FileSystem.js";
-import { FStoreFileSystem } from "./FileSystem/FStoreFileSystem.js";
-import { Path } from "./FileSystem/path.js";
-export class OBFStat extends FStats {
-    #isDirectory = false;
-    constructor(path, contents = null, fs) {
-        super(path, contents, fs);
-        this.#isDirectory = fs.readdir(path).length > 0;
+import { FStore } from "../Firebase/firebase.js";
+import { FirestoreFrame } from "../Firebase/firestore-frame.js";
+import { copy, Debugger } from "../shared.js";
+import { FirestoreFileSystem } from "./FileSystem/FirestoreFileSystem.js";
+import { Path } from "./FileSystem/Path.js";
+const {where, serverTimestamp} = FStore;
+
+const DEBUG = new Debugger(
+    "FileSystem",
+    "background: #125cde; color: white; padding: 5px; border-radius: 5px;"
+);
+
+
+/**
+ * @typedef {Object} IServerTimestamp
+ * @property {number} seconds - The seconds part of the timestamp.
+ * @property {number} nanoseconds - The nanoseconds part of the timestamp.
+ */
+
+/**
+ * @typedef {Object} OBFileData
+ * @property {boolean}  isDirectory - Indicates if the descriptor represents a directory.
+ * @property {boolean}  public - Indicates if the descriptor is public.
+ * @property {boolean}  favourite - Indicates if the descriptor is marked as favourite.
+ * @property {boolean}  effectivePublic - Indicates if the descriptor is effectively public.
+ * 
+ * @property {IServerTimestamp|false}   deletedAt - The timestamp when the file or directory was deleted.
+ * @property {IServerTimestamp|nule}    updatedAt - The timestamp when the file or directory was last updated.
+ * @property {IServerTimestamp}         createdAt - The timestamp when the file or directory was created.
+ * 
+ * @property {string}  path - The path of the file or directory.
+ * @property {string}  owner - The owner of the file or directory.
+ * 
+ * @property {boolean} [hasThumbnail] - Indicates if the descriptor has a thumbnail.
+ */
+class OBFStats{
+
+    /**
+     * @param {OBFileData} data - The data object containing file information.
+     * @param {OBFileSystem} fs - The file system instance.
+     */
+    constructor(id, data, fs) {
+        this.data = data;
+        this.hasChildren = fs.hasChildren(data.path);
+        this.path = new Path(data.path);
+        this.id = id;
+        this.mode = this.data.isDirectory ? 
+            OBFStats.MODES.Folder : 
+            (   
+                this.hasChildren ? 
+                    OBFStats.MODES.GridSet : OBFStats.MODES.Grid
+            );
     }
 
     get boardID() {
-        return this.metadata && this.metadata.id;
+        return this.id
     }
 
     get isDirectory() {
-        return this.#isDirectory || super.isDirectory;
+        return this.data && this.data.isDirectory;
     }
 
-    get isFavourite() {
-        return this.contents && this.contents.favourite;
+    get favourite() {
+        return this.data && this.data.favourite;
     }
 
     get isPublic() {
-        return this.metadata && (this.metadata.public || this.metadata.effectivePublic);
+        return this.data && (this.data.public || this.data.effectivePublic);
     }
 
     get public() {
-        return this.metadata && this.metadata.public;
+        return this.data && this.data.public;
     }
 
-    asPublic(value) {
-        const contents = this.contents || {};
-        contents.public = value;
-        return contents;
-    }
-
-    asFavourite(value) {
-        const contents = this.contents || {};
-        contents.favourite = value;
-        return contents;
-    }
-
-    asEffectivePublic(value) {
-        const contents = this.contents || {};
-        contents.effectivePublic = value;
-        return contents;
-    }
-
-    getEffectivePublic(fs) {
-        let result = false;
-        if (this.contents && this.contents.public) {
-            result = true;
-        } else if (this.path.length > 1) {
-            let parentPath = this.path.parent;
-            let stat = fs.stat(parentPath);
-            if (stat) {
-                result = stat.getEffectivePublic(fs);
-            }
-        }
-    
-        return result;
+    get contents() {
+        return copy(this.data);
     }
 
     /**
      * @returns {boolean} returns true if the file is an AAC board, false otherwise.
      */
     get isBoard() {
-        return this.metadata && !this.metadata.isDirectory;
+        return this.data && !this.data.isDirectory;
+    }
+
+    static get MODES() {
+        return {
+            Grid: 0,
+            GridSet: 1,
+            Folder: 2,
+        }
     }
 }
+
 
 
 /**
  * @classdesc A file system that interacts with Firebase Realtime Database and is tailored for AAC (Augmentative and Alternative Communication) boards.
- * @extends {FStoreFileSystem<OBFStat>}
+ * @extends {FirestoreFileSystem<OBFStats>}
  * @class
  */
-export class OBFileSystem extends FStoreFileSystem {
+class OBFileSystem extends FirestoreFileSystem {
+    #user = null;
+    #watchPromise = null;
+    #unsubscribe = null;
+
     constructor(user) {
-        super(user, "boards", OBFStat);
+        super("boards");
+        this.#user = user;
     }
 
-
-    _parseNewItem(path, contents) {
-        contents.favourite = contents.favourite || false;
-        contents.public = contents.public || false;
-        contents.effectivePublic = !contents.isDirectory && this.stat(path).getEffectivePublic(this);
-        contents.updatedAt = null;
-        contents.deletedAt = false;
-        console.log("Parsed new item at path:", path, "with contents:", JSON.stringify(contents, null, 2));
-        return contents;
-    }
-
-    _parseUpdateItem(path, update) {
-        delete update.isDirectory
-        return update;
-    }
-        
     /**
-     * @param {string|Path} path the path to check for existence
-     * @returns {ChangeExecuter} returns a ChangeExecuter object that can be used to execute the change.
+     * Returns file stats for the given path. 
+     * @param {Path|string} id - The path to get the file stats for.
+     * @returns {OBFStats} The file stats for the given path.
+     * @override
      */
-    getCreateBoardExecuter(path) {
-        let result = new ChangeExecuter();
-        let fstat = this.stat(path);
-        if (fstat !== null) {
-            result.conflict = true;
+    stat(path) {
+        if (path.length === 0) {
+            return new OBFStats(null, {
+                isDirectory: true,
+                updatedAt: null,
+                deletedAt: false,
+
+                public: false,
+                favourite: false,
+                effectivePublic: false,
+
+                createdAt: FirestoreFrame.TimestampSymbol,
+            }, this);
         } else {
-            path = path instanceof Path ? path : new Path(path);
-
-            // Check if any parent directory is a board
-            let subPath = path.parent;
-            let isRootBoard = true;
-            for (let i = 0; i < path.length-1; i++) {
-                let subStat = this.stat(subPath);
-                if (subStat && subStat.isBoard) {
-                    isRootBoard = false;
-                    break
-                } else {
-                    subPath = subPath.parent;
-                }
-            }
-
-            result.execute = async () => {
-                let values = { 
-                    isDirectory: false,
-                    favourite: isRootBoard,
-                }
-                console.log("Creating board at path:", path, "with values:", values);
-                this._set(path, values);
-                this._commitHistory();
-                this._onUpdate();
-            }
-        }
-        return result;
-    }
-
-    getMoveExecuter(oldPath, newPath) {
-        let result = super.getMoveExecuter(oldPath, newPath);
-        if (result.changed) {
-            let oldExecuter = result.execute;
-            result.execute = async() => {
-                oldExecuter();
-                this.#downPropagateEffectivePublic(newPath);
-                this._mergeWithLastHistory();
-            }
-        }
-        return result;
-    }
-
-
-    favourite(path, bool = true) {
-        path = path instanceof Path ? path : new Path(path);
-        let fstat = this.stat(path);
-        if (fstat.isBoard) {
-            this._set(path, fstat.asFavourite(bool));
-
-            if (fstat.public && !bool) {
-                this.#makePublic(path, false);
-            } 
-
-            this._commitHistory();
-            this._onUpdate();
+            let id = this._dataAsFS.get(path);
+            return this.statByID(id);
         }
     }
 
-    #downPropagateEffectivePublic(path) {
-        path = path instanceof Path ? path : new Path(path);
-        
+    /**
+     * Returns file stats for the given path. 
+     * @param {Path|string} id - The path to get the file stats for.
+     * @returns {OBFStats} The file stats for the given path.
+     * @override
+     */
+    statByID(id) {
+        let data = super.statByID(id)
+        return data ? new OBFStats(id, data, this) : null;
+    }
 
+
+    getPathByID(id) {
+        let data = this._dataByID[id];
+        return data ? Path.parse(data.path) : null;
+    }
+
+    /**
+     * Creates a new folder at the specified path with default properties.
+     * @param {Path|string} path - The path where the new folder will be created.
+     * @returns {string|null} The ID of the newly created folder, or null if creation failed.
+     */
+    newFolder(path) {
+        DEBUG.logStart("File Creation", "Creating new folder at path:", path.toString());
+       
+        path = Path.parse(path);
+        let newID = null;
+        if (!this.stat(path)) {
+            newID = this.getNewID();
+            if (this._setFileByID(newID, {
+                isDirectory: true,
+                updatedAt: null,
+                deletedAt: false,
+    
+                public: false,
+                favourite: false,
+                effectivePublic: false,
+
+                createdAt: FirestoreFrame.TimestampSymbol,
+    
+                path: path.toString(),
+                owner: this.#user,
+            })) {
+                DEBUG.log("File Creation", "Created folder.", `path: ${path.toString()}\nid: ${newID}`);
+                this.fullUpdate();
+            } else {
+                DEBUG.log("File Creation", "Failed to create folder", `path: ${path.toString()}\nid: ${newID}`);
+                newID = null;
+            }
+        }
+
+        DEBUG.logEnd();
+        return newID;
+    }
+
+    /**
+     * Creates a new board at the specified path with default properties.
+     * @param {Path|string} path - The path where the new board will be created.
+     * @returns {string|null} The ID of the newly created board, or null if creation failed.
+     */
+    newBoard(path) {
+        DEBUG.logStart("File Creation", `Creating new board at path: "${path.toString()}"`);
+
+        path = Path.parse(path);
+        let newID = null;
+        if (!this.stat(path)) {
+            newID = this.getNewID();
+            if (this._setFileByID(newID, {
+                isDirectory: false,
+                updatedAt: null,
+                deletedAt: false,
+
+                public: false,
+                favourite: this.isRootBoard(path),
+                effectivePublic: this.isEffectivePublic(path), 
+
+                createdAt: FirestoreFrame.TimestampSymbol,
+
+                path: path.toString(),
+                owner: this.#user,
+            })) {
+                DEBUG.log("File Creation", "Ceated board.", `path: ${path.toString()}\nid: ${newID}`);
+                this.fullUpdate();
+            } else {
+                DEBUG.log("File Creation", " Failed to create board!", `path: ${path.toString()}\nid: ${newID}`);
+                newID = null;
+            }
+        }
+
+        DEBUG.logEnd();
+        return newID;
+    }
+
+    /**
+     * After building the file system, this method is called 
+     * to update the effectivePublic property of each file 
+     * and directory based on its own public status and 
+     * the public status of its ancestors.
+     */
+    onAfterBuildFileSystem() {
+        let recurse = (path, effectivePublic) => {
+            let id = this._dataAsFS.get(path);
+            if (id && id in this._dataByID) {
+                let value = this._dataByID[id];
+                effectivePublic ||= value.public;
+                value.effectivePublic = !this.isDeletedValue(value) 
+                                        && effectivePublic 
+                                        && !value.isDirectory;
+            }
+            for (let childPath of this._dataAsFS.getChildrenPaths(path)) {
+                recurse(childPath, effectivePublic);
+            }
+        }
+        recurse("", false);
+    }
+    
+    /**
+     * Checks if the given path is a board.
+     * @param {Path|string} path - The path to check.
+     * @returns {boolean} True if the path is a board, false otherwise.
+     */
+    isBoard(path) {
         let stat = this.stat(path);
-        let initBool = stat.getEffectivePublic(this);
+        return stat && stat.isBoard;
+    }
+
+    /**
+     * Checks if the given path is effectively public, 
+     * meaning it is either public itself 
+     * or has a public ancestor.
+     * @param {Path|string} path - The path to check.
+     * @returns {boolean} True if the path is a directory, false otherwise.
+     */
+    isEffectivePublic(path) {
+        let effectivePublic = false;
+        path = Path.parse(path);
+        if (path.length > 0) {
+            const stat = this.stat(path);
+            effectivePublic = (stat && stat.public && stat.isBoard) || this.isEffectivePublic(path.parent);
+        }
+        return effectivePublic;
+    }
+
+    /**
+     * Checks if the given path is a root board,
+     * meaning it is a board that does not have
+     * any board ancestors.
+     * @param {Path|string} path - The path to check.
+     * @returns {boolean} True if the path is a root board, false otherwise.
+     */
+    isRootBoard(path) {
+        path = Path.parse(path).parent;
+        for (let i = 0; i < path.length; i++) {
+            if (this.isBoard(path)) {
+                return false;
+            }
+            path = path.parent;
+        }
+        return true;
+    }
+    
+    /**
+     * Marks a file or directory at the given path as favourite or not.
+     * @param {Array<Path|string>|Path|string} paths - The path to the file or directory.
+     * @param {boolean} bool - Whether to mark as favourite (true) or not (false).
+     * @returns {void}
+     * @override
+     */
+    toggleFavourite(paths, bool) {
+        if (!Array.isArray(paths)) {
+            paths = [paths];
+        }
+        let change = false;
+        for (let path of paths) {
+            let fstat = this.stat(path);
+            if (fstat && fstat.isBoard) {
+                let favourite = bool ?? !fstat.favourite
+                change ||= this._updateFileByPath(path, {favourite});
+                if (fstat.public && !favourite) {
+                    change ||= this.#makePublic(path, false);
+                } 
+            }
+        }
+
+        if (change) {
+            this.fullUpdate()
+        }
+    }
+
+    /**
+     * Marks a file or directory at the given path as public or not.
+     * @param {Array<Path|string>|Path|string} path - The path to the file or directory.
+     * @param {boolean} [bool=true] - Whether to mark as public (true) or not (false).
+     * @returns {void}
+     * @override
+     */
+    togglePublic(path, bool) {
+        if (!Array.isArray(path)) {
+            path = [path];
+        }
+        let change = false;
+        for (let p of path) {
+            change ||= this.#makePublic(p, bool);
+        }
+        if (change) {
+            this.fullUpdate()
+        }
+        return change;
+    }
+
+    #makePublic(path, bool) {
+        const stat = this.stat(path);
         if (stat.isBoard) {
-            this._set(path, stat.asEffectivePublic(initBool));
+            bool = bool ?? !stat.public;
+            return this._updateFileByPath(path, {
+                public: bool,
+            })
+        } else {
+            return false;
         }
+    }
 
-        let recurse = (path, bool) => {
-            let files = this.readdir(path);
-            for (let file of files) {
-                let newBool = bool;
-                if (file.isBoard) {
-                    newBool = !!(bool || file.public);
-                    this._set(file.path, file.asEffectivePublic(newBool));
-                }
-                recurse(file.path, newBool);
+
+    async watch() {
+        let success = true;
+        const query = this.fstore.query(where("owner", "==", this.#user), where("deletedAt", "==", false));    
+        try {
+            if (this.#watchPromise) {
+                DEBUG.logStart("Watching", "Waiting on old watch promise.");
+                await this.#watchPromise;
+            } else {
+                DEBUG.logStart("Watching", "Setting up Firestore listener for collection:");
+                this.#watchPromise = this.fstore.onValuePromise(query, this.syncFromDatabase.bind(this))
+                this.#unsubscribe = await this.#watchPromise;
             }
+        } catch (error) {
+            console.error("Error setting up Firestore listener:", error);
+            success = false;
         }
-        recurse(path, initBool);
+        DEBUG.logEnd();
+        return success;
     }
-
-    makePublic(path, bool = true) {
-        if (this.#makePublic(path, bool)) {
-            this._commitHistory();
-            this._onUpdate();
-        }
+    
+    stopWatch() {
+        this.#unsubscribe && this.#unsubscribe();
+        this.#watchPromise = null;
     }
-
-    #makePublic(path, bool = true) {
-        let t1 = performance.now();
-        path = path instanceof Path ? path : new Path(path);
-        let tx = performance.now();
-        let fstat = this.stat(path);
-        let dx = performance.now() - tx;
-        if (fstat.isBoard) {
-            const newContents = fstat.asPublic(bool);
-            if (!fstat.isFavourite && bool) {
-                newContents.favourite = true;
-            }
-            // set board public status
-            this._set(path, newContents);
-            
-            // update effective public status for this board and its children
-            this.#downPropagateEffectivePublic(path); 
-        }
-        return fstat.isBoard;
-    }
-
-    isDirectory(){return true;}
 }
+
+
+export { OBFileSystem, OBFStats };
