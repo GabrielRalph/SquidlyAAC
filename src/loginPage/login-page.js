@@ -245,6 +245,7 @@ class OTPVerifyContainer extends SvgPlus {
             required: true,
             length: 6,
         }).build();
+
         col.createChild("button", {
             content: "Verify", 
             class: "btn", 
@@ -351,7 +352,7 @@ class LoginPage extends ShadowElement {
 
             // Get the OTP value from the input and call the verifyOTP function
             let otp = this.vOTP.otpInput.value;
-            let error = await verifyOTP(this.signIn.email.value, otp);
+            let error = await verifyOTP(this.email, otp);
 
             let hide = true;
             if (error) {
@@ -416,7 +417,7 @@ class LoginPage extends ShadowElement {
         if (firstName.validate() && lastName.validate()) {
             this.loading = true;
             this.overlayText = `Creating account...`;
-            let error = await createAccountWithOTP(this.els.email.value, firstName.value, lastName.value);
+            let error = await createAccountWithOTP(this.email, firstName.value, lastName.value);
             if (error){
                 this.showOverlayError(error, "creating your account", "create an account using email");
             } else {
