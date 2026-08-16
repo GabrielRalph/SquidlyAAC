@@ -6,6 +6,7 @@ import { getBoard } from "../Firebase/boards.js";
 import { registerKeyBindings } from "../Utilities/keybindings.js";
 import { openDraftPreview, openEditor, openViewer } from "../shared.js";
 import { OBFStats } from "./OBFileSystem.js";
+
 /**
  * @typedef {import("./OBFileSystem.js").OBFileSystem} OBFileSystem
  * @typedef {import("./OBFileSystem.js").OBFStats} OBFStats
@@ -86,7 +87,6 @@ class OBFileIcon extends FSFileIcon {
         } else if (fstat.isPublic || fstat.isFavourite) {
             iconArea.createChild("fs-i", {[fstat.isPublic ? "favourite-public" : "favourite"]: ""});
         }
-
 
         switch (fstat.mode) {
             case OBFStats.MODES.Grid:
@@ -269,6 +269,11 @@ export class OBFinder extends FileSystemUI {
                 this.fs.undo();
             }
         },
+        "Shift+Meta+z": e => {
+            if (this.fs) {
+                this.fs.redo();
+            }
+        },
         "Meta+y": e => {
             if (this.fs) {
                 this.fs.redo();
@@ -344,6 +349,7 @@ export class OBFinder extends FileSystemUI {
 
     async delete(path) {
         if (!this.fs) return;
+        path = Path.parse(path);
         let files = this.fs.readdir(path, true, true);
         let includesBoards = files.some(f => f.isBoard);
         let confirm = true;
@@ -355,7 +361,10 @@ export class OBFinder extends FileSystemUI {
         }
 
         if (confirm) {
-            this.fs.delete(path);
+            if (this.fs.delete(path)) {
+                console.log("Deleted", path.toString());
+                this.select(path.parent);
+            }
         }
     }
 
