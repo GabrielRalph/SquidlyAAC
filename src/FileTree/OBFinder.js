@@ -164,7 +164,7 @@ class OBFileIcon extends FSFileIcon {
                     label: "Rename",
                     icon: "<i-bw edit-name></i-bw>",
                     binding: "⌘R",
-                    action: () => root.promtRename(fstat.path)
+                    action: () => root.rename(fstat.path)
                 },
                 ...(fstat.isBoard ? [
                     "seperator",
@@ -259,7 +259,7 @@ export class OBFinder extends FileSystemUI {
         },
         "Meta+r": e => {
             if (this.fs && this.isSingleSelection && this.selected) {
-                this.promtRename(this.selected);
+                this.rename(this.selected);
                 e.preventDefault();
             }
         },
@@ -274,22 +274,6 @@ export class OBFinder extends FileSystemUI {
                 this.fs.redo();
             }
         }
-    }
-
-    redo() {
-
-    }
-
-    undo() {
-
-    }
-
-    setRoot(fs, rootName) {
-        super.setRoot(fs, rootName);
-        fs.onAfterCommitHistory = () => {
-            console.log("History committed, re-rendering", this.selection);
-        }
-        this.fs = fs;
     }
 
     async newBoard(path, newName = null) {

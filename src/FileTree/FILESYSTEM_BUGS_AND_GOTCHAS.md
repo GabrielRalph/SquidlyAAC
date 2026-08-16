@@ -1,82 +1,71 @@
-# FileSystem Architecture Audit (Updated)
+# FileSystem Architecture Audit (Updated Re-check)
 
 Date: 2026-08-16
-Scope: Re-check after latest user fixes in FileSystem, OBFileSystem, OBFinder, FileSystemUI, and BoardFinder.
+Scope: Re-check after additional fixes in OBFinder, OBFileSystem, FirestoreFileSystem, FileSystemUI, and BoardFinder.
 
-## Fixed Since Last Audit
+## Fixed Since Previous Revision
 
-1. Import mismatch resolved: OBFStats is now imported consistently.
-   - src/Editor/editor-finder.js:1
+1. OBFinder rename calls no longer reference missing `promtRename`.
+   - src/FileTree/OBFinder.js:167
+   - src/FileTree/OBFinder.js:262
 
-2. newBoard ID shadowing fixed.
-   - src/FileTree/OBFileSystem.js:198-229
+2. `isEffectivePublic` now has null-safe stat access and proper root stop.
+   - src/FileTree/OBFileSystem.js:270-278
 
-3. getPathByID undeclared variable fixed.
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:47-50
+3. `toggleFavourite` array handling and null-guard now look correct.
+   - src/FileTree/OBFileSystem.js:305-324
 
-4. OBFinder validator key fixed and path parsing added in newBoard/newFolder.
-   - src/FileTree/OBFinder.js:295-344
+4. `duplicatePrefix` regex now handles end-of-string suffixes (`\s*$`).
+   - src/FileTree/FileSystem/FirestoreFileSystem.js:618-626
 
-5. Duplicate helper target fixed (now calls FirestoreFileSystem.duplicatePrefix).
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:71
-
-6. delete(path) now returns actual deleted state.
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:443-451
-
-7. PathNode prune logic corrected.
-   - src/FileTree/FileSystem/PathNode.js:114-120
-
-8. Board lookup switched to statByID.
-   - src/Editor/editor-finder.js:136
+5. New board path normalization from BoardFinder -> OBFinder is now safe.
+   - src/Editor/editor-finder.js:43
+   - src/FileTree/OBFinder.js:295-319
 
 ## Remaining Active Bugs
 
-1. Critical: isEffectivePublic can throw on non-existent path entries
-   - src/FileTree/OBFileSystem.js:270-276
-   - Problem: stat can be null, but code reads stat.public and stat.isBoard.
-   - Repro path: creating a new board where the board path does not yet exist in the FS map.
-   - Impact: runtime TypeError during board creation/public inheritance checks.
-
-2. Critical: isDirectory still always returns true
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:283
-   - Problem: no stat/type check.
-   - Impact: drag/drop and move target validation are semantically wrong; files are treated as folders.
-
-3. High: duplicatePrefix regex still fails to increment existing suffixes
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:619
-   - src/FileTree/FileSystem/FirestoreFileSystem.js:623
-   - Problem: regex requires trailing whitespace after ")" due to \s+$, so "Name (2)" does not match.
-   - Impact: repeated collisions likely become "Name (2) (2)" instead of incrementing to "Name (3)".
-
-4. High: rename action calls missing method promtRename
+1. Critical: rename path has no prompt/new-name source
    - src/FileTree/OBFinder.js:167
    - src/FileTree/OBFinder.js:262
-   - Problem: promtRename is invoked, but no implementation exists in the new FileSystemUI stack.
-   - Impact: rename from context menu / Meta+R fails at runtime.
+   - src/FileTree/FileSystem/FileSystemUI.js:362-377
+   - Problem: both context-menu and hotkey call `rename(path)` with no `newName`, but `FileSystemUI.rename` requires `newName`.
+   - Impact: rename can pass `undefined` through to backend rename logic, producing invalid target names/paths.
 
-5. Medium: save-mode action currently does not create a board
+2. Critical: `isDirectory` still always returns true
+   - src/FileTree/FileSystem/FirestoreFileSystem.js:283
+   - Problem: no actual stat/type check.
+   - Impact: drag/drop and move validation remain semantically wrong (files treated as directories).
+
+3. High: `#makePublic` can throw on missing path/stat
+   - src/FileTree/OBFileSystem.js:348-355
+   - Problem: reads `stat.isBoard` without null guard.
+   - Impact: toggling public/favourite on stale selections can raise runtime errors.
+
+4. Medium: Save mode still appears enabled but performs no create action
    - src/Editor/editor-finder.js:82-84
-   - Problem: create call is commented out.
-   - Impact: Save mode UX appears enabled but does not perform create behavior.
+   - Problem: create call remains commented out.
+   - Impact: UX inconsistency; user clicks “Save” and no board is created.
 
 ## Nuanced Gotchas (Current)
 
-1. isEffectivePublic recursion relies on ancestor entries existing in the FS map.
-   - If ancestor folders are virtual/implicit and not materialized, null stats can surface unexpectedly.
+1. Root contract drift in FileSystemUI
+   - `setRoot` now takes `(fs, rootName)` and rendering is anchored to `""` root internally.
+   - Call sites still passing legacy extra args work incidentally, but hide intent and make future refactors risky.
 
-2. Root setup contract in FileSystemUI is now implicit.
-   - setRoot takes (fs, rootName) and rendering always starts from empty path; callers still passing legacy extra args are tolerated but can hide intent drift.
-
-3. Watch API naming diverges from older patterns.
-   - Base and concrete now both expose stopWatch (not stopWatching); if any legacy caller still uses stopWatching it will silently fail.
+2. Default double-click fallback is currently a no-op in base icon class
+   - `FSFileIcon.onDoubleClick` in FileSystemUI is empty.
+   - OBFinder provides a board-specific double-click handler, but non-board fallback behavior is now effectively disabled unless added explicitly.
 
 ## Suggested Next Fix Order
 
-1. Runtime blockers
-   - Guard null in isEffectivePublic before reading stat fields.
-   - Implement a real isDirectory(path) using stat(path).
-   - Restore or replace promtRename call path.
+1. Restore safe rename UX path
+   - Add a prompt-based rename entrypoint (or require `newName` at call sites before invoking `rename`).
 
-2. Consistency bugs
-   - Fix duplicatePrefix regex to match end-of-string numeric suffixes without requiring trailing spaces.
-   - Re-enable save-mode create action or disable the button state for that mode.
+2. Fix filesystem type semantics
+   - Implement `isDirectory(path)` using actual stats.
+
+3. Harden edge-path guards
+   - Null-guard `#makePublic` before dereferencing `stat.isBoard`.
+
+4. Resolve save-mode UX
+   - Re-enable board creation action or disable save button until implemented.

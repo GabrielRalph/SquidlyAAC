@@ -358,9 +358,26 @@ class FileSystemUI extends SvgPlus {
         this.render();
     }
 
-
     async rename(path, newName) {
         path = Path.parse(path);
+        if (!newName || typeof newName !== "string" || newName.trim() === "") {
+            newName = await this.prompt({
+                message: `Enter a new name for “${path.name}”:`,
+                defaultValue: path.name,
+                yesValue: "Rename",
+                noValue: "Cancel",
+                validator: (value) => {
+                    if (!value || value.trim() === "") {
+                        return "Name cannot be empty";
+                    }
+                    if (value.includes(PATH_SEPERATOR)) {
+                        return `Name cannot contain the character “${PATH_SEPERATOR}”`;
+                    }
+                    return true;
+                }
+            });
+        }
+
         const newPath = path.parent.join(newName);
         
         let confirmed = true;
@@ -376,7 +393,6 @@ class FileSystemUI extends SvgPlus {
             }
         }
     }
-
 
     async _checkMoveConflict(fromPath, toPath) {
         fromPath = Path.parse(fromPath);
@@ -511,9 +527,7 @@ class FileSystemUI extends SvgPlus {
             this.#selected = this.#selection[0] || new Path("");
             selectedFile = this.fs.stat(this.selected);
         } 
-
         selectedFile = selectedFile || {path: "", isDirectory: true};
-
         let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " ➤ " + this.selected.name;
         headerName ||= this.rootName;
         this.head.titleEl.createChild("span", {content: headerName});
@@ -521,7 +535,7 @@ class FileSystemUI extends SvgPlus {
         let parts = this.selected.parts;
         let pslice = ["", ...parts];
         const n = pslice.length;
-        this.main.styles = {"--n": n};
+        let nAdjusted = 0;
         for (let i = 0; i < n; i++) {
             let path = new Path(pslice.slice(0, i+1));
             const stat = this.fs.stat(path);
@@ -531,15 +545,14 @@ class FileSystemUI extends SvgPlus {
                 let nameIndex = n - i - 2;
                 const column = this.main.createChild(Column, {}, path, files, this, name, nameIndex);
                 this.#restoreColumnScroll(path, column);
+                nAdjusted++;
             }
-
             if (i === n - 1) {
                 this.main.createChild(this.fileDisplayClass, {}, stat, this);
             }
         }
-        // window.requestAnimationFrame(() => {
-            this.main.parentNode.scrollLeft = this.main.scrollWidth;
-        // });
+        this.main.styles = {"--n": nAdjusted};
+        this.main.parentNode.scrollLeft = this.main.scrollWidth;
         this.#ensurePrimarySelectionVisible();
     }
 

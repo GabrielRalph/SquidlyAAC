@@ -115,24 +115,32 @@ class FirestoreFileSystem extends FileSystemInterface {
     }
 
     _updateFileByID(id, value, hardDelete = false) {
+        DEBUG.logStart("Updating file by ID", `\nid: ${id}, \nvalue: ${JSON.stringify(value)}, \nhardDelete: ${hardDelete}`);
         let updated = true;
         if (value) {
             if (id in this._dataByID) {
+                console.log("updating")
                 this._dataByID[id] = updateObject(
                     this._dataByID[id], value
                 );
+                console.log("updated", this._dataByID[id])
             } else {
+                console.log("setting")
                 this._dataByID[id] = value;
             }
         } else if (id in this._dataByID) {
             if (hardDelete) {
+                console.log("hard deleting")
                 delete this._dataByID[id];
             } else {
+                console.log("soft deleting")
                 this.assignDeletedValue(this._dataByID[id]);
             }
         } else {
+            console.log("not found, not updating")
             updated = false;
         }
+        DEBUG.logEnd();
         return updated;
     }
 
@@ -474,6 +482,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     _move(fromPath, toPath) {
         fromPath = Path.parse(fromPath);
         toPath = Path.parse(toPath);
+        DEBUG.logStart("Moving files", `/${fromPath.toString()} to /${toPath.toString()}`);
         let moved = false;
         if (this.isDirectory(toPath)) {
             const newPath = toPath.join(fromPath.name);
@@ -484,16 +493,22 @@ class FirestoreFileSystem extends FileSystemInterface {
     
             const fromPathParent = fromPath.parent;
             let ids = this._dataAsFS.getDecendantValues(fromPath, true);
+
+
             for (let id of ids) {
-                let value = this._getFileByID(id);
-                let oldPath = Path.parse(value.path);
-                let relativePath = oldPath.relative(fromPathParent);
-                let newFilePath = toPath.join(relativePath);
-                value.path = newFilePath.toString();
-                moved ||= this._updateFileByID(id, value);
+                const oldPath = this.getPathByID(id);
+                if (oldPath) {
+                    const newFilePath = toPath.join(oldPath.relative(fromPathParent));
+                    DEBUG.log("Moving files", `${oldPath} -> ${newFilePath}`);
+                    moved = this._updateFileByID(id, {
+                        path: newFilePath+""
+                    }) || moved;
+                }
             }
         }
 
+       
+        DEBUG.logEnd();
         return moved;
     }
 
@@ -554,6 +569,11 @@ class FirestoreFileSystem extends FileSystemInterface {
 
             value.path = newPath.toString();
             this._updateFileByID(id, value);
+
+            let children = this._dataAsFS.getChildrenPaths(fromPath);
+            children.forEach(childPath => {
+                this._move(childPath, newPath);
+            });
 
             this.run("onAfterRename", fromPath, newPath);
             this.fullUpdate();

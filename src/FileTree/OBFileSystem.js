@@ -90,6 +90,14 @@ class OBFStats{
             Folder: 2,
         }
     }
+
+    static symbolicDirectory(path, root) {
+        return new OBFStats(null, {
+            isDirectory: true,
+            symbolic: true,
+            path: Path.parse(path).toString(),
+        }, root);
+    }
 }
 
 
@@ -116,22 +124,14 @@ class OBFileSystem extends FirestoreFileSystem {
      * @override
      */
     stat(path) {
-        if (path.length === 0) {
-            return new OBFStats(null, {
-                isDirectory: true,
-                updatedAt: null,
-                deletedAt: false,
-
-                public: false,
-                favourite: false,
-                effectivePublic: false,
-
-                createdAt: FirestoreFrame.TimestampSymbol,
-            }, this);
+        const id = this._dataAsFS.get(path);
+        let stat = null;
+        if (id) {
+            stat = this.statByID(id);
         } else {
-            let id = this._dataAsFS.get(path);
-            return this.statByID(id);
+            stat = OBFStats.symbolicDirectory(path, this);
         }
+        return stat;
     }
 
     /**
@@ -145,11 +145,23 @@ class OBFileSystem extends FirestoreFileSystem {
         return data ? new OBFStats(id, data, this) : null;
     }
 
-
-    getPathByID(id) {
-        let data = this._dataByID[id];
-        return data ? Path.parse(data.path) : null;
+     /**
+     * Returns file stats for the given path. 
+     * @param {Path|string} id - The path to get the file stats for.
+     * @returns {Array<T>} The file stats for the given path.
+     * @override
+     */
+    readdir(path, recursive = false, includeSelf = false) { 
+        path = Path.parse(path);
+        let result = recursive ? 
+            this._dataAsFS.getDecendantPaths(path) :
+            this._dataAsFS.getChildrenPaths(path);
+        if (includeSelf) {  result.unshift(path); } 
+        result = result.map(p => this.stat(p));
+        return result;
     }
+
+
 
     /**
      * Creates a new folder at the specified path with default properties.
@@ -272,7 +284,8 @@ class OBFileSystem extends FirestoreFileSystem {
         path = Path.parse(path);
         if (path.length > 0) {
             const stat = this.stat(path);
-            effectivePublic = (stat && stat.public && stat.isBoard) || this.isEffectivePublic(path.parent);
+            effectivePublic = (stat && stat.public && stat.isBoard) 
+                              || this.isEffectivePublic(path.parent);
         }
         return effectivePublic;
     }
