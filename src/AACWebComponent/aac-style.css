@@ -2,6 +2,7 @@
     --border: .25vw;
     --gap: .125vw;
     --pad: var(--border);
+    --shadow-color: #565048cf
 }
 
 [shadow] > grid-layout {
@@ -30,11 +31,6 @@ access-textarea {
 }
 access-textarea textarea {
     overflow: hidden;
-}
-
-access-button.grid-icon  {
-    --shadow-color: #565048cf
-
 }
 
 access-button.grid-icon:not([label-at-bottom]) .content {

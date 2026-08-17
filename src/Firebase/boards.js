@@ -4,6 +4,7 @@ import { FirestoreFrame } from "./firestore-frame.js";
 import { OBBoardManager } from "../OpenBoard/openboard-manager.js";
 import { DataClass } from "../OpenBoard/dataclass.js";
 import { Debugger } from "../shared.js";
+import { Path } from "../FileTree/FileSystem/Path.js";
 
 const BOARD_CACHE = {};
 const BOARD_LISTENERS = {}
@@ -12,6 +13,8 @@ const META = new FirestoreFrame("boards");
 const DRAFTS = new FirestoreFrame("draft-boards");
 const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
 debug.disable = true;
+
+
 class ServerTimestamp {
     constructor(value) {
         this.value = value;
@@ -45,6 +48,7 @@ class ServerTimestamp {
 class BoardMetadata extends DataClass {
     /** @type {string} */
     path = null;
+    static path_parser(value) { return Path.parse(value); }
 
     /** @type {string} */
     owner = null;

@@ -6,6 +6,7 @@ import { getBoard } from "../Firebase/boards.js";
 import { registerKeyBindings } from "../Utilities/keybindings.js";
 import { openDraftPreview, openEditor, openViewer } from "../shared.js";
 import { OBFStats } from "./OBFileSystem.js";
+import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
 
 /**
  * @typedef {import("./OBFileSystem.js").OBFileSystem} OBFileSystem
@@ -192,6 +193,11 @@ class OBFileIcon extends FSFileIcon {
                         icon: "<i-bw view></i-bw>",
                         action: () => openViewer(fstat.boardID)
                     },
+                    {
+                        label: "Export",
+                        icon: "<i-bw print></i-bw>",
+                        action: () => root.downloadBoardImage(fstat)
+                    }
                     // {
                     //     label: "Open Draft Preview",
                     //     icon: "<i-bw draft-view></i-bw>",
@@ -364,7 +370,6 @@ export class OBFinder extends FileSystemUI {
         return id;
     }
 
-
     async deleteFromSelection(path) {
         path = Path.parse(path).toString();
 
@@ -399,6 +404,13 @@ export class OBFinder extends FileSystemUI {
             if (this.fs.deleteMultiple(paths)) {
                 this.select(paths[0].parent);
             }
+        }
+    }
+
+    async downloadBoardImage(fstat) {
+        if (fstat && fstat.isBoard) {
+            const board = await getBoard(fstat.boardID);
+            await AACGridCanvas.exportBoard(board, fstat.path.name);
         }
     }
 

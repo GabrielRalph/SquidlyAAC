@@ -4,27 +4,25 @@ EDITOR
         - DONE: hidden cells slightly opaque 
 
     bugs: 
+        - Save causes old saved board to be drafted when two tabs open
+        
         - DONE: load_board broken
         - DONE: odd merge bug 
-        
-        - upload image function is broken
-        - Save causes old saved board to be drafted when two tabs open
+        - DONE: upload image function is broken
+
 
 
     feature updates: 
-        - DONE: save file loader
-        - DONE: more info with regards to actions 
-
         - advanced hints similar ()
-
         - If search then close, keep search results until a label is edited
-
         - when editor is opened without board id
         - r,c input to set grid size
-        - upload image auto resize 
         - text 2 speach preview
-        - print 
 
+        - DONE: save file loader
+        - DONE: more info with regards to actions 
+        - DONE: print 
+        - DONE: upload image auto resize 
         - DONE: write action copy issue
         - DONE: actions add space
         - DONE: copy accross tabs
@@ -32,21 +30,23 @@ EDITOR
 
 FINDER
     fast-fixes:
+        - information when files is blank
+        - change the word favourite to featured
+
         - DONE: root doesn't need delete,rename
         - DONE: popups only open once 
         - DONE: double click opens the editor
         - DONE: button to add new board
 
-        - information when files is blank
-        - change the word favourite to featured
-
     bugs:
-        - updates from one tab don't properly propergate to another (try drag folder)
+        - DONE: updates from one tab don't properly propergate to another (try drag folder)
        
 
     feature updates:
-        - DONE: Favorite root boards automatically
         - adding file thumbnails
+
+        - DONE: Favorite root boards automatically
+        
 
 
 
@@ -56,9 +56,9 @@ FINDER
         - Show message when permision is denied
 
     feature updates:
+        - text 2 speach in preview
 
         - DONE: text area to scroll into view
-        - text 2 speach in preview
 
 
 AAC GENERIC

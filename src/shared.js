@@ -1,34 +1,71 @@
 const POPUP_CACHE = {};
 const DEBUG = (new URLSearchParams(window.location.search).get("debug") === "true")
+
+
+function openCachedPopup(id, url) {
+    let openedCached = false;
+    if (id in POPUP_CACHE) {
+        const popup = POPUP_CACHE[id];
+        if (!popup.closed) {
+            popup.focus();
+            openedCached = true;
+        }
+    }
+
+    if (!openedCached) {
+        const popup = window.open(url, id);
+        POPUP_CACHE[id] = popup;
+    }
+}
+
+
 function openWindow(name, board, other, extraKey = "") {
     const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set("board", board);
+    if (board) {
+        urlParams.set("board", board);
+    }
     if (other && typeof other === "object") {
         for (let key in other) {
             urlParams.set(key, other[key]);
         }
     }
     const popupID = `${name}-${board}${extraKey}`;
-    if (popupID in POPUP_CACHE) {
-        const popup = POPUP_CACHE[popupID];
-        if (!popup.closed) {
-            popup.focus();
-            return;
-        }
-    } else {
-        const popup = window.open(`../${name}/?${urlParams.toString()}`, popupID);
-        POPUP_CACHE[popupID] = popup;
-    }
+    const url = `../${name}/?${urlParams.toString()}`;
+    openCachedPopup(popupID, url);
 }
+
 function openEditor(board) {
     openWindow("Editor", board);
 }
+
+function openNewEditor() {
+    let randomID = Math.random().toString(36).substring(2, 10);
+    let urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete("board");
+    let paramsString = urlParams.toString();
+    if (paramsString) {
+        paramsString = `?${paramsString}`;
+    }
+    openCachedPopup(`Editor-${randomID}`, `../Editor/${paramsString}`);
+}
+
 function openViewer(board) {
     openWindow("View", board);
 } 
+
 function openDraftPreview(board) {
     openWindow("View", board, {mode: "preview-draft"}, "-draft");
 }
+
+function openFiles() {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete("board");
+    const id = "Files";
+    const url = `../Files/?${urlParams.toString()}`
+    openCachedPopup(id, url);
+}
+
+
 
 class Debugger {
     constructor(name, style = "background: #b43113; color: white; padding: 5px; border-radius: 5px;") {
@@ -68,7 +105,6 @@ class Debugger {
 }
 
 
-
 function isEqual(obj1, obj2) {
     if (typeof obj1 !== typeof obj2) return false;
     if (obj1 && obj2 && typeof obj1 === 'object') {
@@ -96,7 +132,6 @@ function copy(obj) {
     }
     return obj;
 }
-
 
 /**
  * Returns the differences between two objects or arrays. If there are no differences, it returns null.
@@ -218,4 +253,8 @@ function updateObject(target, changes) {
     return updatedValue;
 }
 
-export { Debugger, openWindow, openEditor, openViewer, openDraftPreview, copy, isEqual, differences, updateObject};
+export { 
+    Debugger, 
+    openWindow, openEditor, openViewer, openDraftPreview, openFiles, openNewEditor,
+    copy, isEqual, differences, updateObject
+};

@@ -55,7 +55,7 @@ async function setupBoard(rootID) {
         manager.load(),
         (async () => {
             let meta = await getBoardMetadata(rootID)
-            let name = meta.path.split("\\").pop();
+            let name = meta.path.name;
             document.head.querySelector("title").innerHTML = `${name} | Board Viewer | Squidly`;
         })()
     ]);

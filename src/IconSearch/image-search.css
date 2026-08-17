@@ -154,6 +154,9 @@ image-finder .finder .panel input:focus {
     opacity: 0;
     transition: 0.3s ease-in-out opacity;
 }
+.owned[public] {
+    background: #42a01f;
+}
 .image-box:hover .owned {
     opacity: 1;
 }

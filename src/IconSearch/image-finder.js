@@ -1,6 +1,5 @@
 import { SvgPlus } from "../Utilities/utils.js";
-import { OBImage } from "../OpenBoard/openboard.js";
-import { addRecentImage, getRecentImages, textSearch, semanticSearch, getNumberOfOwnedImages, addMyIconCountWatcher, uniqueImages, uploadImage } from "./images.js";
+import { addRecentImage, getRecentImages, textSearch, semanticSearch, getNumberOfOwnedImages, addMyIconCountWatcher, uniqueImages, uploadImage, SOBImageIcon } from "../Firebase/images.js";
 
 const MAX_FILE_SIZE = 256 * 1024 ** 2;
 const STATUS_TEXT = {
@@ -33,8 +32,32 @@ class ImageBox extends SvgPlus {
             },
         }
         if (image?.license?.owner) {
-            this.createChild("div", {class: "owned", innerHTML: "✓"});
+            let ownerTag= this.createChild("div", {class: "owned", innerHTML: "✓"});
+            ownerTag.toggleAttribute("public", image.public);
         }
+    }
+}
+class ImageGrid extends SvgPlus {
+    constructor() {
+        super("div");
+        this.class = "image-grid";
+        this.createChild("div", {class: "loader"})
+    }
+
+    set images(images) {
+        this.innerHTML = "";
+        images.map(img => 
+            this.createChild(ImageBox, {}, img, (i) => this.#selectImage(i))
+        )
+        this.createChild("div", {class: "loader"});
+    }
+
+    #selectImage(image) {
+        addRecentImage(image);
+        if (this.onImageSelected instanceof Function) {
+            this.onImageSelected(image);
+        }
+        this.dispatchEvent(new CustomEvent("image-selected", {detail: {image}}));
     }
 }
 
@@ -153,13 +176,14 @@ class Uploader extends SvgPlus {
                     this.loaderText.innerHTML = `${(p * 100).toFixed(0)}% - ` + STATUS_TEXT[key];
                 });
                 if (results?.valid) {
-                    let image = OBImage.make({
+                    let image = SOBImageIcon.make({
                         id: results.symbolID,
                         name,
                         width: 100,
                         height: 100,
                         license: {owner: true},
                         url: results.url,
+                        public: isPublic
                     })
                     this.#selectImage(image);
                 } else {
@@ -221,29 +245,7 @@ class Uploader extends SvgPlus {
     }
 }
 
-class ImageGrid extends SvgPlus {
-    constructor() {
-        super("div");
-        this.class = "image-grid";
-        this.createChild("div", {class: "loader"})
-    }
 
-    set images(images) {
-        this.innerHTML = "";
-        images.map(img => 
-            this.createChild(ImageBox, {}, img, (i) => this.#selectImage(i))
-        )
-        this.createChild("div", {class: "loader"});
-    }
-
-    #selectImage(image) {
-        addRecentImage(image);
-        if (this.onImageSelected instanceof Function) {
-            this.onImageSelected(image);
-        }
-        this.dispatchEvent(new CustomEvent("image-selected", {detail: {image}}));
-    }
-}
 
 class Searcher extends SvgPlus {
     limit = 6 * 50;
@@ -303,7 +305,7 @@ class Searcher extends SvgPlus {
             let images = await tprom;
             this.main.images = images;
             let semanticImages = await sprom;
-            images = uniqueImages(images.concat(semanticImages));
+            images = uniqueImages([...images, ...semanticImages]);
             this.main.images = images;
             this.toggleAttribute("searching", false);
         }
@@ -443,7 +445,7 @@ class FastFindImageList extends SvgPlus {
 
                     // Only update the list if the query hasn't changed
                     if (this.#lastQuery === query) {
-                        this.images = uniqueImages(images.concat(imagesScemantic));
+                        this.images = uniqueImages([...images, ...imagesScemantic]);
                     }
                 }
             }

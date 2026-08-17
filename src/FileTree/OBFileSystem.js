@@ -183,31 +183,31 @@ class OBFileSystem extends FirestoreFileSystem {
 
     _newFile(path, data, name = "folder") {
         let newID = null;
+        let changed = false;
         DEBUG.logStart("File Creation", `Creating new ${name} at path: ${path.toString()}`);
        
         // Ensure that no file exists at the given path
+        // If a file exists, delete it first to avoid conflicts.
         path = Path.parse(path);
-        if (!this.stat(path)) {
-
+        if (!this.exists(path)) {
             // Create a new file with the provided data
             newID = this.getNewID();
 
             // Set the file data at the new ID
             if (this._setFileByID(newID, data)) {
-
                 DEBUG.log("File Creation", `Created ${name}.`, `path: ${path.toString()}\nid: ${newID}`);
-                this._buildFileSystem();
-                this._syncToDatabase();
-                this.triggerUpdate();
+                
                 // We won't commit to history here becuase once the the server timestamp
                 // is created that will propagate to the local data and trigger a full 
                 // update, which will be recorded in history.
+                this._buildFileSystem();
+                this._syncToDatabase();
+                this.triggerUpdate();
             } else {
                 DEBUG.log("File Creation", `Failed to create ${name}`, `path: ${path.toString()}\nid: ${newID}`);
                 newID = null;
             }
         }
-
         DEBUG.logEnd();
         return newID;
     }
@@ -267,7 +267,7 @@ class OBFileSystem extends FirestoreFileSystem {
             let id = this._dataAsFS.get(path);
             if (id && id in this._dataByID) {
                 let value = this._dataByID[id];
-                effectivePublic ||= value.public;
+                effectivePublic ||= value.public ?? false;
                 value.effectivePublic = !this.isDeletedValue(value) 
                                         && effectivePublic 
                                         && !value.isDirectory;
@@ -316,7 +316,7 @@ class OBFileSystem extends FirestoreFileSystem {
      */
     isRootBoard(path) {
         path = Path.parse(path).parent;
-        if (path.length === 0) {
+        if (!path || path.length === 0) {
             return true;
         } else {
             return !this.isBoard(path) && this.isRootBoard(path.parent);

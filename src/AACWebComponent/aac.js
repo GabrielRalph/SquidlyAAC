@@ -1,7 +1,8 @@
 import { OBBoard, OBButton, OBImage } from "../OpenBoard/openboard.js";
-import { AccessEvent, AccessTextArea, delay, GridIcon, GridLayout, ShadowElement, SvgPlus } from "../Utilities/utils.js";
+import { AccessEvent, AccessTextArea, delay, GridCard, GridIcon, GridLayout, ShadowElement, SvgPlus, Vector } from "../Utilities/utils.js";
 import { Color } from "../Utilities/color.js";
 import { Debugger } from "../shared.js";
+
 
 const debug = new Debugger(
     "AACBoard",
@@ -61,7 +62,6 @@ class AACInsert extends AccessEvent {
  * }} AACBoardEventMap
  */
 
-
 class AACButton extends GridIcon {
     #button = null; 
 
@@ -93,72 +93,13 @@ class AACButton extends GridIcon {
         this.toggleAttribute("italic", button.italic);
         this.toggleAttribute("label-at-bottom", button.label_at_bottom)
 
-        this.styles = AACButton.colorGenerator(button);
+        this.styles = Object.fromEntries(Object.entries(button.colorTheme).map(([k, v]) => [`--${k}`, v]));
         this.#button = button;
     }
-
 
     /** @returns {OBButton} */
     get button() {
         return this.#button
-    }
-
-
-    /**
-     * @param  {OBButton} button
-     */
-    static colorGenerator(button) {
-        const bg = new Color(button.background_color);
-        const outline = new Color(button.border_color);
-        const text = new Color(button.text_color);
-
-        let styles = { };
-
-        if (outline.valid) styles["--outline"] = outline.toHex();
-        if (text.valid) styles["--text"] = text.toHex();
-
-        if (bg.valid) {
-            // bg.l = bg.l * 0.8
-            styles["--main"] = bg.toHex();
-
-            const mc = bg.clone();
-            mc.s *= 1.2
-            mc.l *= 0.9
-            styles["--main-hover"] = mc.toHex();
-
-            mc.s *= 1.2
-            mc.l *= 0.9
-            styles["--main-active"] = mc.toHex();
-
-
-            // Tab color
-            const tc = bg.clone();
-
-            tc.s *= 0.8
-            tc.l *= 0.6
-            styles["--tab-color"] = tc.toHex();
-
-            tc.l *= 5/6
-            styles["--tab-hover"] = tc.toHex()
-
-            tc.l *= 5/6
-            styles["--tab-active"] = tc.toHex();
-
-            if (!text.valid) {
-                styles["--text"] = bg.brightness > 128 ? "black" : "white";
-            }
-
-            if (!outline.valid) {
-                const oc = bg.clone()
-                if (oc.s < 0.05) {
-                    oc.l *= 0.3;
-                }
-                oc.s *= 1.5;
-                oc.l *= 0.5;
-                styles["--outline"] = oc.toHex()
-            }
-        }
-        return styles;
     }
 }
 
@@ -222,8 +163,6 @@ class AACGrid extends GridLayout {
         this.onBoardSet();
     }
 }
-
-
 
 class AACBoard extends ShadowElement {
     keepCornerFree = false;
@@ -567,5 +506,4 @@ class AACGridWrapper extends ShadowElement {
         ];
     }
 }
-
 export { AACBoard, AACGrid, AACGridWrapper, AACButton, AACClick, AACChange, AACInsert }

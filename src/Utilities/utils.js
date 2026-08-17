@@ -2778,6 +2778,12 @@ class GridCard extends SvgPlus {
     getCardBorderWidth() {
       return window.innerWidth < 450 ? 2 : 4;
     }
+
+    static getCardRenderer(type) {
+      if (CARD_RENDERERS[type] instanceof Function) {
+        return CARD_RENDERERS[type].bind(CARD_RENDERERS);
+      }
+    }
 }
 
 /** A GridIcon represents an item from a topic. */
@@ -4782,4 +4788,4 @@ class Slider extends SlotTransition {
     }
 }
 
-export { AccessButton, AccessClickEvent, AccessEvent, AccessTextArea, BasePointer, GridCard, GridIcon, GridIconSymbol, GridLayout, HideShow, HideShowTransition, Icon, MarkdownElement, POINTERS, PopUpFrame, PromiseChain, PublicProxy, Rotater, ShadowElement, Slider, SvgCanvas, SvgPlus, SvgResize, TransitionVariable, Vector, WaveStateVariable, argmax, argmin, delay, dotGrid, elementAtCursor, getCursorPosition, getDevice, getQueryKey, isExactSame, isIOS, isIconName, isIpadOS, isPageHidden, linspace, lurp4, makeLogger, parseVector, relURL, series, transition, uncamelCase };
+export { AccessButton, AccessClickEvent, AccessEvent, AccessTextArea, BasePointer, GridCard, GridIcon, GridIconSymbol, GridLayout, HideShow, HideShowTransition, Icon, MarkdownElement, POINTERS, PopUpFrame, PromiseChain, PublicProxy, Rotater, ShadowElement, Slider, SvgCanvas, SvgPlus, SvgResize, TransitionVariable, Vector, WaveStateVariable, argmax, argmin, delay, dotGrid, elementAtCursor, getCursorPosition, getDevice, getQueryKey, isExactSame, isIOS, isIconName, isIpadOS, isPageHidden, linspace, lurp4, makeLogger, parseVector, relURL, series, transition, uncamelCase, wrapText};

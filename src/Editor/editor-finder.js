@@ -1,3 +1,4 @@
+import { Path } from "../FileTree/FileSystem/Path.js";
 import { OBFileSystem, OBFStats } from "../FileTree/OBFileSystem.js";
 import { OBFinder } from "../FileTree/OBFinder.js";
 import { OBLoadBoard } from "../OpenBoard/openboard.js";
@@ -11,6 +12,8 @@ export class BoardFinder extends ShadowElement {
     #lastSelected = null;
 	constructor() {
 		super("board-finder");
+
+
 		this.fsUI = this.createChild(OBFinder, {events: {
             "selection-change": e => {
                 let selection = this.fsUI.selection;
@@ -49,7 +52,7 @@ export class BoardFinder extends ShadowElement {
 
         // Set double click event to select a board
         this.fsUI.onDoubleClick = (e, root, fstat) => {
-            if (fstat.isBoard) {
+            if (fstat.isBoard && !this.isSaveMode) {
                 this._onSelect(fstat);
             }
         }
@@ -78,10 +81,31 @@ export class BoardFinder extends ShadowElement {
             content: "select", 
             class: "select",
             primary: true,
-            events: {click: () => {
+            events: {click: async () => {
                 if (this.isSaveMode) {
-                    // this.fsUI.newBoard()
+                    let selected = new Path("");
+                    let selection = this.fsUI.selection;
+                    if (selection.length > 1) {
+                        selected = selection[0].parent
+                    } else if (selection.length == 1) {
+                        selected = selection[0];
+                    }
 
+                    let name = this.input.value.trim();
+                    let path = selected.join(name);
+                    let confirm = true;
+                    if (this.#fs.exists(path)) {
+                        confirm = await this.fsUI.confirm(`A file with the name "${name}" already exists.`, [["Cacel", false]])
+                    }
+
+                    if (confirm) {
+                        let newBoardID = this.#fs.newBoard(path);
+                        if (newBoardID) {
+                            this._onSelect(newBoardID);
+                        } else {
+                            this._onSelect();
+                        }
+                    } 
                 } else {
                     this._onSelect();
                 }

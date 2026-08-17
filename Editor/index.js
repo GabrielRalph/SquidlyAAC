@@ -52,6 +52,12 @@ class EditorSession {
                 await promise;
                 this.updateSaveStatus();
                 editor.forceUpdate();
+            } else if (!this.boardWatcher) {
+                const id = await editor.getNewBoard();
+                console.log("New Board ID:", id);
+                if (id) {
+                    this.saveAsAndWatch(id);
+                }
             }
         }
     }
@@ -59,10 +65,9 @@ class EditorSession {
     updateTitle() {
         if (this.boardWatcher && this.boardWatcher.metadata) {
             let path = this.boardWatcher?.metadata?.path;
-            let name = path.split("\\").pop();
-            this.headTitle.innerHTML = `${name} | Board Editor | Squidly`;
+            this.headTitle.innerHTML = `${path.name} | Board Editor | Squidly`;
             
-            path = (path ? path.replace(/\\/g, " ▸ ") : "")
+            path = (path ? path.parts.join(" ▸ ") : "")
             path = path ? "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;<b>" + path : "";
             this.editor.titleSpan.innerHTML = path;
         }
@@ -89,18 +94,22 @@ class EditorSession {
             this.boardWatcher = null;
         }
         
-        let started = false;
-        this.boardWatcher = new BoardWatcher(boardID, (isChange) => {
-            const { currentBoard, board, metadata, draft } = this.boardWatcher;
-            if (!started) {
-                started = true;
-                this.editor.board = currentBoard;
-            } else if (this.updateSaveStatus()) {
-                this.editor.updateBoard(currentBoard);
-            }
-            this.updateTitle();
-        });
-        await this.boardWatcher.watch();
+        if (boardID) {
+            let started = false;
+            console.log("Watching board:", boardID);
+            this.boardWatcher = new BoardWatcher(boardID, (isChange) => {
+                const { currentBoard, board, metadata, draft } = this.boardWatcher;
+                this.editor.metadata = metadata;
+                if (!started) {
+                    started = true;
+                    this.editor.board = currentBoard;
+                } else if (this.updateSaveStatus()) {
+                    this.editor.updateBoard(currentBoard);
+                }
+                this.updateTitle();
+            });
+            await this.boardWatcher.watch();
+        }
     }
 
     async saveAsAndWatch(boardID) {
@@ -109,9 +118,19 @@ class EditorSession {
             this.boardWatcher = null;
         }
 
-        let boardWatcher = new BoardWatcher(boardID, (isChange) => {})
-        boardWatcher.save(this.editor.board);
-        await this.watchBoard(boardID);
+        // Update the URL to include the new board ID
+        const query = new URLSearchParams(window.location.search);
+        query.set("board", boardID);
+        window.history.replaceState({}, "", `${window.location.pathname}?${query.toString()}`);
+
+        // Start saving the board 
+        this.boardWatcher = new BoardWatcher(boardID, (isChange) => {})
+        let prom = this.boardWatcher.save(this.editor.board);
+        this.editor.forceToolUpdate();
+        await prom;
+
+        // Now start watching the board for changes
+        this.watchBoard(boardID);
     }
 }
 
@@ -121,7 +140,7 @@ async function onUserChange(user) {
     document.body.toggleAttribute("loaded", false);
     if (user) {
         const query = new URLSearchParams(window.location.search);
-        const boardID = query.get("board");
+        const boardID = query.get("board") ?? null;
         const uid = query.get("user") || (user?.uid ?? null); 
 
         

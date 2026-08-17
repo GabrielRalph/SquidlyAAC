@@ -1,3 +1,4 @@
+import { Color } from "../Utilities/color.js";
 import { DataClass, array2D } from "./dataclass.js";
 
 /**
@@ -361,6 +362,67 @@ class OBButton extends OpenBoardObject {
         return this.vocalization || this.textInserted || this.label
     }
 
+    /**
+     * Returns an object containing the color theme for the button,
+     * including the main color, hover color, active color, 
+     * tab color, tab hover color, tab active color,
+     * outline color, and text color.
+     * If a color is not specified, it will be derived from the background color.
+     * @returns {Object} An object containing the color theme for the button.
+     */
+    get colorTheme() {
+        const bg = new Color(this.background_color);
+        const outline = new Color(this.border_color);
+        const text = new Color(this.text_color);
+
+        let styles = { };
+
+        if (outline.valid) styles["outline"] = outline.toHex();
+        if (text.valid) styles["text"] = text.toHex();
+
+        if (bg.valid) {
+            // bg.l = bg.l * 0.8
+            styles["main"] = bg.toHex();
+
+            const mc = bg.clone();
+            mc.s *= 1.2
+            mc.l *= 0.9
+            styles["main-hover"] = mc.toHex();
+
+            mc.s *= 1.2
+            mc.l *= 0.9
+            styles["main-active"] = mc.toHex();
+
+
+            // Tab color
+            const tc = bg.clone();
+
+            tc.s *= 0.8
+            tc.l *= 0.6
+            styles["tab-color"] = tc.toHex();
+
+            tc.l *= 5/6
+            styles["tab-hover"] = tc.toHex()
+
+            tc.l *= 5/6
+            styles["tab-active"] = tc.toHex();
+
+            if (!text.valid) {
+                styles["text"] = bg.brightness > 128 ? "black" : "white";
+            }
+
+            if (!outline.valid) {
+                // const oc = bg.clone()
+                // if (oc.s < 0.05) {
+                //     oc.l *= 0.3;
+                // }
+                // oc.s *= 1.5;
+                // oc.l *= 0.5;
+                styles["outline"] = styles["tab-color"];
+            }
+        }
+        return styles;
+    }
 
     static newID() {
         return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
@@ -399,6 +461,7 @@ class OBButton extends OpenBoardObject {
     static get fontSizes() {
         return ["tiny", "small", "medium", "large", "huge", "giant"];
     }
+
 }
 
 class OBGrid extends DataClass {

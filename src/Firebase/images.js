@@ -1,6 +1,10 @@
 
-import * as FB from "../Firebase/firebase.js";
+import * as FB from "./firebase.js";
 import { OBImage } from "../OpenBoard/openboard.js";
+
+class SOBImageIcon extends OBImage {
+    public = false;
+} 
 
 FB.initialise();
 
@@ -17,6 +21,23 @@ function uniqueImages(images) {
 }
 
 
+function formatImage(image, id) {
+    let result = null;
+    if (image) {
+        result = SOBImageIcon.make({
+            ...image,
+            width: 100,
+            height: 100,
+            id,
+            license: {
+                owner: image.owned
+            }
+        });
+    }
+    return result;
+}
+
+
 
 /** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Recent Images ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -29,7 +50,7 @@ try {
     if (storedResults) {
         const parsedResults = JSON.parse(storedResults);
         if (Array.isArray(parsedResults)) {
-            RECENT_IMAGES.push(...parsedResults.map(i => OBImage.make(i)));
+            RECENT_IMAGES.push(...parsedResults.map(i => SOBImageIcon.make(i)));
         }
     }
 } catch (e) {}
@@ -55,7 +76,7 @@ function addRecentImage(image) {
 }
 
 function getRecentImages() {
-    return RECENT_IMAGES.map(i => OBImage.make(i));
+    return RECENT_IMAGES.map(i => SOBImageIcon.make(i));
 }
 
 
@@ -199,14 +220,9 @@ async function _semanticSearch(text, includePublic = true) {
 			mode: includePublic ? "all" : "user",
 			size: 150
 		}, "australia-southeast1");
-		images = (res.data || []).map(i => {
-			i.width = 100;
-			i.height = 100;
-			i.license = {
-				owner: i.owned
-			} 
-			return OBImage.make(i);
-		})
+		images = (res.data || []).map(image => {
+            return formatImage(image, image.id);
+        })
 	} catch (e) {
 		console.error("Semantic image search failed", e);
 	}
@@ -217,7 +233,7 @@ async function getResultsFromSemanticSearchCache(text, includePublic = true) {
     let results = null;
     if (SemanticSearchCache[includePublic ? "public" : "user"][text]) {
         let idSet = await SemanticSearchCache[includePublic ? "public" : "user"][text];
-        results = [...idSet].map(i => OBImage.make(ImageCache[i])).filter(Boolean);
+        results = [...idSet].map(i => SOBImageIcon.make(ImageCache[i])).filter(Boolean);
     }
     return results;
 }
@@ -225,7 +241,7 @@ async function getResultsFromSemanticSearchCache(text, includePublic = true) {
 /**
  * @param {string} text - The text to search for.
  * @param {boolean} includePublic - Whether to include public icons in the search.
- * @returns {Promise<OBImage[]>} - A promise that resolves to an array of OBImage objects that match the search criteria.
+ * @returns {Promise<SOBImageIcon[]>} - A promise that resolves to an array of SOBImageIcon objects that match the search criteria.
  */
 async function semanticSearch(text, includePublic = true) {
     text = text.trim().toLowerCase().replace(/\s+/g, " ");
@@ -266,7 +282,7 @@ async function getResultsFromTextSearchCache(text, includePublic, isEqual) {
     let results = null;
     if (TextSearchCache[includePublic ? "public" : "user"][isEqual ? "equal" : "startsWith"][text]) {
         let idSet = await TextSearchCache[includePublic ? "public" : "user"][isEqual ? "equal" : "startsWith"][text];
-        results = [...idSet].map(i => OBImage.make(ImageCache[i])).filter(Boolean);
+        results = [...idSet].map(i => SOBImageIcon.make(ImageCache[i])).filter(Boolean);
     }
     return results;
 }
@@ -289,13 +305,9 @@ async function queryImages(text, isEqual = false, includePublic = true) {
                 let docs = await getDocs(textQuery);
                 let images = docs.docs.map(doc => {
                     let image = doc.data();
-                    image.id = doc.id;
-                    image.width = 100;
-                    image.height = 100;
-                    image.license = {
-                        owner: uid && image.uid === uid,
-                    } 
-                    ImageCache[doc.id] = OBImage.make(image);
+                    image.owned = uid && image.uid === uid;
+                    image = formatImage(image, doc.id);
+                    ImageCache[doc.id] = image;
                     return image;
                 })
                 return new Set(images.map(i => i.id));
@@ -321,7 +333,7 @@ function exactMatch(name, length) {
 /**
  * @param {string} text - The text to search for.
  * @param {boolean} includePublic - Whether to include public icons in the search.
- * @returns {Promise<OBImage[]>} - A promise that resolves to an array of OBImage objects that match the search criteria.
+ * @returns {Promise<SOBImageIcon[]>} - A promise that resolves to an array of SOBImageIcon objects that match the search criteria.
  */
 async function textSearch(text, includePublic = true) {
 	let images = [];
@@ -368,4 +380,4 @@ async function textSearch(text, includePublic = true) {
 }
 
 
-export {textSearch, semanticSearch, uploadImage, deleteImage, addMyIconCountWatcher, getNumberOfOwnedImages, addRecentImage, getRecentImages, uniqueImages};
+export {SOBImageIcon, textSearch, semanticSearch, uploadImage, deleteImage, addMyIconCountWatcher, getNumberOfOwnedImages, addRecentImage, getRecentImages, uniqueImages};

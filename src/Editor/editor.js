@@ -8,7 +8,8 @@ import { ActionsPanel, NavigationPanel } from "./editor-actions.js";
 import { Icon } from "../Utilities/icons.js";
 import { BoardFinder } from "./editor-finder.js";
 import { META_KEY, registerKeyBindings, setActiveKeyBindingSet } from "../Utilities/keybindings.js";
-
+import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
+import { openEditor, openFiles, openNewEditor } from "../shared.js";
 
 // Editor -----------
 function hideIfNoSelection({selection}) {
@@ -57,15 +58,32 @@ const TOP_TOOLS = [
         binding: "f",
         tools: [
             {
+                name: "export",
+                icon: "print",
+                async onClick(editor) {
+                    const board = editor.board;
+                    const name = editor.metadata?.path?.name || "board";
+                    this.toggleAttribute("loading", true);
+                    await AACGridCanvas.exportBoard(board, name);
+                    this.toggleAttribute("loading", false);
+                },
+                build(element, editor) {
+                    element.createChild("loader", {class: "loader"})
+                }
+            },
+            {
                 name: "files",
                 icon: "folder",
                 onClick(editor) {
+                    openFiles();
                 }
             },
             {
                 name: "new",
                 icon: "new-grid",
-                onClick(editor) {}
+                onClick(editor) {
+                    openNewEditor();
+                }
             }
         ]
     },
@@ -623,7 +641,7 @@ class GridTools extends SvgPlus {
         }
         this.dynamicTools = dynamicTools;
 
-        this.selectCategory(TOP_TOOLS[0].category);
+        this.selectCategory("content");
     }
 
     createDropDown(tool, buttonLocations) {
@@ -960,6 +978,7 @@ class OpenBoardEditor extends ShadowElement {
 
 	getLinkedBoard() {
 		setActiveKeyBindingSet("ob-finder");
+        this.finder.mode = "load";
 		this.finder.styles = {opacity: 1, "pointer-events": "all"};
 		this.finder.onSelect = (board) => {
 			this.finder.styles = {opacity: 0, "pointer-events": "none"};
@@ -981,6 +1000,22 @@ class OpenBoardEditor extends ShadowElement {
 			}
 		}
 	}
+
+    async getNewBoard() {
+        setActiveKeyBindingSet("ob-finder");
+		this.finder.styles = {opacity: 1, "pointer-events": "all"};
+        this.finder.mode = "save";
+
+        const boardID = await new Promise((resolve) => {
+            this.finder.onSelect = (boardID) => {
+                this.finder.styles = {opacity: 0, "pointer-events": "none"};
+                setActiveKeyBindingSet("ob-editor");
+                resolve(boardID);
+            }
+        });
+
+        return boardID;
+    }
 
     async assignFinderUser(user) {
         await this.finder.assignUser(user)

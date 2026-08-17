@@ -82,7 +82,6 @@ class DragableLocation extends SvgPlus {
     }
 }
 
-
 /********************************************************************************
  * FS Files Icons and Columns
  ********************************************************************************/
@@ -150,6 +149,8 @@ class FSColumn extends DragableLocation {
                             columnPath: path,
                             columnFiles: files,
                         });
+                        event.stopImmediatePropagation();
+                        event.preventDefault();
                     },
                     contextmenu: (event) => {
                         let inSelection = root.selection.some(sel => sel.same(f.path));
@@ -175,6 +176,12 @@ class FSColumn extends DragableLocation {
             if (this.onContextMenu(e, root, root.fs.stat(path))) {
                 e.preventDefault();
             }
+        });
+
+        this.addEventListener("click", e => {
+            root.select(path, {
+                event: e,
+            });
         });
 
         // let path = new Path([root.selected.parts[i]]);
