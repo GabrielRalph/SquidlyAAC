@@ -37,7 +37,7 @@ class Debugger {
     }
 
     logStart(mode, info, ...args) {
-        if (DEBUG) {
+        if (DEBUG && !this.disable) {
             console.groupCollapsed(`%c${this.name}: ${mode}`, this.style, info);
             if (args.length > 0) {
                 console.log(...args);
@@ -45,12 +45,18 @@ class Debugger {
         }
     }
 
+    logBasic(...args) {
+        if (DEBUG && !this.disable) {
+            console.log(`%c${this.name}:`, this.style, ...args);
+        }
+    }
+
     logEnd() {
-        console.groupEnd();
+        if (DEBUG && !this.disable) console.groupEnd();
     }
 
     log(mode, info, ...args) {
-        if (DEBUG) {
+        if (DEBUG && !this.disable) {
             this.logStart(mode, info);
             let error = new Error();
             let stack = error.stack.split("\n").slice(2).join("\n");
@@ -79,6 +85,9 @@ function isEqual(obj1, obj2) {
 
 function copy(obj) {
     if (obj && typeof obj === 'object') {
+        if (obj.clone instanceof Function || obj.copy instanceof Function) {
+            return obj.clone ? obj.clone() : obj.copy();
+        }
         const c = Array.isArray(obj) ? [] : {};
         for (let key in obj) {
             c[key] = copy(obj[key]);

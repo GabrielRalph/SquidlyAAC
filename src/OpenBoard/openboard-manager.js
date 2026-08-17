@@ -60,8 +60,6 @@ function relativeTo(base, path) {
     } else {
         let pathA = path.split("/").filter(s => s.length > 0);
         let baseA = base.split("/").filter(s => s.length > 0);
-        console.log("Path array:", pathA);
-        console.log("Base array:", baseA);
         let final = [];
         for (let i = 0; i < Math.min(pathA.length); i++) {
             if (pathA[i] !== baseA[i]) {

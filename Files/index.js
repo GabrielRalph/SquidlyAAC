@@ -40,14 +40,11 @@ export class AACFinder extends ShadowElement {
 		}
 	}
 
-	onconnect() {
-		console.log("AACFinder connected")
-	}
+	
 
     async assignUser(uid) {
 		this.uid = uid;
 		this.#fs = new OBFileSystem(uid)
-		console.log(this.#fs);
 		this.#loading = this.#fs.watch();
         await this.#loading;
         this.#loading = null;
@@ -90,7 +87,6 @@ addAuthChangeListener(async (user) => {
 	document.body.toggleAttribute("loaded", false);
 	document.body.toggleAttribute("user", user != null);
 	if (user) {
-		console.log("user:", user)
 		let uid = desiredUser || user.uid;
 		userSpan.textContent = uid == user.uid ? 
 			"Hey " + user.displayName + " - " + user.email :

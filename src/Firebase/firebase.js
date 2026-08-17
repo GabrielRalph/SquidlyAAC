@@ -287,10 +287,7 @@ export function storageRef(fileName){
 
 // Upload file to firebase storage bucket
 export async function uploadFileToCloud(file, path, statusCallback, metadata, getURL = true) {
-  console.log("uploading file of size", (file.size / 1e6) + "MB");
-
   if (!(file instanceof File) || typeof path !== 'string') {
-      console.log('invalid file');
       return null;
   }
 
@@ -317,8 +314,6 @@ export async function getFile(path) {
 
 export async function updateMetrics(uid) {
     let time = Date.now();
-    // console.log(`set  users/${uid}/metrics/lastSignInTime  =  ${time}`);
-    
     return await set(ref(`users/${uid}/metrics/lastSignInTime`), time);
 }
 

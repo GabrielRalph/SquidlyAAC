@@ -79,7 +79,6 @@ async function setupPreview(rootID, isDraft) {
         LAST_BOARD_ID = d;
         document.body.toggleAttribute("loaded", false);  
         if (isDraft) {
-            console.log("WATCHING BOARD", d)
             if (lastWatcher) {
                 lastWatcher.stop();
                 lastWatcher = null;
@@ -102,7 +101,6 @@ async function setupPreview(rootID, isDraft) {
         await setBoard(rootID);
     }
     window.addEventListener("message", async (event) => {
-        console.log("MESSAGE RECEIVED", event.data)
         if (event.data.type === "updateBoard") {
             await setBoard(event.data.id);
         }

@@ -2,7 +2,14 @@ import { FStore } from "./firebase.js";
 
 const { collection, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, where, limit, query, and, or, serverTimestamp } = FStore;
 
-console.log("FStore", FStore);
+/**
+ * Add a clone method to the Firestore Timestamp prototype 
+ * to create a new instance with the same 
+ * seconds and nanoseconds values.
+ */
+FStore.Timestamp.prototype.clone = function() {
+    return new FStore.Timestamp(this.seconds, this.nanoseconds);
+}
 
 const TimestampSymbol = Symbol("TimeStamp");
 
@@ -21,7 +28,7 @@ function replaceWithTimeStamp(obj) {
 /**
  * @typedef {string} DocumentID
  * @typedef {("added"|"modified"|"removed")} ChangeType
- * @typedef {[DocumentID, Object, ChangeType]} Change
+ * @typedef {[DocumentID, Object, ChangeType, Object]} Change
  */
 class FirestoreFrame {
     listenerTerminators = new Set()
@@ -92,7 +99,8 @@ class FirestoreFrame {
                     const data = docSnap.docChanges().map(change => [
                         change.doc.id,
                         change.doc.data(),
-                        change.type
+                        change.type,
+                        change
                     ])
                     callback(data);
                 } else {

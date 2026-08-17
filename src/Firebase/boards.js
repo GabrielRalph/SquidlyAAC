@@ -11,6 +11,7 @@ const BOARD_META_CACHE = {};
 const META = new FirestoreFrame("boards");
 const DRAFTS = new FirestoreFrame("draft-boards");
 const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
+debug.disable = true;
 class ServerTimestamp {
     constructor(value) {
         this.value = value;
@@ -186,7 +187,6 @@ async function downloadBoardSet(rootID) {
         let boards = await Promise.all(ids.map(async id => {
             manager.boards[id] = true;
             const board = await getBoard(id, Date.now())
-            console.log("downloaded board", id, board)
             manager.boards[id] = board
             let linkedBoards = board.linkedBoards.map(b => {
                 let id = b.data_url || b.id;
@@ -225,10 +225,11 @@ class BoardWatcher {
         }
         this.#id = id;
         this.callback = callback;
+        this.debugger = new Debugger(`BW-${id.slice(-5)}`, "background: black; color: orange; padding: 5px; border-radius: 5px;");
     }
 
     log(...args) {
-        console.log(`%cBW-[${this.id.slice(-5)}]`, "background: black; color: orange; padding: 5px; border-radius: 5px;", ...args);
+        this.debugger.logBasic(...args);
     }
 
     stop() {

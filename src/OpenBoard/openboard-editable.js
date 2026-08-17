@@ -346,7 +346,6 @@ class OBBoardEditable extends OBBoard {
                 for (let c = loc.colRange[0]; c <= loc.colRange[1]; c++) {
                     if (r !== loc.rowRange[0] || c !== loc.colRange[0]) {
                         let newButton = OBButtonEditable.makeEmptyButton();
-                        console.log("new button", newButton)
                         this.buttons.push(newButton);
                         this.grid.order[r][c] = newButton.id;
                     }
@@ -481,13 +480,11 @@ class OBBoardEditable extends OBBoard {
     }
 
     addImages(images) {
-        console.log("Adding images", images)
         for (let image of images) {
             if (!this.images.some(img => img.id === image.id)) {
                 this.images.push(OBImage.make(image));
             }
         }
-        console.log("Images after adding", this.images)
         this.cleanUpImages();
     }
 

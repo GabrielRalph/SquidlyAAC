@@ -120,17 +120,10 @@ window.addEventListener("keydown", e => {
             const keyCombo = getKeyCombo(e);
             if (keyCombo in bindings) {
                 bindings[keyCombo](...getParams(e));
-                // console.log(`Key binding "${keyCombo}" triggered in set "${ACTIVE_KEY_BINDING_SET}"`, bindings[keyCombo]);
                 e.preventDefault();
-            } else {
-                // console.log("BINDINGS: No key binding for", keyCombo, "in set", ACTIVE_KEY_BINDING_SET);
             }
-        } else {
-            // console.log("BINDINGS: No active key binding set.");
         }
-    } else {
-        // console.log("BINDINGS: Active element input.");
-    }
+    } 
 });
 
 export { registerKeyBindings, setActiveKeyBindingSet, getActiveElement, isTextInput, META_KEY };

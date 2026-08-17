@@ -118,7 +118,6 @@ export class BoardFinder extends ShadowElement {
 		this.#loading = this.#fs.watch();
         await this.#loading;
         this.#loading = null;
-        console.log("loaded fs", this.#fs)
 		this.fsUI.setRoot(this.#fs, "", "")
 	}
 	

@@ -29,7 +29,7 @@ class EditorSession {
                 this.boardWatcher.updateDraft(editor.board);
             }
         }
-        
+
         editor.clearChanges = () => {
             if (this.boardWatcher) {
                 editor.board = this.boardWatcher.board;
@@ -66,7 +66,7 @@ class EditorSession {
             const savedBoard = this.boardWatcher?.board;
             this.canSave = !editorBoard.same(savedBoard);
             this.canSaveDraft = !editorBoard.same(draftBoard);
-            console.log(`update status: canSave=${this.canSave}, canSaveDraft=${this.canSaveDraft}`)
+            // console.log(`update status: canSave=${this.canSave}, canSaveDraft=${this.canSaveDraft}`)
             this.editor.titleNote.innerHTML = this.canSave ? 
                 (this.canSaveDraft ? "*" : "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Draft Saved") : ""
             return !editorBoard.same(this.boardWatcher?.currentBoard) 
@@ -126,7 +126,6 @@ async function onUserChange(user) {
         console.log("User is not logged in. Please log in to access the editor.");
     }
     document.body.toggleAttribute("loaded", true);
-    console.log("Loaded");
 }
 
 FB.addAuthChangeListener(onUserChange);
