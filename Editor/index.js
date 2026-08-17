@@ -29,6 +29,13 @@ class EditorSession {
                 this.boardWatcher.updateDraft(editor.board);
             }
         }
+        
+        editor.clearChanges = () => {
+            if (this.boardWatcher) {
+                editor.board = this.boardWatcher.board;
+            }
+        }
+
         editor.save = async () => {
             if (this.boardWatcher && this.canSave) {
                 let promise = this.boardWatcher.save(editor.board);
