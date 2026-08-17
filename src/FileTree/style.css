@@ -228,6 +228,7 @@ fs-file > div {
     gap: 0.3em;
 }
 
+
 fs-i {
     display: inline-block;
     width: 1em;
@@ -282,4 +283,8 @@ i-circ {
     height: 0.4em;
     background: #61d33d;
     border-radius: 0.5em;
+}
+i-circ[name="public"] {
+    background: #61d33d;
+    border: 2px solid #2b900c;
 }

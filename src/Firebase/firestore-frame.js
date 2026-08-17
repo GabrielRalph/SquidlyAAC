@@ -1,15 +1,35 @@
 import { FStore } from "./firebase.js";
 
-const { collection, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, where, limit, query, and, or } = FStore;
+const { collection, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, where, limit, query, and, or, serverTimestamp } = FStore;
 
-console.log("FStore", FStore);
+/**
+ * Add a clone method to the Firestore Timestamp prototype 
+ * to create a new instance with the same 
+ * seconds and nanoseconds values.
+ */
+FStore.Timestamp.prototype.clone = function() {
+    return new FStore.Timestamp(this.seconds, this.nanoseconds);
+}
+
+const TimestampSymbol = Symbol("TimeStamp");
+
+function replaceWithTimeStamp(obj) {
+    if (obj && typeof obj === 'object') {
+        for (let key in obj) {
+            if (obj[key] === TimestampSymbol) {
+                obj[key] = serverTimestamp();
+            } else {
+                replaceWithTimeStamp(obj[key]);
+            }
+        }
+    }
+}
 
 /**
  * @typedef {string} DocumentID
  * @typedef {("added"|"modified"|"removed")} ChangeType
- * @typedef {[DocumentID, Object, ChangeType]} Change
+ * @typedef {[DocumentID, Object, ChangeType, Object]} Change
  */
-
 class FirestoreFrame {
     listenerTerminators = new Set()
     constructor(collectionName) {
@@ -79,7 +99,8 @@ class FirestoreFrame {
                     const data = docSnap.docChanges().map(change => [
                         change.doc.id,
                         change.doc.data(),
-                        change.type
+                        change.type,
+                        change
                     ])
                     callback(data);
                 } else {
@@ -143,11 +164,13 @@ class FirestoreFrame {
     }
 
     async set(id, data, options = { merge: false }) {
+        replaceWithTimeStamp(data);
         const docRef = this.doc(id);
         await setDoc(docRef, data, options);
     }
 
     async update(id, data) {
+        replaceWithTimeStamp(data);
         const docRef = this.doc(id);
         await updateDoc(docRef, data);
     }
@@ -169,10 +192,15 @@ class FirestoreFrame {
     async batchSet(sets, options = { merge: false }) {
         const batch = writeBatch();
         for (const [id, data] of Object.entries(sets)) {
+            replaceWithTimeStamp(data);
             const docRef = this.doc(id);
             batch.set(docRef, data, options);
         }
         await batch.commit();
+    }
+
+    static get TimestampSymbol() {
+        return TimestampSymbol
     }
 }
 

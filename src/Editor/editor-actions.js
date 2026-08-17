@@ -359,7 +359,6 @@ class MoveCursorAction extends Action {
      */
     constructor(actionsSimple, editor) {
         super("Move Cursor", "Moves the cursor in the selected direction.");
-		console.log("MOVE CURSOR ACTION", actionsSimple.moveCursor)
         let action = actionsSimple.moveCursor;
         let direction = action.direction || "left";
         this.on.checked = action.on;
@@ -468,7 +467,6 @@ class ActionsPanel extends SvgPlus {
 				update[actionInput.key] = value;
 			}
 		}
-		console.log("UPDATE ACTIONS SIMPLE", update)
 		this.editor.updateSelectionActionsSimple(update);
 	}
 }

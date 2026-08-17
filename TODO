@@ -6,16 +6,15 @@ EDITOR
     bugs: 
         - DONE: load_board broken
         - DONE: odd merge bug 
-
+        
         - upload image function is broken
-
         - Save causes old saved board to be drafted when two tabs open
 
 
     feature updates: 
         - DONE: save file loader
+        - DONE: more info with regards to actions 
 
-        - more info with regards to actions 
         - advanced hints similar ()
 
         - If search then close, keep search results until a label is edited
@@ -24,6 +23,7 @@ EDITOR
         - r,c input to set grid size
         - upload image auto resize 
         - text 2 speach preview
+        - print 
 
         - DONE: write action copy issue
         - DONE: actions add space
@@ -42,7 +42,7 @@ FINDER
 
     bugs:
         - updates from one tab don't properly propergate to another (try drag folder)
-        - can't name folder and grid the same thing*
+       
 
     feature updates:
         - DONE: Favorite root boards automatically
@@ -56,8 +56,8 @@ FINDER
         - Show message when permision is denied
 
     feature updates:
-        - DONE: text area to scroll into view
 
+        - DONE: text area to scroll into view
         - text 2 speach in preview
 
 

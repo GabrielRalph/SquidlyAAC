@@ -3,11 +3,29 @@ board-finder {
     grid-template-rows: 1fr auto;
 }
 
+board-finder:not([save-mode]) .finder-options input {
+    opacity: 0;
+    pointer-events: none;
+}
+
+board-finder[save-mode] .finder-options {
+    grid-template-columns: auto 1fr auto;
+}
+board-finder[save-mode] .finder-options input {
+    grid-area: 1 / 2;
+}
+board-finder[save-mode] .finder-options button.cancel {
+    grid-area: 1 / 1;
+}
+board-finder[save-mode] .finder-options button.select {
+    grid-area: 1 / 3;
+}
+
 .finder-options {
     padding: 0.5em;
     border-top: 1px solid var(--border-color);
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     gap: 0.5em;
 }
 

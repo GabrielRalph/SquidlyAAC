@@ -1,4 +1,3 @@
-import { OBFileSystem, OBFStat } from "../src/FileTree/OBFileSystem.js";
 import { OBFinder } from "../src/FileTree/OBFinder.js";
 import { OBLoadBoard } from "../src/OpenBoard/openboard.js";
 import { ShadowElement } from "../src/Utilities/utils.js";
@@ -7,9 +6,10 @@ import { LoginPage } from "../src/loginPage/login-page.js";
 import { openEditor } from "../src/shared.js";
 import { setActiveKeyBindingSet } from "../src/Utilities/keybindings.js";
 import { Icon } from "../src/Utilities/icons.js";
+import { OBFileSystem } from "../src/FileTree/OBFileSystem.js";
+
 
 LoginPage.define();
-setActiveKeyBindingSet("ob-finder");
 
 export class AACFinder extends ShadowElement {
 	/** @type {OBFileSystem} */
@@ -40,9 +40,7 @@ export class AACFinder extends ShadowElement {
 		}
 	}
 
-	onconnect() {
-		console.log("AACFinder connected")
-	}
+	
 
     async assignUser(uid) {
 		this.uid = uid;
@@ -82,11 +80,13 @@ const finder = document.querySelector("aac-finder");
 const userSpan = document.getElementById("user");
 const urlParams = new URLSearchParams(window.location.search);
 const desiredUser = urlParams.get("user");
+const loginPage = document.querySelector("login-page");
+
+setActiveKeyBindingSet("ob-finder");
 addAuthChangeListener(async (user) => { 
 	document.body.toggleAttribute("loaded", false);
 	document.body.toggleAttribute("user", user != null);
 	if (user) {
-		console.log("user:", user)
 		let uid = desiredUser || user.uid;
 		userSpan.textContent = uid == user.uid ? 
 			"Hey " + user.displayName + " - " + user.email :
@@ -95,10 +95,12 @@ addAuthChangeListener(async (user) => {
 			await finder.assignUser(uid);
 		}
 	} else {
+		loginPage.reset();
 		finder.removeUser();
 	}
 	await styleLoadPromise;
 	document.body.toggleAttribute("loaded", true);
 });
+
 initialise();
 window.signOut = signOut

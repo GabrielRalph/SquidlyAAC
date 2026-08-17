@@ -1,6 +1,9 @@
 import { InputPlus } from "./input-plus.js";
 import { ShadowElement, SvgPlus, delay} from "../Utilities/utils.js";
 import { addAuthChangeListener, callFunction, forceAuthStateChange, getUser, GoogleAuthProvider, linkWithCredential, OAuthProvider, signInWithCustomToken, signInWithPopup, signOut } from "../Firebase/firebase.js";
+import { Debugger } from "../shared.js";
+
+const DEBUG = new Debugger("login-page", "color: white; background: rgb(203, 14, 89); padding: 5px; border-radius: 5px;");
 
 const OTP_RESEND_INTERVAL = 120; // seconds
 const ForceSignInWithMicrosoftEmails = [
@@ -88,7 +91,7 @@ async function verifyOTP(email, otp) {
                 try {
                     await linkWithCredential(result.user, cred);
                 } catch (e) {
-                    console.log("Error linking credential: ", e);
+                    DEBUG.log("VerifyOTP", "Error linking credential", e);
                 }
             }
 
@@ -154,6 +157,7 @@ class TandC extends SvgPlus {
         this.content = `<a target="_blank" href ="https://policies.squidly.com.au/terms-of-use/" >Terms of Service</a> and <a target="_blank" href = "https://policies.squidly.com.au/privacy/" >Privacy Policy</a>.`
     }
 }
+
 class SignInContainer extends SvgPlus {
     constructor(root) {
         super("div");
@@ -208,7 +212,6 @@ class SignUpContainer extends SvgPlus {
             name: "firstName",
             type: "text",                        
             label: "First name",
-            icon: "person",
             autocomplete: "off",
             required: true
         }).build()
@@ -216,7 +219,6 @@ class SignUpContainer extends SvgPlus {
             name: "lastName",
             type: "text",
             label: "Last name",
-            icon: "person",
             autocomplete: "off",
             required: true
         }).build();    
@@ -380,16 +382,17 @@ class LoginPage extends ShadowElement {
             this.loading = false;
         }
     }
-
     
     async requestOTP(email = this.signIn.email.value) {
+        DEBUG.logStart("requestOTP", `Requesting OTP for email: ${email}`)
         if (isEmailFromDomains(email, ForceSignInWithMicrosoftEmails)) {
+            DEBUG.logBasic("Forcing sign in with Microsoft for email")
             await this.signInWithMicrosoft();
         } else {
             this.loading = true;
             this.overlayText = `Sending verification code`;
             let [isNewUser, error] = await requestOTP(email);
-            console.log(isNewUser, error)
+            DEBUG.logBasic(`Is new user: ${isNewUser}, error: ${error}`)
             if (isNewUser) {
                 this.mode = "signUp";
                 this.loading = false;
@@ -410,6 +413,7 @@ class LoginPage extends ShadowElement {
                 this.loading = false;
             }
         }
+        DEBUG.logEnd();
     } 
     
     async createAccountWithOTP() {
@@ -459,7 +463,7 @@ class LoginPage extends ShadowElement {
         let res;
         let userEmail;
         try {
-            console.log("Attempting to sign in with provider: ", pname)
+            DEBUG.log("Provider sign in", "Attempting to sign in with provider: ", pname)
             res = await signInWithPopup(p);
         } catch (error) {
             
@@ -509,14 +513,13 @@ class LoginPage extends ShadowElement {
         }
     }
 
-    
     async onEmailNeedsVerification({email}) {
-        console.log("Email needs verification for email: ", email)
+        DEBUG.logBasic("Email needs verification for email: ", email)
         if (isEmailFromDomains(email, ForceSignInWithMicrosoftEmails)) {
             this.loading = true;
-            console.log("Forcing email verification for email: ", email)
+            DEBUG.logBasic("Forcing email verification for email: ", email)
             let res = await forceEmailVerification(email);
-            console.log("force email verification result: ", res)
+            DEBUG.logBasic("force email verification result: ", res)
             if (res) {
                 this.showOverlayError(res, "verifying your email", "verify my email");
             } else {
@@ -527,6 +530,11 @@ class LoginPage extends ShadowElement {
             this.email = email;
             await this.requestOTP(email);
         }
+    }
+
+
+    reset() {
+        this.mode = "signIn";
     }
 
     static get usedStyleSheets() {

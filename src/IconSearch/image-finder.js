@@ -278,7 +278,6 @@ class Searcher extends SvgPlus {
             }
         })
         addMyIconCountWatcher((count) => {
-            console.log("My Icon Count", count);
             this.toggleAttribute("has-my-icons", count > 0);
         })
         this.main = this.createChild(ImageGrid);
@@ -291,7 +290,6 @@ class Searcher extends SvgPlus {
 
     async initialiseTop() {
         let myIcons = await getNumberOfOwnedImages();
-        console.log("My Icons", myIcons);
     }
 
     async search(text) {
@@ -303,7 +301,6 @@ class Searcher extends SvgPlus {
             const tprom = textSearch(text, this.isPublic);
             const sprom = semanticSearch(text, this.isPublic);
             let images = await tprom;
-            console.log("Search results", images.length, "images found for query:", text);
             this.main.images = images;
             let semanticImages = await sprom;
             images = uniqueImages(images.concat(semanticImages));

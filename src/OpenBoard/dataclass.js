@@ -1,13 +1,4 @@
-
-/**
- * @typedef {[number, number]} Range
- * 
- * 
- * @typedef {Object} LocationInfo
- * @property {Range} rowRange the starting and ending row
- * @property {Range} colRange the starting and ending column
- * @property {string} buttonID the button id for which the location is held.
- */
+import { isEqual } from "../shared.js";
 
 async function loadFile(url, type = "text", onprogress = () => {}) {
     if (!(onprogress instanceof Function)) {
@@ -38,32 +29,10 @@ async function loadFile(url, type = "text", onprogress = () => {}) {
     });
 }
 
-
-
-
 function array2D(rows, columns, fillValue = null) {
     let func = fillValue instanceof Function ? fillValue : () => fillValue;
     const order = Array.from({length: rows}, (_, r) => Array.from({length: columns}, (_, c) => fillValue(r, c)));
     return order;
-}
-
-
-function deepCompare(obj1, obj2) {
-    if (typeof obj1 !== typeof obj2) {
-        return false;
-    }
-    if (obj1 && obj2 && typeof obj1 === 'object') {
-        const keys1 = Object.keys(obj1);
-        const keys2 = Object.keys(obj2);
-        if (keys1.length !== keys2.length) {
-            return false;
-        }
-        for (let key of keys1) {
-            if (!deepCompare(obj1[key], obj2[key])) return false;
-        }
-        return true;
-    }
-    return obj1 === obj2;
 }
 
 function findFirstDifference(obj1, obj2, path = "") {
@@ -145,14 +114,13 @@ class DataClass {
             if (!(value instanceof Function)) {
                 let defaultValue = DataClass.toJSON(blank[key]);
                 value = DataClass.toJSON(value);
-                if (defaultValue === undefined || !deepCompare(value, defaultValue)) {
+                if (defaultValue === undefined || !isEqual(value, defaultValue)) {
                     json[key] = value;
                 }
             }
         }
         return json;
     }
-
 
     static toJSON(object) {
         if (object instanceof DataClass) {
@@ -175,7 +143,7 @@ class DataClass {
     }
 
     same(other) {
-        return deepCompare(this, other);
+        return isEqual(this, other);
     }
 
     diff(other) {
@@ -184,4 +152,4 @@ class DataClass {
 }
 
 
-export { DataClass, loadFile, array2D, deepCompare, findFirstDifference };
+export { DataClass, loadFile, array2D, findFirstDifference };

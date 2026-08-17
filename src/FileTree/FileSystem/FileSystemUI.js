@@ -1,11 +1,24 @@
 import { SvgPlus } from "../../Utilities/utils.js";
 import { ContextMenu } from "../../ContextMenu/context-menu.js";
-import { FileSystem, FStats } from "./FileSystem.js";
-import { Path, PATH_SEPERATOR } from "./path.js";
+import { Path, PATH_SEPERATOR } from "./Path.js";
 
-const DRAG_STATE = {
+/**
+ * @typedef {import("./FileSystemInterface.js").FileSystemInterface} FileSystemInterface
+ */
+
+const DEFAULT_PROMT_OPTIONS = {
+    message: "",
+    defaultValue: "", 
+    yesValue: "Rename", 
+    noValue: "Cancel",
+    validator: () => true
 }
 
+/********************************************************************************
+ * Drag Methods
+ ********************************************************************************/
+
+const DRAG_STATE = { }
 
 function startDrag(e, fstats, root) {
     fstats = Array.isArray(fstats) ? fstats : [fstats];
@@ -26,7 +39,6 @@ function endDrag(e, fstat) {
 function getDraggedFiles() {
     return DRAG_STATE.draggedFiles || [];
 }
-
 
 class DragableLocation extends SvgPlus {
     addDragListeners(onDrop, thisPath){
@@ -71,10 +83,14 @@ class DragableLocation extends SvgPlus {
 }
 
 
-export class FSFileIcon extends DragableLocation {
+/********************************************************************************
+ * FS Files Icons and Columns
+ ********************************************************************************/
+
+class FSFileIcon extends DragableLocation {
     /**
      * @param {FStats} fstat
-     * @param {FileSystemUI} root
+     * @param {FileSystemUIClass} root
      */
     constructor(fstat, root) {
         super("fs-file");
@@ -103,39 +119,33 @@ export class FSFileIcon extends DragableLocation {
         this.addEventListener("dragend", e =>  endDrag(e, fstat));
 
         if (root.fs.isDirectory(fstat.path)) {
-            this.addDragListeners(root.moveMany.bind(root), fstat.path);
+            this.addDragListeners(root.moveMultiple.bind(root), fstat.path);
         }
     }
 
     onDoubleClick(e, root, fstat) {
-        root.promtRename(fstat.path);
     }
 
     onContextMenu(e, root) {}
 }
 
-export class FSColumn extends DragableLocation {
+class FSColumn extends DragableLocation {
     /**
      * @param {Path} path
      * @param {FStats[]} files
-     * @param {FileSystemUI} root
+     * @param {FileSystemUIClass} root
      * @param {string} name
      */
     constructor(path, files, root, name, i) {
         super("fs-column");
         this.setAttribute("data-column-path", path.toString());
         const div = this.createChild("div"); 
-        files.sort((a, b) => {
-            if (a.isDirectory && !b.isDirectory) return -1;
-            if (!a.isDirectory && b.isDirectory) return 1;
-            return a.path.name.localeCompare(b.path.name);
-        });
 
         files.forEach(f => {
             let fsf = div.createChild(root.fileIconClass, {
                 events: {
                     click: (event) => {
-                        root.select(f, {
+                        root.select(f.path, {
                             event,
                             columnPath: path,
                             columnFiles: files,
@@ -144,7 +154,7 @@ export class FSColumn extends DragableLocation {
                     contextmenu: (event) => {
                         let inSelection = root.selection.some(sel => sel.same(f.path));
                         if (!inSelection) {
-                            root.select(f, {
+                            root.select(f.path, {
                                 event,
                                 columnPath: path,
                                 columnFiles: files,
@@ -168,27 +178,25 @@ export class FSColumn extends DragableLocation {
         });
 
         // let path = new Path([root.selected.parts[i]]);
-        this.addDragListeners(root.moveMany.bind(root), path);
+        this.addDragListeners(root.moveMultiple.bind(root), path);
     }
 
     onContextMenu(e, root) {}
 }
 
+/********************************************************************************
+ * File System UI
+ ********************************************************************************/
 
-const DEFAULT_PROMT_OPTIONS = {
-    message: "",
-    defaultValue: "", 
-    yesValue: "Rename", 
-    noValue: "Cancel",
-    validator: () => true
-}
-
-export class FileSystemUI extends SvgPlus {
+class FileSystemUI extends SvgPlus {
     #selected = new Path("");
     #selection = [];
     #selectionDir = new Path("");
     #selectionAnchor = null;
     #columnScrollTops = new Map();
+
+    /** @type {FileSystemInterface} */
+    fs = null;
 
     
     constructor(fileIconClass, fileDisplayClass, columnClass) {
@@ -277,7 +285,6 @@ export class FileSystemUI extends SvgPlus {
             input.select();
         }, 10);
         let promise = new Promise((resolve, reject) => {
-
             let lastValidity = null;
             let updateValidity = () => {
                 let isValid = validator(input.value);
@@ -323,6 +330,8 @@ export class FileSystemUI extends SvgPlus {
             input.addEventListener("input", e => {
                 updateValidity();
             })
+
+            updateValidity();
         })
 
         this.popup.toggleAttribute("hidden", false);
@@ -331,150 +340,102 @@ export class FileSystemUI extends SvgPlus {
         return result;
     }
 
-
     /**
      * @param {FileSystem}  fs the file system to set as the root
      * @param {string|Path} path the path to set as the root
      * */
-    setRoot(fs, path, rootName) {
+    setRoot(fs, rootName) {
         this.fs = fs;
-        this.rootName = rootName || "Root";
-        this.root = path instanceof Path ? path : new Path(path);
-        this.fs._onUpdate = () => this.render();
+        this.rootName = rootName || "My Files";
+        this.fs.addOnUpdateCallback(this.render.bind(this));
         this.render();
-
-    }
-
-    async promtRename(path) {
-        path = path instanceof Path ? path : new Path(path);
-        let newName = await this.prompt({
-            message:`Rename ${path.name} to:`,
-            defaultValue: path.name,
-            validator: (value) => value.indexOf(PATH_SEPERATOR) !== -1 ? `Name cannot contain “${PATH_SEPERATOR}”` : true
-        });
-        if (newName && newName !== path.name) {
-            await this.rename(path, newName);
-        }
-    }
-
-
-    async delete(path) {
-        path = path instanceof Path ? path : new Path(path);
-        const change = this.fs.getDeleteExecuter(path)
-        if (change.changed) {
-            await change.execute();
-            this.#setSingleSelection(change.newPath);
-            this.render();
-        }
-    }
-
-
-    async newFolder(path) {
-        path = path instanceof Path ? path : new Path(path);
-        let newName = await this.prompt({
-            message: `New folder name:`,
-            defaultValue: "New Folder",
-            validator: (value) => value.indexOf(PATH_SEPERATOR) !== -1 ? `Name cannot contain “${PATH_SEPERATOR}”` : true,
-            yesValue: "Create",
-            noValue: "Cancel"
-        });
-        if (newName) {
-            let newPath = path.join(newName);
-
-            const result = this.fs.getAddDirectoryExecuter(newPath);
-            if (result.conflict) {
-                this.confirm(`An item named “${newName}” already exists in this location!`, [["Stop", false]])
-            } else {
-                result.execute();
-                this.render();
-            }
-        }
     }
 
     async rename(path, newName) {
-        const results = this.fs.getRenameExecuter(path, newName);
-        if (results.changed) {
-            if (results.error) {
-                console.error(results.error);
-            } else if (results.conflict) {
-                if (await this.confirm(`An item named “${newName}” already exists in this location. Do you want to replace it with the one you’re renaming?`)) {
-                    results.execute();
+        path = Path.parse(path);
+        if (!newName || typeof newName !== "string" || newName.trim() === "") {
+            newName = await this.prompt({
+                message: `Enter a new name for “${path.name}”:`,
+                defaultValue: path.name,
+                yesValue: "Rename",
+                noValue: "Cancel",
+                validator: (value) => {
+                    if (!value || value.trim() === "") {
+                        return "Name cannot be empty";
+                    }
+                    if (value.includes(PATH_SEPERATOR)) {
+                        return `Name cannot contain the character “${PATH_SEPERATOR}”`;
+                    }
+                    return true;
                 }
-            } else {
-                results.execute();
-            }
+            });
         }
 
-        if (results.executed) {
-            this.#setSingleSelection(results.newPath);
-            this.render();
+        const newPath = path.parent.join(newName);
+        
+        let confirmed = true;
+        if (this.fs.exists(newPath)) {
+            confirmed = await this.confirm(
+                `An item named “${newName}” already exists in this location. Do you want to replace it with the one you’re renaming?`,
+                [["Stop", false], ["Replace", true]]
+            );
         }
+        if (confirmed) {
+            if (this.fs.rename(path, newName)) {
+                this.#setSingleSelection(newPath);
+            }
+        }
+    }
+
+    async _checkMoveConflict(fromPath, toPath) {
+        fromPath = Path.parse(fromPath);
+        toPath = Path.parse(toPath);
+        const newPath = toPath.join(fromPath.name);
+        let confirmed = true;
+         if (this.fs.exists(newPath)) {
+            confirmed = await this.confirm(
+                `An item named “${fromPath.name}” already exists in this location. Do you want to replace it with the one you’re moving?`,
+                [["Stop", false], ["Replace", true]]
+            )
+        }
+
+        return [confirmed, newPath];
     }
 
     async move(fromPath, toPath) {
-        fromPath = fromPath instanceof Path ? fromPath : new Path(fromPath);
-        const result = this.fs.getMoveExecuter(fromPath, toPath);
-        if (result.changed) {
-            let execute = false;
-            if (result.error) {
-                console.error(result.error);
-            } else if (result.conflict) {
-                if (await this.confirm(`An item named “${fromPath.name}” already exists in this location. Do you want to replace it with the one you’re moving?`)) {
-                    result.execute();
+        if (!this.fs) return;
+        if (this.fs.isDirectory(toPath)) {
+            const [confirmed, newPath] = await this._checkMoveConflict(fromPath, toPath);
+            if (confirmed) {
+                if (this.fs.move(fromPath, toPath)) {
+                    this.#setSingleSelection(newPath);
                 }
-            } else {
-                result.execute();
             }
-        }
-
-        if (result.executed) {
-            this.#setSingleSelection(result.newPath);
-            this.render();
         }
     }
 
-    async moveMany(fromPaths, toPath) {
-        toPath = toPath instanceof Path ? toPath : new Path(toPath);
-        fromPaths = Array.isArray(fromPaths) ? fromPaths : [fromPaths];
+    async moveMultiple(fromPaths, toPath) {
+        if (!this.fs) return;
+        fromPaths = fromPaths.map(path => Path.parse(path)).filter(Boolean);
+        toPath = Path.parse(toPath);    
 
-        const uniquePaths = [];
-        const seen = new Set();
-        for (let fromPath of fromPaths) {
-            fromPath = fromPath instanceof Path ? fromPath : new Path(fromPath);
-            const key = fromPath.toString();
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniquePaths.push(fromPath);
-            }
-        }
-
-        const movedPaths = [];
-        for (const fromPath of uniquePaths) {
-            const result = this.fs.getMoveExecuter(fromPath, toPath);
-            if (result.changed) {
-                if (result.error) {
-                    console.error(result.error);
-                } else if (result.conflict) {
-                    if (await this.confirm(`An item named “${fromPath.name}” already exists in this location. Do you want to replace it with the one you’re moving?`)) {
-                        await result.execute();
-                    }
-                } else {
-                    await result.execute();
+        if (this.fs.isDirectory(toPath)) {
+            let movePaths = []
+            for (let fromPath of fromPaths) {
+                const [confirmed, newPath] = await this._checkMoveConflict(fromPath, toPath);
+                if (confirmed) {
+                    movePaths.push([fromPath, newPath]);
                 }
             }
-
-            if (result.executed) {
-                movedPaths.push(result.newPath);
+            if (this.fs.moveMultiple(movePaths.map(([from, to]) => from), toPath)) {
+                movePaths = movePaths.map(([from, to]) => to);
+                this.#selected = movePaths[movePaths.length - 1]
+                this.#selection = movePaths;
+                this.#selectionDir = toPath;
+                this.#selectionAnchor = this.#selected;
             }
         }
 
-        if (movedPaths.length > 0) {
-            this.#selected = movedPaths[movedPaths.length - 1];
-            this.#selection = movedPaths;
-            this.#selectionDir = toPath;
-            this.#selectionAnchor = this.#selected;
-            this.render();
-        }
     }
 
     addContextMenu(items, e) {
@@ -546,14 +507,12 @@ export class FileSystemUI extends SvgPlus {
     }
 
     #render() {
-        
         this.#captureColumnScrolls();
         this.main.innerHTML = "";
         this.head.titleEl.innerHTML = "";
         if (!this.fs) return;
         const Column = this.columnClass;
-        let fileList = this.fs.readdir(this.root);
-
+        let fileList = this.fs.readdir("");
         this.#normalizeSelection();
 
         let selectedFile = this.fs.stat(this.selected);
@@ -561,32 +520,33 @@ export class FileSystemUI extends SvgPlus {
             this.#selected = this.#selection[0] || new Path("");
             selectedFile = this.fs.stat(this.selected);
         } 
-        let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " ➤ " + this.selected.name;
+
+        
+        let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " / " + this.selected.name;
         headerName ||= this.rootName;
         this.head.titleEl.createChild("span", {content: headerName});
 
         let parts = this.selected.parts;
         let pslice = ["", ...parts];
         const n = pslice.length;
-        this.main.styles = {"--n": n};
+        let nAdjusted = 0;
         for (let i = 0; i < n; i++) {
             let path = new Path(pslice.slice(0, i+1));
             const stat = this.fs.stat(path);
-            if (stat.isDirectory) {
-                let files = this.fs.readdir(path);
+            const files = this.fs.readdir(path);
+            if (files.length > 0) {
                 let name = parts[i];
                 let nameIndex = n - i - 2;
                 const column = this.main.createChild(Column, {}, path, files, this, name, nameIndex);
                 this.#restoreColumnScroll(path, column);
+                nAdjusted++;
             }
-
             if (i === n - 1) {
                 this.main.createChild(this.fileDisplayClass, {}, stat, this);
             }
         }
-        // window.requestAnimationFrame(() => {
-            this.main.parentNode.scrollLeft = this.main.scrollWidth;
-        // });
+        this.main.styles = {"--n": nAdjusted};
+        this.main.parentNode.scrollLeft = this.main.scrollWidth;
         this.#ensurePrimarySelectionVisible();
     }
 
@@ -727,10 +687,10 @@ export class FileSystemUI extends SvgPlus {
         return !this.#isSameSelectionState(before, this.#getSelectionState());
     }
 
-    select(path, options = {}) {
-        path = path instanceof FStats ? path.path : path;
-        path = path instanceof Path ? path : new Path(path);
 
+    select(path, options = {}) {
+        path = Path.parse(path);
+       
         const event = options.event || null;
         const columnPath = options.columnPath instanceof Path
             ? options.columnPath
@@ -763,3 +723,5 @@ export class FileSystemUI extends SvgPlus {
         ]
     }
 }
+
+export { FileSystemUI, FSFileIcon, FSColumn };

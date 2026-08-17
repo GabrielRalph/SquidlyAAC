@@ -9,10 +9,6 @@ import { Icon } from "../Utilities/icons.js";
 import { BoardFinder } from "./editor-finder.js";
 import { META_KEY, registerKeyBindings, setActiveKeyBindingSet } from "../Utilities/keybindings.js";
 
-const DEBUG = (...args) => {
-    console.log("%cOBEdit", "background: #334; font-weight: bold; color: rgb(255, 127, 76);", ...args)
-}
-
 
 // Editor -----------
 function hideIfNoSelection({selection}) {
@@ -56,6 +52,23 @@ function toLabel(name, joiner = "\n") {
 }
 
 const TOP_TOOLS = [
+    {
+        category: "file",
+        binding: "f",
+        tools: [
+            {
+                name: "files",
+                icon: "folder",
+                onClick(editor) {
+                }
+            },
+            {
+                name: "new",
+                icon: "new-grid",
+                onClick(editor) {}
+            }
+        ]
+    },
     {
         category: "content",
         binding: "c",
@@ -924,7 +937,6 @@ class OpenBoardEditor extends ShadowElement {
      * @param {string} image - The URL of the image to set for the selected buttons.
      */
     setButtonImages(image) {
-        DEBUG("SET BUTTON IMAGES", image);
         if (this.selection.length > 0) {
             for (let buttonID of this.selection) {
                 this.#board.setButtonImage(buttonID, image);
