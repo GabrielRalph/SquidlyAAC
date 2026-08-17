@@ -1,5 +1,14 @@
 import * as FB from "../src/Firebase/firebase.js";
 
+/**
+ * User states
+ * 
+ *  allowed: User && isUserEditor
+ *      User:           true  |  false
+ *      isUserEditor:   true  |  false
+ * 
+ *  IsBoard:        true  |  false
+ */
 
 let userLoadedPromise = FB.initialise();
 
@@ -113,12 +122,12 @@ async function onUserChange(user) {
     if (user) {
         const query = new URLSearchParams(window.location.search);
         const boardID = query.get("board");
-        const uid = query.get("user") || user.uid;
+        const uid = query.get("user") || (user?.uid ?? null); 
 
-
+        
         await Promise.all([ 
             boardID && session.watchBoard(boardID), 
-            session.editor.assignFinderUser(uid),
+            uid && session.editor.assignFinderUser(uid),
             styleSheetsLoader
         ]);
     } else {
