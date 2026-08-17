@@ -1,5 +1,15 @@
 import { DataClass, array2D } from "./dataclass.js";
 
+/**
+ * @typedef {[number, number]} Range
+ * 
+ * 
+ * @typedef {Object} LocationInfo
+ * @property {Range} rowRange the starting and ending row
+ * @property {Range} colRange the starting and ending column
+ * @property {string} buttonID the button id for which the location is held.
+ */
+
 class OpenBoardObject extends DataClass {
     /** @type {string} */
     id; 

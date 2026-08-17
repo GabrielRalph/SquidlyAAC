@@ -13,8 +13,15 @@ import { OBFStats } from "./OBFileSystem.js";
  */
 
 class OBFSColumn extends FSColumn {
-    constructor(...args) {
-        super(...args);
+    constructor(path, files, ...args) {
+        files.sort((a, b) => {
+            if (a.isDirectory && !b.isDirectory) return -1;
+            if (!a.isDirectory && b.isDirectory) return 1;
+            if (a.hasChildren && !b.hasChildren) return -1;
+            if (!a.hasChildren && b.hasChildren) return 1;
+            return a.path.name.localeCompare(b.path.name);
+        });
+        super(path, files, ...args);
     }
 
     onContextMenu(event, root, fstat) {
@@ -82,10 +89,14 @@ class OBFileIcon extends FSFileIcon {
         super(fstat, root);
         this.file = fstat;
         let iconArea = this.createChild("div");
-        if (fstat.isPublic && !fstat.isFavourite) {
-            iconArea.createChild("i-circ", {"name": "Public"});
-        } else if (fstat.isPublic || fstat.isFavourite) {
-            iconArea.createChild("fs-i", {[fstat.isPublic ? "favourite-public" : "favourite"]: ""});
+
+        
+        let icon = [
+            fstat.favourite ? "favourite" : "",
+            fstat.isPublic ? (fstat.public ? "public" : "effective-public") : ""
+        ].filter(Boolean).join("-");
+        if (icon) {
+            iconArea.createChild("fs-i", {[icon]: true});
         }
 
         switch (fstat.mode) {
@@ -119,7 +130,7 @@ class OBFileIcon extends FSFileIcon {
                 },
                 "seperator",
                 ...(fstat.isBoard ? [
-                    fstat.isFavourite ?  {
+                    fstat.favourite ?  {
                         label: "Unfavourite",
                         icon: "<i-c not-favourite></i-c>",
                         action: () => {root.toggleFavourite(fstat.path, false)},
@@ -137,7 +148,7 @@ class OBFileIcon extends FSFileIcon {
                         binding: "P"
                     } : {
                         label: "Make Public",
-                        icon: "<i-c favourite-public></i-c>",
+                        icon: "<i-c public></i-c>",
                         action: () => {root.togglePublic(fstat.path, true)},
                         binding: "P"
                     },
@@ -158,7 +169,9 @@ class OBFileIcon extends FSFileIcon {
                     label: "Delete",
                     icon: "<i-bw trash></i-bw>",
                     binding: "<i-bw delete-key></i-bw>",
-                    action: () => root.delete(fstat.path)
+                    action: () => {
+                        root.deleteFromSelection(fstat.path);
+                    }
                 },
                 {
                     label: "Rename",
@@ -166,6 +179,7 @@ class OBFileIcon extends FSFileIcon {
                     binding: "⌘R",
                     action: () => root.rename(fstat.path)
                 },
+
                 ...(fstat.isBoard ? [
                     "seperator",
                     {
@@ -257,6 +271,11 @@ export class OBFinder extends FileSystemUI {
                 this.fs.togglePublic(this.selection);
             }
         },
+        "Backspace": e => {
+            if (this.fs && this.selection.length > 0) {
+                this.delete(this.selection);
+            }
+        },
         "Meta+r": e => {
             if (this.fs && this.isSingleSelection && this.selected) {
                 this.rename(this.selected);
@@ -264,7 +283,6 @@ export class OBFinder extends FileSystemUI {
             }
         },
         "Meta+z": e => {
-            console.log("Undo");
             if (this.fs) {
                 this.fs.undo();
             }
@@ -287,7 +305,7 @@ export class OBFinder extends FileSystemUI {
         if (newName === null) {
             let name = await this.prompt({
                 message: "Enter a name for the new board:",
-                placeholder: "New Board",
+                defaultValue: "New Board",
                 validator: (name) => {
                     if (!name) return "Name cannot be empty";
                     if (name.includes(PATH_SEPERATOR)) return `Name cannot contain "${PATH_SEPERATOR}"`;
@@ -336,7 +354,6 @@ export class OBFinder extends FileSystemUI {
         let id = null;
         if (newName) {
             const newPath = path.join(newName);
-            console.log("Creating new folder at path:", newPath.toString(), this.fs.exists(newPath));
             if (!this.fs.exists(newPath)) {
                 id = this.fs.newFolder(newPath);
                 if (id) {
@@ -347,23 +364,40 @@ export class OBFinder extends FileSystemUI {
         return id;
     }
 
-    async delete(path) {
+
+    async deleteFromSelection(path) {
+        path = Path.parse(path).toString();
+
+        let paths = []
+        let selection = new Set(this.selection.map(p => p.toString()));
+        if (selection.has(path)) {
+            paths = [...selection];
+        } else {
+            paths = [path];
+        }
+
+        await this.delete(paths);
+    }
+
+    async delete(paths) {
         if (!this.fs) return;
-        path = Path.parse(path);
-        let files = this.fs.readdir(path, true, true);
+        if (!Array.isArray(paths)) paths = [paths];
+        if (paths.length === 0) return;
+        paths = paths.map(p => Path.parse(p));
+        let files = paths.flatMap(p => this.fs.readdir(p, true, true));
+
         let includesBoards = files.some(f => f.isBoard);
         let confirm = true;
         if (includesBoards) {
             confirm = await this.confirm(
-                `Are you sure you want to delete "${path.name}"?`,
+                `Are you sure you want to delete ${paths.map(p => `<b>${p.name}</b>`).join(", ")}?`,
                 [["Cancel", false], ["Delete", true]]
             )
         }
 
         if (confirm) {
-            if (this.fs.delete(path)) {
-                console.log("Deleted", path.toString());
-                this.select(path.parent);
+            if (this.fs.deleteMultiple(paths)) {
+                this.select(paths[0].parent);
             }
         }
     }

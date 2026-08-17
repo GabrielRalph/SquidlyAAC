@@ -82,10 +82,10 @@ class DragableLocation extends SvgPlus {
     }
 }
 
+
 /********************************************************************************
  * FS Files Icons and Columns
  ********************************************************************************/
-
 
 class FSFileIcon extends DragableLocation {
     /**
@@ -129,7 +129,6 @@ class FSFileIcon extends DragableLocation {
     onContextMenu(e, root) {}
 }
 
-
 class FSColumn extends DragableLocation {
     /**
      * @param {Path} path
@@ -141,11 +140,6 @@ class FSColumn extends DragableLocation {
         super("fs-column");
         this.setAttribute("data-column-path", path.toString());
         const div = this.createChild("div"); 
-        files.sort((a, b) => {
-            if (a.isDirectory && !b.isDirectory) return -1;
-            if (!a.isDirectory && b.isDirectory) return 1;
-            return a.path.name.localeCompare(b.path.name);
-        });
 
         files.forEach(f => {
             let fsf = div.createChild(root.fileIconClass, {
@@ -193,7 +187,6 @@ class FSColumn extends DragableLocation {
 /********************************************************************************
  * File System UI
  ********************************************************************************/
-
 
 class FileSystemUI extends SvgPlus {
     #selected = new Path("");
@@ -353,7 +346,7 @@ class FileSystemUI extends SvgPlus {
      * */
     setRoot(fs, rootName) {
         this.fs = fs;
-        this.rootName = rootName || "Boot";
+        this.rootName = rootName || "My Files";
         this.fs.addOnUpdateCallback(this.render.bind(this));
         this.render();
     }
@@ -527,8 +520,9 @@ class FileSystemUI extends SvgPlus {
             this.#selected = this.#selection[0] || new Path("");
             selectedFile = this.fs.stat(this.selected);
         } 
-        selectedFile = selectedFile || {path: "", isDirectory: true};
-        let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " ➤ " + this.selected.name;
+
+        
+        let headerName = selectedFile.isDirectory ? this.selected.name : this.selected.parent.name + " / " + this.selected.name;
         headerName ||= this.rootName;
         this.head.titleEl.createChild("span", {content: headerName});
 

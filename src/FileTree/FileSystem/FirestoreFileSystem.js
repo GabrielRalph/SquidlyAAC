@@ -5,6 +5,7 @@ import { FileSystemInterface } from "./FileSystemInterface.js";
 import { Path } from "./Path.js";
 import { PathNode } from "./PathNode.js";
 
+
 const DEBUG = new Debugger(
     "FSFS",
     "color: #c53e0d; border: 2px solid #c53e0d; border-radius: 5px;"
@@ -54,13 +55,14 @@ class FirestoreFileSystem extends FileSystemInterface {
     }
 
     isDeletedValue(value) {
-        return !value || value.deletedAt && typeof value.deletedAt === "object"
+        return !value || !(value.deletedAt === undefined || value.deletedAt === false || value.deletedAt === null);
     }
 
     assignDeletedValue(object) {
         if (object) {
             object.deletedAt = FirestoreFrame.TimestampSymbol;
         }
+        return object;
     }
 
     getUniquePath(value, id) {
@@ -102,11 +104,7 @@ class FirestoreFileSystem extends FileSystemInterface {
             this._dataByID[id] = copy(value);
         } else {
             if (id in this._dataByID) {
-                if (hardDelete) {
-                    delete this._dataByID[id];
-                } else {
-                    this.assignDeletedValue(this._dataByID[id]);
-                }
+                this.assignDeletedValue(this._dataByID[id]);
             } else {
                 set = false;
             }
@@ -117,50 +115,21 @@ class FirestoreFileSystem extends FileSystemInterface {
     _updateFileByID(id, value, hardDelete = false) {
         DEBUG.logStart("Updating file by ID", `\nid: ${id}, \nvalue: ${JSON.stringify(value)}, \nhardDelete: ${hardDelete}`);
         let updated = true;
-        if (value) {
+        if (value && typeof value === "object") {
             if (id in this._dataByID) {
-                console.log("updating")
                 this._dataByID[id] = updateObject(
                     this._dataByID[id], value
                 );
-                console.log("updated", this._dataByID[id])
             } else {
-                console.log("setting")
                 this._dataByID[id] = value;
             }
         } else if (id in this._dataByID) {
-            if (hardDelete) {
-                console.log("hard deleting")
-                delete this._dataByID[id];
-            } else {
-                console.log("soft deleting")
-                this.assignDeletedValue(this._dataByID[id]);
-            }
+            this.assignDeletedValue(this._dataByID[id]);
         } else {
-            console.log("not found, not updating")
             updated = false;
         }
         DEBUG.logEnd();
         return updated;
-    }
-
-    _buildFileSystem() {
-        this._dataAsFS = new PathNode();
-        this._correctedPaths = {};
-        for (let id in this._dataByID) {
-            const value = this._dataByID[id];
-            let validPath = value && value.path 
-                            && typeof value.path === "string" 
-                            && value.path.length > 0;
-
-            if (validPath) {
-                const path = this.getUniquePath(value, id);
-                this._correctedPaths[id] = path;
-                this._dataAsFS.set(path, id);
-            }
-        }
-        DEBUG.log("Built file system with", Object.keys(this._dataByID).length, "files and directories.");
-        this.run("onAfterBuildFileSystem", this._dataAsFS);
     }
 
     _setFileByPath(path, value) {
@@ -212,18 +181,20 @@ class FirestoreFileSystem extends FileSystemInterface {
 
     syncFromDatabase(changes) {
         let changed = false;
-        for (let [id, doc, type] of changes) {
+        changes = changes.filter(change => !(change[3]?.doc?.metadata?.hasPendingWrites??false));
+        for (let [id, doc, type, change] of changes) {
             if (type === "removed") {
                 doc = null;
             }
             let oldDoc = this._dataByID[id];
             oldDoc = this.isDeletedValue(oldDoc) ? null : oldDoc;
+
             changed ||= !isEqual(oldDoc, doc);
             this._dataByID[id] = doc;
             this._lastSyncedDataByID[id] = copy(doc);
         }
-
         if (changed) {
+            DEBUG.log("Synced from database with", Object.keys(changes).length + " changes.", changes);
             this.run("onAfterSync", changes);
             this._buildFileSystem();
             this.commitHistory();
@@ -233,16 +204,63 @@ class FirestoreFileSystem extends FileSystemInterface {
 
     _syncToDatabase() {
         let changes = {}
-        for (let id in this._dataByID) {
+        // For each file id in from current data and last synced data.
+        const allIDs = new Set([...Object.keys(this._dataByID), ...Object.keys(this._lastSyncedDataByID)]);
+        for (let id of allIDs) {
+            
             const oldValue = this._lastSyncedDataByID[id];
             const newValue = this._dataByID[id];
-            const change = differences(oldValue, newValue);
+
+            const isOldDeleted = this.isDeletedValue(oldValue);
+            const isNewDeleted = this.isDeletedValue(newValue);
+
+            let change = null;
+            // The file has been created or restored from deletion
+            if (isOldDeleted && !isNewDeleted) {
+                change = newValue;
+
+            // The file has been deleted
+            } else if (!isOldDeleted && isNewDeleted) {
+                change = this.assignDeletedValue({})
+
+            // The file has been updated
+            } else if (!isOldDeleted && !isNewDeleted) {
+                change = differences(oldValue, newValue);
+            }
+
+            // Otherwise file has been deleted but was 
+            // already deleted, so no change is needed.
+
+            // If a change has occured, then add it to the changes object 
+            // and update the last synced data.
             if (change !== null) {
-                changes[id] = change;
-                this._lastSyncedDataByID[id] = this.isDeletedValue(newValue) ? null : copy(newValue);
+                changes[id] = copy(change);
+                this._lastSyncedDataByID[id] = isNewDeleted ? null : copy(newValue);
             }
         }
-        this.fstore.batchSet(changes, { merge: true });
+
+        if (Object.keys(changes).length > 0) {
+            DEBUG.log("Syncing to database with", Object.keys(changes).length + " changes.", JSON.stringify(changes, null, 2));
+            this.fstore.batchSet(changes, { merge: true });
+        }
+    }
+
+    _buildFileSystem() {
+        this._dataAsFS = new PathNode();
+        this._correctedPaths = {};
+        for (let id in this._dataByID) {
+            const value = this._dataByID[id];
+            let validPath = !this.isDeletedValue(value) && value.path 
+                            && typeof value.path === "string" 
+                            && value.path.length > 0;
+            if (validPath) {
+                const path = this.getUniquePath(value, id);
+                this._correctedPaths[id] = path;
+                this._dataAsFS.set(path, id);
+            }
+        }
+        DEBUG.log("Built file system with", Object.keys(this._dataByID).length, "files and directories.");
+        this.run("onAfterBuildFileSystem", this._dataAsFS);
     }
 
     /********************************************************************************
@@ -333,6 +351,7 @@ class FirestoreFileSystem extends FileSystemInterface {
             .map(this.statByID.bind(this))
             .filter(Boolean)
 
+        console.log("readdir", path.toString())
         return result;
     }
 
@@ -433,13 +452,10 @@ class FirestoreFileSystem extends FileSystemInterface {
      ********************************************************************************/
     
     _delete(path) {
-        let deleted = false;
         let decendantPaths = this._dataAsFS.getDecendantPaths(path, true);
-        let sets = decendantPaths.map((p) => [p, null]);
-        for (let [p, v] of sets) {
-            deleted ||= this._setFileByPath(p, v);
-        }
-        return deleted;
+        return decendantPaths
+                .map((p) => this._setFileByPath(p, null))
+                .some(Boolean);
     }
 
     /**
@@ -587,6 +603,7 @@ class FirestoreFileSystem extends FileSystemInterface {
      ********************************************************************************/
 
     commitHistory() {
+        DEBUG.log("Committing history at index", this._historyIndex, "with", this._history.length, "entries.");
         this._history = this._history.slice(0, this._historyIndex + 1);
         this._history.push({
             data: copy(this._dataByID),
@@ -599,7 +616,7 @@ class FirestoreFileSystem extends FileSystemInterface {
         if (this._historyIndex > 0) {
             this._historyIndex--;
             const previousState = this._history[this._historyIndex].data;
-            this._dataByID = JSON.parse(JSON.stringify(previousState));
+            this._dataByID = copy(previousState);
             this._dataAsFS = new PathNode();
 
             this._buildFileSystem();
@@ -612,7 +629,7 @@ class FirestoreFileSystem extends FileSystemInterface {
         if (this._historyIndex < this._history.length - 1) {
             this._historyIndex++;
             const nextState = this._history[this._historyIndex].data;
-            this._dataByID = JSON.parse(JSON.stringify(nextState));
+            this._dataByID = copy(nextState);
             this._dataAsFS = new PathNode();
             
             this._buildFileSystem();

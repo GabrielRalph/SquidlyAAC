@@ -56,27 +56,47 @@ class OBFStats{
         return this.id
     }
 
+    /**
+     * Returns true if the file is a directory, false otherwise.
+     * @returns {boolean} True if the file is a directory, false otherwise.
+     */
     get isDirectory() {
         return this.data && this.data.isDirectory;
     }
 
+    /**
+     * Returns true if the file is marked as favourite, false otherwise.
+     * @returns {boolean} True if the file is favourite, false otherwise.
+     */
     get favourite() {
         return this.data && this.data.favourite;
     }
 
+    /**
+     * Returns true if the file is effectively public,
+     * meaning it is either public itself or has a public ancestor.
+     * @returns {boolean} True if the file is effectively public, false otherwise.
+     */
     get isPublic() {
         return this.data && (this.data.public || this.data.effectivePublic);
     }
 
+    /**
+     * Returns true if the file has directly been made public, 
+     * false otherwise.
+     * @returns {boolean} True if the file is public, false otherwise.
+     */
     get public() {
         return this.data && this.data.public;
     }
+
 
     get contents() {
         return copy(this.data);
     }
 
     /**
+     * Checks if the file is an AAC board.
      * @returns {boolean} returns true if the file is an AAC board, false otherwise.
      */
     get isBoard() {
@@ -124,14 +144,12 @@ class OBFileSystem extends FirestoreFileSystem {
      * @override
      */
     stat(path) {
-        const id = this._dataAsFS.get(path);
-        let stat = null;
-        if (id) {
-            stat = this.statByID(id);
+        if (path.length === 0) {
+            return OBFStats.symbolicDirectory("", this);
         } else {
-            stat = OBFStats.symbolicDirectory(path, this);
+            let id = this._dataAsFS.get(path);
+            return this.statByID(id);
         }
-        return stat;
     }
 
     /**
@@ -158,10 +176,41 @@ class OBFileSystem extends FirestoreFileSystem {
             this._dataAsFS.getChildrenPaths(path);
         if (includeSelf) {  result.unshift(path); } 
         result = result.map(p => this.stat(p));
+        result = result.filter(Boolean);
         return result;
     }
 
 
+    _newFile(path, data, name = "folder") {
+        let newID = null;
+        DEBUG.logStart("File Creation", `Creating new ${name} at path: ${path.toString()}`);
+       
+        // Ensure that no file exists at the given path
+        path = Path.parse(path);
+        if (!this.stat(path)) {
+
+            // Create a new file with the provided data
+            newID = this.getNewID();
+
+            // Set the file data at the new ID
+            if (this._setFileByID(newID, data)) {
+
+                DEBUG.log("File Creation", `Created ${name}.`, `path: ${path.toString()}\nid: ${newID}`);
+                this._buildFileSystem();
+                this._syncToDatabase();
+                this.triggerUpdate();
+                // We won't commit to history here becuase once the the server timestamp
+                // is created that will propagate to the local data and trigger a full 
+                // update, which will be recorded in history.
+            } else {
+                DEBUG.log("File Creation", `Failed to create ${name}`, `path: ${path.toString()}\nid: ${newID}`);
+                newID = null;
+            }
+        }
+
+        DEBUG.logEnd();
+        return newID;
+    }
 
     /**
      * Creates a new folder at the specified path with default properties.
@@ -169,36 +218,20 @@ class OBFileSystem extends FirestoreFileSystem {
      * @returns {string|null} The ID of the newly created folder, or null if creation failed.
      */
     newFolder(path) {
-        DEBUG.logStart("File Creation", "Creating new folder at path:", path.toString());
-       
-        path = Path.parse(path);
-        let newID = null;
-        if (!this.stat(path)) {
-            newID = this.getNewID();
-            if (this._setFileByID(newID, {
-                isDirectory: true,
-                updatedAt: null,
-                deletedAt: false,
-    
-                public: false,
-                favourite: false,
-                effectivePublic: false,
+        return this._newFile(path, {
+            isDirectory: true,
+            updatedAt: null,
+            deletedAt: false,
 
-                createdAt: FirestoreFrame.TimestampSymbol,
-    
-                path: path.toString(),
-                owner: this.#user,
-            })) {
-                DEBUG.log("File Creation", "Created folder.", `path: ${path.toString()}\nid: ${newID}`);
-                this.fullUpdate();
-            } else {
-                DEBUG.log("File Creation", "Failed to create folder", `path: ${path.toString()}\nid: ${newID}`);
-                newID = null;
-            }
-        }
+            public: false,
+            favourite: false,
+            effectivePublic: false,
 
-        DEBUG.logEnd();
-        return newID;
+            createdAt: FirestoreFrame.TimestampSymbol,
+
+            path: path.toString(),
+            owner: this.#user,
+        }, "folder");
     }
 
     /**
@@ -207,36 +240,20 @@ class OBFileSystem extends FirestoreFileSystem {
      * @returns {string|null} The ID of the newly created board, or null if creation failed.
      */
     newBoard(path) {
-        DEBUG.logStart("File Creation", `Creating new board at path: "${path.toString()}"`);
+        return this._newFile(path, {
+            isDirectory: false,
+            updatedAt: null,
+            deletedAt: false,
 
-        path = Path.parse(path);
-        let newID = null;
-        if (!this.stat(path)) {
-            newID = this.getNewID();
-            if (this._setFileByID(newID, {
-                isDirectory: false,
-                updatedAt: null,
-                deletedAt: false,
+            public: false,
+            favourite: this.isRootBoard(path),
+            effectivePublic: this.isEffectivePublic(path), 
 
-                public: false,
-                favourite: this.isRootBoard(path),
-                effectivePublic: this.isEffectivePublic(path), 
+            createdAt: FirestoreFrame.TimestampSymbol,
 
-                createdAt: FirestoreFrame.TimestampSymbol,
-
-                path: path.toString(),
-                owner: this.#user,
-            })) {
-                DEBUG.log("File Creation", "Ceated board.", `path: ${path.toString()}\nid: ${newID}`);
-                this.fullUpdate();
-            } else {
-                DEBUG.log("File Creation", " Failed to create board!", `path: ${path.toString()}\nid: ${newID}`);
-                newID = null;
-            }
-        }
-
-        DEBUG.logEnd();
-        return newID;
+            path: path.toString(),
+            owner: this.#user,
+        }, "board");
     }
 
     /**
@@ -299,14 +316,14 @@ class OBFileSystem extends FirestoreFileSystem {
      */
     isRootBoard(path) {
         path = Path.parse(path).parent;
-        for (let i = 0; i < path.length; i++) {
-            if (this.isBoard(path)) {
-                return false;
-            }
-            path = path.parent;
+        if (path.length === 0) {
+            return true;
+        } else {
+            return !this.isBoard(path) && this.isRootBoard(path.parent);
         }
-        return true;
     }
+
+  
     
     /**
      * Marks a file or directory at the given path as favourite or not.
@@ -316,24 +333,15 @@ class OBFileSystem extends FirestoreFileSystem {
      * @override
      */
     toggleFavourite(paths, bool) {
-        if (!Array.isArray(paths)) {
-            paths = [paths];
-        }
-        let change = false;
-        for (let path of paths) {
-            let fstat = this.stat(path);
-            if (fstat && fstat.isBoard) {
-                let favourite = bool ?? !fstat.favourite
-                change ||= this._updateFileByPath(path, {favourite});
-                if (fstat.public && !favourite) {
-                    change ||= this.#makePublic(path, false);
-                } 
-            }
-        }
+        if (!Array.isArray(paths)) paths = [paths];
+        
+        let change = paths
+            .map(path => this.#toggleBoardProp(path, bool, "favourite"))
+            .some(Boolean);
+        
+        if (change) this.fullUpdate();
 
-        if (change) {
-            this.fullUpdate()
-        }
+        return change;
     }
 
     /**
@@ -343,32 +351,30 @@ class OBFileSystem extends FirestoreFileSystem {
      * @returns {void}
      * @override
      */
-    togglePublic(path, bool) {
-        if (!Array.isArray(path)) {
-            path = [path];
-        }
-        let change = false;
-        for (let p of path) {
-            change ||= this.#makePublic(p, bool);
-        }
-        if (change) {
-            this.fullUpdate()
-        }
+    togglePublic(paths, bool) {
+        if (!Array.isArray(paths)) paths = [paths];
+
+        let change = paths
+            .map(p => this.#toggleBoardProp(p, bool, "public"))
+            .some(Boolean);
+
+        if (change) this.fullUpdate();
+
         return change;
     }
 
-    #makePublic(path, bool) {
-        const stat = this.stat(path);
-        if (stat.isBoard) {
-            bool = bool ?? !stat.public;
-            return this._updateFileByPath(path, {
-                public: bool,
-            })
-        } else {
-            return false;
+    #toggleBoardProp(path, bool, prop) {
+        let updated = false;
+        let fstat = this.stat(path);
+        if (fstat && fstat.isBoard) {
+            let value = bool ?? !fstat[prop];
+            updated = this._updateFileByPath(path, {[prop]: value});
         }
+        return updated;
     }
 
+
+ 
 
     async watch() {
         let success = true;
