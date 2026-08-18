@@ -91,7 +91,7 @@ class OBFileIcon extends FSFileIcon {
         this.file = fstat;
         let iconArea = this.createChild("div");
 
-        
+
         let icon = [
             fstat.favourite ? "favourite" : "",
             fstat.isPublic ? (fstat.public ? "public" : "effective-public") : ""
@@ -99,19 +99,25 @@ class OBFileIcon extends FSFileIcon {
         if (icon) {
             iconArea.createChild("fs-i", {[icon]: true});
         }
-
+           
+       
+        let imain = iconArea.createChild("fs-i");
         switch (fstat.mode) {
             case OBFStats.MODES.Grid:
-                iconArea.createChild("fs-i", {"grid": ""});
+                imain.toggleAttribute("grid", true);
                 break;
             case OBFStats.MODES.GridSet:
-                iconArea.createChild("fs-i", {"grid-set": ""});
+                imain.toggleAttribute("grid-set", true);
                 break;
             case OBFStats.MODES.Folder:
-                iconArea.createChild("fs-i", {"folder": ""});
+                imain.toggleAttribute("folder", true);
                 break;
         }
-       
+        
+        if (fstat.thumbnail) {
+            imain.styles = {"--i-bg": `url(${fstat.thumbnail})`};
+        }
+
         this.createChild("span", {innerHTML: fstat.path.name});
         if (fstat.hasChildren) this.createChild("fs-i", {"right-arrow": ""});
     }
@@ -181,7 +187,32 @@ class OBFileIcon extends FSFileIcon {
                     action: () => root.rename(fstat.path)
                 },
 
+
                 ...(fstat.isBoard ? [
+                    {
+                        label: "Upload Icon",
+                        icon: "<i-bw image></i-bw>",
+                        action: () => {
+                            let selection = root.selection;
+                            if (!selection.some(p => p.same(fstat.path))) {
+                                selection = [fstat.path];
+                            }
+                            root.uploadThumbnail(selection)
+                        }
+                    },
+                    ...(fstat.thumbnail ? [
+                        {
+                            label: "Delete Icon",
+                            icon: "<i-bw delete-image></i-bw>",
+                            action: () => {
+                                let selection = root.selection;
+                                if (!selection.some(p => p.same(fstat.path))) {
+                                    selection = [fstat.path];
+                                }
+                                root.removeThumbnail(selection)
+                            }
+                        }
+                    ] : []),
                     "seperator",
                     {
                         label: "Open Editor",
@@ -303,6 +334,15 @@ export class OBFinder extends FileSystemUI {
                 this.fs.redo();
             }
         }
+    }
+
+    async uploadThumbnail(path) {
+        if (!this.fs) return false;
+        await this.fs.uploadThumbnail(path);
+    }
+    async removeThumbnail(path) {
+        if (!this.fs) return false;
+        await this.fs.removeThumbnail(path);
     }
 
     async newBoard(path, newName = null) {

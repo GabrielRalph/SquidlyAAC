@@ -57,6 +57,7 @@ import { getStorage,
          ref as sref, 
          uploadBytesResumable, 
          getDownloadURL, 
+         deleteObject,
          getBlob, 
          getMetadata } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js'
 
@@ -285,27 +286,45 @@ export function storageRef(fileName){
     return sref(Storage, fileName);
 }
 
-// Upload file to firebase storage bucket
+/** Upload file to firebase storage bucket
+ * @param {File} file - The file to upload
+ * @param {string} path - The path in the storage bucket where the file will be uploaded
+ * @param {function} statusCallback - A callback function to track the upload progress
+ * @param {object} metadata - Metadata for the file being uploaded
+ * @param {boolean} getURL - Whether to return the download URL of the uploaded file
+ * @returns {Promise<string|null>} - The download URL of the uploaded file if getURL is true, otherwise null
+ */ 
 export async function uploadFileToCloud(file, path, statusCallback, metadata, getURL = true) {
-  if (!(file instanceof File) || typeof path !== 'string') {
-      return null;
-  }
+    let url = null;  
+    if (file instanceof File && typeof path === 'string' && path.length > 0) {
+        if (!(statusCallback instanceof Function)) statusCallback = () => { };
 
-  if (!(statusCallback instanceof Function))
-      statusCallback = () => { }
+        let sr = storageRef(path);
+    
+        let uploadTask = uploadBytesResumable(sr, file, metadata);
+        uploadTask.on('next', statusCallback);
+        await uploadTask;
+    
+        if (getURL) url = await getDownloadURL(sr);
+    } 
+    return url;
+}
 
-  let sr = storageRef(path)
+export async function deleteFile(path) {
+    if (typeof path === 'string' && path.length > 0) {
+        let sr = storageRef(path);
+        await deleteObject(sr);
+    }
+}
 
-
-  let uploadTask = uploadBytesResumable(sr, file, metadata);
-  uploadTask.on('next', statusCallback)
-  await uploadTask;
-
-  if (getURL) {
-      let url = await getDownloadURL(sr);
-      return url;
-  }
-  return null
+const cache = new Map();
+export async function getFileURL(path) {
+    if (cache.has(path)) {
+        return cache.get(path);
+    }
+    const url = await getDownloadURL(storageRef(path));
+    cache.set(path, url);
+    return url;
 }
 
 export async function getFile(path) {
@@ -336,6 +355,7 @@ export {
         EmailAuthProvider,
         getMetadata,
         linkWithCredential,
+        getDownloadURL,
 
         update,
         child,

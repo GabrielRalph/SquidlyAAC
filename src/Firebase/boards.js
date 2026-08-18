@@ -12,7 +12,7 @@ const BOARD_META_CACHE = {};
 const META = new FirestoreFrame("boards");
 const DRAFTS = new FirestoreFrame("draft-boards");
 const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
-debug.disable = true;
+// debug.disable = true;
 
 
 class ServerTimestamp {
@@ -80,6 +80,9 @@ class BoardMetadata extends DataClass {
     /** @type {boolean} */
     valid = false;
 
+    /** @type {boolean | string} */
+    thumbnail = false;
+
     newer(other) {
         if (other instanceof BoardMetadata) {
             return this.updatedAt.newer(other.updatedAt);
@@ -109,13 +112,21 @@ async function _loadBoard(id) {
     let board = null;
     debug.log("download ", id);
     if (id.startsWith("http")) {
-        const response = await fetch(id);
-        const text = await response.text();
-        board = OBBoard.make(JSON.parse(text));
+        try {
+            const response = await fetch(id);
+            const text = await response.text();
+            board = OBBoard.make(JSON.parse(text));
+        } catch (e) {
+            console.error(`Error loading board from URL ${id}:`, e);
+        }
     } else {
-        const blob = await FB.getFile(`boards/${id}`);
-        const text = await blob.text();
-        board = OBBoard.make(JSON.parse(text));
+        try {
+            const blob = await FB.getFile(`boards/${id}`);
+            const text = await blob.text();
+            board = OBBoard.make(JSON.parse(text));
+        } catch (e) {
+            console.error(`Error loading board from Firestore ${id}:`, e);
+        }
     }
     return board;
 }

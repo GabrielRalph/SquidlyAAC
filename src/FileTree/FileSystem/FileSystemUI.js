@@ -149,8 +149,7 @@ class FSColumn extends DragableLocation {
                             columnPath: path,
                             columnFiles: files,
                         });
-                        event.stopImmediatePropagation();
-                        event.preventDefault();
+                        event.stopPropagation();
                     },
                     contextmenu: (event) => {
                         let inSelection = root.selection.some(sel => sel.same(f.path));
@@ -377,16 +376,20 @@ class FileSystemUI extends SvgPlus {
                 }
             });
         }
-
-        const newPath = path.parent.join(newName);
         
-        let confirmed = true;
-        if (this.fs.exists(newPath)) {
-            confirmed = await this.confirm(
-                `An item named “${newName}” already exists in this location. Do you want to replace it with the one you’re renaming?`,
-                [["Stop", false], ["Replace", true]]
-            );
+        let confirmed = false;
+        let newPath;
+        if (newName && typeof newName === "string" && newName.trim() !== "" ) {
+            confirmed = true;
+            newPath = path.parent.join(newName);
+            if (this.fs.exists(newPath)) {
+                confirmed = await this.confirm(
+                    `An item named “${newName}” already exists in this location. Do you want to replace it with the one you’re renaming?`,
+                    [["Stop", false], ["Replace", true]]
+                );
+            }
         }
+
         if (confirmed) {
             if (this.fs.rename(path, newName)) {
                 this.#setSingleSelection(newPath);

@@ -1,5 +1,6 @@
-import { FStore } from "../Firebase/firebase.js";
+import { deleteFile, FStore,  } from "../Firebase/firebase.js";
 import { FirestoreFrame } from "../Firebase/firestore-frame.js";
+import { ThumbnailUploader } from "../Firebase/thumbnail-uploader.js";
 import { copy, Debugger } from "../shared.js";
 import { FirestoreFileSystem } from "./FileSystem/FirestoreFileSystem.js";
 import { Path } from "./FileSystem/Path.js";
@@ -10,6 +11,7 @@ const DEBUG = new Debugger(
     "background: #125cde; color: white; padding: 5px; border-radius: 5px;"
 );
 
+const THUMBNAIL_SIZE = 160;
 
 /**
  * @typedef {Object} IServerTimestamp
@@ -31,7 +33,7 @@ const DEBUG = new Debugger(
  * @property {string}  path - The path of the file or directory.
  * @property {string}  owner - The owner of the file or directory.
  * 
- * @property {boolean} [hasThumbnail] - Indicates if the descriptor has a thumbnail.
+ * @property {boolean} [thumbnail] - Indicates if the descriptor has a thumbnail.
  */
 class OBFStats{
 
@@ -50,6 +52,10 @@ class OBFStats{
                 this.hasChildren ? 
                     OBFStats.MODES.GridSet : OBFStats.MODES.Grid
             );
+    }
+
+    get thumbnail() {
+        return this.data && this.data.thumbnail;
     }
 
     get boardID() {
@@ -210,6 +216,62 @@ class OBFileSystem extends FirestoreFileSystem {
         }
         DEBUG.logEnd();
         return newID;
+    }
+
+    /**
+     * Adds a thumbnail to the board at the specified path.
+     * @param {Array<Path|string>|Path|string} paths - The path of the board to which the thumbnail will be added.
+     * @param {Function} [onProgress=null] - Optional callback function to track upload progress.
+     * @returns {Promise<void>} A promise that resolves when the thumbnail has been added.
+     */
+    async uploadThumbnail(paths, onProgress = null) {
+        if (!Array.isArray(paths)) paths = [paths];
+        const stats = paths.map(p => this.stat(p)).filter(stat => stat && stat.isBoard);
+
+        if (stats.length > 0) {
+            const uploader = new ThumbnailUploader();
+            if (onProgress instanceof Function) uploader.onProgress = onProgress;
+            uploader.maxSize = THUMBNAIL_SIZE;
+
+            await uploader.getFile();
+            await uploader.resizeImage();
+
+            for (let stat of stats) {
+                this._updateFileByID(stat.boardID, { thumbnail: uploader.imageURL });
+                this.triggerUpdate();
+            }
+
+            let uploads = await Promise.all(stats.map(async stat => {
+                const u = uploader.clone();
+                if (await u.upload(`board-thumbnails/${stat.boardID}`)) {
+                    this._updateFileByID(stat.boardID, { thumbnail: u.imageURL });
+                    this.triggerUpdate();
+                    return true;
+                }
+                return false;
+            }));
+
+            if (uploads.some(Boolean)) {
+                this.fullUpdate();
+            }
+        }
+    }
+
+    async removeThumbnail(paths) {
+        console.log("Removing thumbnail for paths:", paths);
+        if (!Array.isArray(paths)) paths = [paths];
+        const stats = paths.map(p => this.stat(p)).filter(stat => stat && stat.isBoard);
+        if (stats.length > 0) {
+            let proms = stats.map(({boardID}) => { 
+                console.log(`Deleting thumbnail for boardID: ${boardID}`);
+                let p = deleteFile(`board-thumbnails/${boardID}`);
+                this._updateFileByID(boardID, { thumbnail: false });
+                return p;
+            });
+            this.fullUpdate();
+            await Promise.all(proms);
+            console.log(`Deleted thumbnails for ${proms.length} boards.`);
+        }
     }
 
     /**

@@ -62,8 +62,10 @@ FINDER
 
 
 AAC GENERIC
+    - export to pdf + export grid set
     - DONE: font size shared between all three
 
 
 AAC SYSTEM
     - migrate all boards
+

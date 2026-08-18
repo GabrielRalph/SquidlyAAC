@@ -6,7 +6,7 @@ window.addEventListener("click", e => {
     if (activeMenu) {
         activeMenu.destroy();
     }
-});
+}, true);
 window.addEventListener("keydown", e => {
     if (e.key === "Escape" && activeMenu) {
         activeMenu.destroy();
