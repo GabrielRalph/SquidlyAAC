@@ -5,7 +5,7 @@
 */
 
 /** @type {string} */
-const META_KEY = navigator.platform.includes("Mac") ? "⌘" : "Ctrl";
+const META_KEY = navigator.platform.includes("Mac") ? "⌘" : "Ctrl+";
 
 /** @type {Object<string, KeyBindingSet} */
 const KEY_BINDING_SETS = { }

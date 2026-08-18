@@ -3,7 +3,7 @@ import { Icon, SvgPlus } from "../Utilities/utils.js";
 import { Path, PATH_SEPERATOR } from "./FileSystem/Path.js";
 import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js";
 import { getBoard } from "../Firebase/boards.js";
-import { registerKeyBindings } from "../Utilities/keybindings.js";
+import { META_KEY, registerKeyBindings } from "../Utilities/keybindings.js";
 import { openDraftPreview, openEditor, openViewer } from "../shared.js";
 import { OBFStats } from "./OBFileSystem.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
@@ -31,11 +31,13 @@ class OBFSColumn extends FSColumn {
                 {
                     label: "New Folder",
                     icon: "<i-bw new-folder></i-bw>",
+                    binding: META_KEY + "F",
                     action: () => {root.newFolder(fstat.path)}
                 },
                 {
                     label: "New Board",
                     icon: "<i-bw new-grid></i-bw>",
+                    binding: META_KEY + "B",
                     action: () => {root.newBoard(fstat.path)}
                 },
                 
@@ -128,11 +130,13 @@ class OBFileIcon extends FSFileIcon {
                 {
                     label: "New Folder",
                     icon: "<i-bw new-folder></i-bw>",
+                    binding: META_KEY + "F",
                     action: () => {root.newFolder(fstat.path)}
                 },
                 {
                     label: "New Board",
                     icon: "<i-bw new-grid></i-bw>",
+                    binding: META_KEY + "B",
                     action: () => {root.newBoard(fstat.path)}
                 },
                 "seperator",
@@ -183,7 +187,7 @@ class OBFileIcon extends FSFileIcon {
                 {
                     label: "Rename",
                     icon: "<i-bw edit-name></i-bw>",
-                    binding: "⌘R",
+                    binding: META_KEY + "R",
                     action: () => root.rename(fstat.path)
                 },
 
@@ -192,6 +196,7 @@ class OBFileIcon extends FSFileIcon {
                     {
                         label: "Upload Icon",
                         icon: "<i-bw image></i-bw>",
+                        binding: META_KEY + "I",
                         action: () => {
                             let selection = root.selection;
                             if (!selection.some(p => p.same(fstat.path))) {
@@ -204,6 +209,7 @@ class OBFileIcon extends FSFileIcon {
                         {
                             label: "Delete Icon",
                             icon: "<i-bw delete-image></i-bw>",
+                            binding:  META_KEY + "J",
                             action: () => {
                                 let selection = root.selection;
                                 if (!selection.some(p => p.same(fstat.path))) {
@@ -217,16 +223,19 @@ class OBFileIcon extends FSFileIcon {
                     {
                         label: "Open Editor",
                         icon: "<i-bw edit></i-bw>",
+                        binding: "E",
                         action: () => openEditor(fstat.boardID)
                     },
                     {
                         label: "Open Viewer",
                         icon: "<i-bw view></i-bw>",
+                        binding: "V",
                         action: () => openViewer(fstat.boardID)
                     },
                     {
                         label: "Export",
                         icon: "<i-bw print></i-bw>",
+                        binding: META_KEY + "E",
                         action: () => root.downloadBoardImage(fstat)
                     }
                     // {
@@ -332,6 +341,41 @@ export class OBFinder extends FileSystemUI {
         "Meta+y": e => {
             if (this.fs) {
                 this.fs.redo();
+            }
+        },
+        "v": e => {
+            if (this.fs && this.isSingleSelection && this.selected) {
+                openViewer(this.fs.stat(this.selected).boardID);
+            }
+        },
+        "e": e => {
+            if (this.fs && this.isSingleSelection && this.selected) {
+                openEditor(this.fs.stat(this.selected).boardID);
+            }
+        },
+        "Meta+e": e => {
+            if (this.fs && this.isSingleSelection && this.selected) {
+                this.downloadBoardImage(this.fs.stat(this.selected));
+            }
+        },
+        "Meta+i": e => {
+            if (this.fs && this.selection.length > 0) {
+                this.uploadThumbnail(this.selection);
+            }
+        },
+        "Meta+j": e => {
+            if (this.fs && this.selection.length > 0) {
+                this.removeThumbnail(this.selection);
+            }
+        },
+        "Meta+f": e => {
+            if (this.fs && this.isSingleSelection && this.selected) {
+                this.newFolder(this.selected);
+            }
+        },
+        "Meta+b": e => {
+            if (this.fs && this.isSingleSelection && this.selected) {
+                this.newBoard(this.selected);
             }
         }
     }
