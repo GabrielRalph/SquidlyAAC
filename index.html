@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <!-- <link rel="stylesheet" href="./Assets/Icons/icons.css"> -->
+    <script type="module" src="./index.js"></script>
+    <style>
+        :root {
+            --gray-100: rgb(245, 245, 245)
+        }
+        body {
+            margin: 0;
+            width: 100%;
+            background-color: var(--gray-100);
+            font-family: 'Supreme LL TT';
+            background: #1a1a1a;
+        }
+        aac-home-page {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <aac-home-page></aac-home-page>
+</body>
+<script type = "module">
+    const homePage = document.querySelector("aac-home-page");
+    homePage.waitStyles().then(() => {
+        setTimeout(() => {
+            homePage.style.opacity = "1";
+            homePage.style.pointerEvents = "all";
+        }, 300);
+    });
+
+</script>
+</html>

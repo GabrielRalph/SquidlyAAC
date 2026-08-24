@@ -1,5 +1,5 @@
 import { AACBoard, AACGrid } from "../AACWebComponent/aac.js";
-import { Icon, SvgPlus } from "../Utilities/utils.js";
+import { SvgPlus } from "../Utilities/utils.js";
 import { Path, PATH_SEPERATOR } from "./FileSystem/Path.js";
 import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js";
 import { getBoard } from "../Firebase/boards.js";
@@ -7,6 +7,7 @@ import { META_KEY, registerKeyBindings } from "../Utilities/keybindings.js";
 import { openDraftPreview, openEditor, openViewer } from "../shared.js";
 import { OBFStats } from "./OBFileSystem.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
+import { Icon } from "../Utilities/icons.js";
 
 /**
  * @typedef {import("./OBFileSystem.js").OBFileSystem} OBFileSystem
@@ -121,7 +122,7 @@ class OBFileIcon extends FSFileIcon {
         }
 
         this.createChild("span", {innerHTML: fstat.path.name});
-        if (fstat.hasChildren) this.createChild("fs-i", {"right-arrow": ""});
+        if (fstat.hasChildren) this.createChild(Icon, {}, "right-arrow");
     }
 
     onContextMenu(event, root, fstat) {
@@ -237,6 +238,14 @@ class OBFileIcon extends FSFileIcon {
                         icon: "<i-bw print></i-bw>",
                         binding: META_KEY + "E",
                         action: () => root.downloadBoardImage(fstat)
+                    },
+                    "seperator",
+                    {
+                        label: "Copy Board ID",
+                        icon: "<i-bw copy></i-bw>",
+                        action: () => {
+                            navigator.clipboard.writeText(fstat.boardID);
+                        }
                     }
                     // {
                     //     label: "Open Draft Preview",

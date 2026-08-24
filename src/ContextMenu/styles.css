@@ -7,6 +7,12 @@ context-menu {
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
     transform: translate(-0.7em, -0.7em);
+
+    --_background: var(--context-menu-background, rgba(255, 255, 255, 0.794));
+    --_border_color: var(--context-menu-border-color, #0000004d);
+    --_selected_background: var(--context-menu-selected-background, rgb(62, 123, 253));
+    --_binding_color: var(--context-menu-binding-color, #7d7d7d);
+    --_shadow: var(--context-menu-shadow-color, #0000004d);
 }
 
 context-menu[hide] {
@@ -23,9 +29,9 @@ context-menu-seperator {
 context-menu > div {
     display: flex;
     flex-direction: column;
-    background-color: rgba(255, 255, 255, 0.794);
+    background-color: var(--_background);
     border-radius: 0.8em;
-    box-shadow: 0 0 10px var(--border-color);
+    box-shadow: 0 0 10px var(--_shadow);
     border: 1px solid var(--border-color);
     padding: 0.3em;
     min-width: 13em;
@@ -46,13 +52,13 @@ context-menu-item .icon {
     align-items: center;
 }
 context-menu-item:hover {
-    background-color: rgb(62, 123, 253);
+    background-color: var(--_selected_background);
     color: var(--selected-fg);
 }
 
 context-menu-item .binding {
     font-size: 0.95em;
-    color: #666666;
+    color: var(--_binding_color);
 }
 context-menu-item:hover .binding {
     color: var(--selected-fg);

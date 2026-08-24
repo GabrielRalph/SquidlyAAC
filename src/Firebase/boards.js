@@ -12,6 +12,7 @@ const BOARD_META_CACHE = {};
 const META = new FirestoreFrame("boards");
 const DRAFTS = new FirestoreFrame("draft-boards");
 const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
+const {FStore: {where}} = FB;
 // debug.disable = true;
 
 
@@ -131,6 +132,11 @@ async function _loadBoard(id) {
     return board;
 }
 
+/**
+ * @param {string} id
+ * 
+ * @returns {Promise<BoardMetadata>}
+ */
 async function getBoardMetadata(id) {
     let metadata = new BoardMetadata();
     if (!(id in BOARD_LISTENERS)) {
@@ -435,4 +441,59 @@ class BoardSetWatcher {
     }
 }
 
-export { getBoardMetadata, getBoard, downloadBoardSet, BoardWatcher, BoardSetWatcher };
+
+async function watchMyFavouriteBoards(uid, callback) {
+    console.log("Watching favourite boards for user", uid);
+    const boards = {};
+    const q = META.query(
+        where("owner", "==", uid), 
+        where("deletedAt", "==", false)
+    );
+    const frame = META.onValue(q, (changes) => {
+            changes.forEach(([id, data, type]) => {
+                if (data.favourite && type !== "removed") {
+                    boards[id] = data;
+
+                } else if (id in boards) {
+                    delete boards[id];
+                }
+            })
+            callback(Object.fromEntries(Object.entries(boards).map(([id, data]) => [id, BoardMetadata.make(data)])));
+        }
+    );
+    return () => frame.clearListeners()
+}
+
+async function watchPublicBoards(callback) {
+    const boards = {};
+    const q = META.query(
+        where("public", "==", true), 
+        where("favourite", "==", true),
+        where("deletedAt", "==", false)
+    );
+
+    const frame = META.onValue(q, (changes) => {
+            changes.forEach(([id, data, type]) => {
+                if (data.favourite && type !== "removed") {
+                    boards[id] = data;
+
+                } else if (id in boards) {
+                    delete boards[id];
+                }
+            })
+            callback(Object.fromEntries(Object.entries(boards).map(([id, data]) => [id, BoardMetadata.make(data)])));
+        }
+    );
+    return () => frame.clearListeners()
+}
+
+
+export { 
+    getBoardMetadata, 
+    getBoard, 
+    downloadBoardSet, 
+    watchPublicBoards,
+    BoardWatcher, 
+    BoardSetWatcher,
+    watchMyFavouriteBoards,
+};

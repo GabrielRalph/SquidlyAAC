@@ -1,9 +1,24 @@
 :root, :host {
-    --border-color: #4444442c;
-    --border: 1px solid var(--border-color);
-    --selected-bg: #104cff;
-    --selected-bg-darker: #083ddd;
-    --selected-fg: #ffffff;
+    --_border_color:        var(--border-color, #4444442c);
+
+    --_selected-bg:         var(--selected-button-background, #104cff);
+    --_selected-bg-darker:  var(--selected-button-hover-background, #083ddd);
+    --_selected-fg:         var(--selected-button-color, #ffffff);
+    --_selected-border:     var(--selected-button-border-color, #4978ff);
+
+    --_column-drop-color:     var(--column-drop-color, #d4eeff);
+
+    --_head-color:          var(--header-color, #4d4d4d);
+
+    --_popup-bg:            var(--popup-background, #ffffff);
+    --_popup-color:         var(--popup-color, #000000);
+    --_popup-shadow-color:  var(--popup-shadow-color,#0000002c);
+    --_input-bg:            var(--input-background, #f6f6ff);
+    --_input-border:        var(--input-border-color, #e9e9ff);
+    --_input-focused-bg:    var(--input-focus-background, #f1f1ff);
+    --_input-hover-border:  var(--input-border-focus-color, #e0e0ff);
+
+
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
@@ -30,14 +45,14 @@ button {
     justify-content: center;
 }
 button[primary] {
-    background-color: var(--selected-bg);
-    color: var(--selected-fg);
+    background-color: var(--_selected-bg);
+    color: var(--_selected-fg);
 }
 button:hover {
-    background-color: var(--border-color);
+    background-color: var(--_border_color);
 }
 button[primary]:hover {
-    background-color: var(--selected-bg-darker);
+    background-color: var(--_selected-bg-darker);
 }
 
 button:active {
@@ -51,14 +66,15 @@ button:disabled {
 
 input {
     outline: none;
-    border: 1px solid #e9e9ff;
-    background: #f6f6ff;
+    border: 1px solid var(--_input-border);
+    background: var(--_input-bg);
     padding: 0.5em;
     border-radius: 0.5em;
 }
+
 input:focus {
-    background:  #f1f1ff;
-    border-color: #e0e0ff;
+    background:  var(--_input-focused-bg);
+    border-color: var(--_input-hover-border);
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -69,7 +85,8 @@ fs-popup {
     display: flex;
     flex-direction: column;
     position: absolute;
-    background: white;
+    background: var(--_popup-bg);
+    color: var(--_popup-color);
     width: 30em;
     z-index: 100;
     border-radius: 1em;
@@ -77,8 +94,8 @@ fs-popup {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 1px solid var(--border-color);
-    filter: drop-shadow(0 0 10px var(--border-color));
+    border: 1px solid var(--_border_color);
+    filter: drop-shadow(0 0 10px var(--_popup-shadow-color));
     gap: 1em;
 }
 
@@ -132,8 +149,8 @@ fs-head {
     font-weight: bold;
     font-size: 1.1em;
     padding: 0.5em;
-    color: #4d4d4d;
-    border-bottom: 1px solid var(--border-color);
+    color: var(--_head-color);
+    border-bottom: 1px solid var(--_border_color);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -147,7 +164,7 @@ fs-head {
 fs-column {
     display: flex;
     position: relative;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--_border_color);
     width: 13.75vw;
 }
 
@@ -158,7 +175,7 @@ fs-column[dummy] {
 }
 
 fs-column[drag-over] {
-    background-color: rgb(212, 238, 255);
+    background-color: var(--_column-drop-color);
 }
 
 fs-column > div {
@@ -169,11 +186,24 @@ fs-column > div {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    bottom: 0;
     overflow-y: auto;
     box-sizing: border-box;
 }
 
+fs-column:first-of-type:after {
+    content: "Tip: Right-click to create folders or boards, or right-click an item for more options.";
+    padding: 0.5em 1em 1em 1em;
+    display: inline-block;
+    font-size: 0.8em;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+fs-column:first-of-type > div {
+    bottom: 4em;
+}
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~ FILE ICON STYLES ~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -198,13 +228,13 @@ fs-file span {
 
 fs-file[selected] + fs-file[selected]:has( + fs-file[selected]) {
     border-radius: 0;
-    border-bottom: 1px solid #4978ff;
+    border-bottom: 1px solid var(--_selected-border);
 }
 
 fs-file:not([selected]) + fs-file[selected]:has( + fs-file[selected]),
 fs-file[selected]:first-child:has( + fs-file[selected]) {
     border-radius: 0.3em 0.3em 0 0;
-    border-bottom: 1px solid #4978ff;
+    border-bottom: 1px solid var(--_selected-border);
 }
 
 fs-file[selected] + fs-file[selected] {
@@ -212,14 +242,14 @@ fs-file[selected] + fs-file[selected] {
 }
 
 fs-file[in-selected-path] {
-    background-color: var(--border-color);
+    background-color: var(--_border_color);
 }
 
 fs-file[drag-over],
 fs-file[selected],
 fs-file[in-selected-path][drag-over]{
-    background-color: var(--selected-bg);
-    color: var(--selected-fg);
+    background-color: var(--_selected-bg);
+    color: var(--_selected-fg);
 }
 
 fs-file > div {
@@ -275,16 +305,4 @@ fs-file-display access-button.grid-icon .content {
 
 fs-file-display access-button.grid-icon[card="folder"] .content .display-value {
     padding-top: calc(var(--width, 100vw) / 50);
-}
-
-i-circ {
-    display: inline-block;
-    width: 0.4em;
-    height: 0.4em;
-    background: #61d33d;
-    border-radius: 0.5em;
-}
-i-circ[name="public"] {
-    background: #61d33d;
-    border: 2px solid #2b900c;
 }

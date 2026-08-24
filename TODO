@@ -11,14 +11,14 @@ EDITOR
         - DONE: upload image function is broken
 
 
-
     feature updates: 
-        - advanced hints similar ()
         - If search then close, keep search results until a label is edited
-        - when editor is opened without board id
         - r,c input to set grid size
         - text 2 speach preview
 
+        - advanced hints similar ()
+
+        - DONE: when editor is opened without board id
         - DONE: save file loader
         - DONE: more info with regards to actions 
         - DONE: print 
@@ -30,9 +30,7 @@ EDITOR
 
 FINDER
     fast-fixes:
-        - information when files is blank
-        - change the word favourite to featured
-
+        - DONE: information when files is blank
         - DONE: root doesn't need delete,rename
         - DONE: popups only open once 
         - DONE: double click opens the editor
@@ -43,13 +41,9 @@ FINDER
        
 
     feature updates:
-        - adding file thumbnails
-
+        - DONE: adding file thumbnails
         - DONE: Favorite root boards automatically
         
-
-
-
 
  VIEWER 
     bugs:
@@ -62,10 +56,23 @@ FINDER
 
 
 AAC GENERIC
-    - export to pdf + export grid set
-    - DONE: font size shared between all three
+    bugs:
+
+    feature updates:
+        - export to pdf + export grid set
+
+        - DONE: font size shared between all three
+        - DONE: export to png
 
 
 AAC SYSTEM
     - migrate all boards
 
+
+EXPLORE
+    feature-updates:
+        - Three dots to open menu
+        - Hover effect on board card
+        - Recent boards using local storage (if possible)
+        - drop down for user
+        - upload obz

@@ -2,20 +2,20 @@
 .login-page {
 
     --wclamp: clamp(500px, 100vw, 1000px);
-    font-size: calc(12px + (var(--wclamp) - 500px) / 100);
     --fw: min(500px, 90vw);
     --ratio: 0.4;
-
+    
     --tw: calc(var(--ratio) * var(--fw));
     --fcw: calc(var(--fw) - var(--tw));
-
+    
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: #c9d6ff;
-    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+    font-size: calc(12px + (var(--wclamp) - 500px) / 100);
+    background: var(--login-page-background, linear-gradient(to right, #e2e2e2, #c9d6ff));
+    backdrop-filter: var(--login-page-backdrop-filter, blur(5px));
     display: flex;
     align-items: center;
     justify-content: center;

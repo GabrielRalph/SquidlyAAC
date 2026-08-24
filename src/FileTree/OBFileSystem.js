@@ -11,7 +11,7 @@ const DEBUG = new Debugger(
     "background: #125cde; color: white; padding: 5px; border-radius: 5px;"
 );
 
-const THUMBNAIL_SIZE = 160;
+const THUMBNAIL_SIZE = 200;
 
 /**
  * @typedef {Object} IServerTimestamp
