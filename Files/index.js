@@ -39,7 +39,6 @@ export class AACFinder extends ShadowElement {
 			openEditor(stat.boardID);
 		}
 	}
-
 	
 
     async assignUser(uid) {
@@ -68,6 +67,10 @@ export class AACFinder extends ShadowElement {
 			...OBFinder.usedStyleSheets,
 		]
 	}
+}
+
+function load() {
+
 }
 
 const styleLoadPromise = await Promise.all([
