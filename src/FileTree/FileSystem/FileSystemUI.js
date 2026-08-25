@@ -158,6 +158,7 @@ class FSColumn extends DragableLocation {
                                 event,
                                 columnPath: path,
                                 columnFiles: files,
+                                dontScroll: true,
                             });
                         }
                         if (fsf.onContextMenu(event, root, f)) {
@@ -200,6 +201,7 @@ class FileSystemUI extends SvgPlus {
     #selectionDir = new Path("");
     #selectionAnchor = null;
     #columnScrollTops = new Map();
+    #dontScroll = false;
 
     /** @type {FileSystemInterface} */
     fs = null;
@@ -478,46 +480,48 @@ class FileSystemUI extends SvgPlus {
         }, {passive: true});
     }
 
-    #ensurePrimarySelectionVisible() {
-        const columnPath = this.#selectionDir?.toString();
-        const selectedPath = this.#selected?.toString();
-        if (!columnPath || !selectedPath) return;
+    // #ensurePrimarySelectionVisible() {
+    //     console.log("Ensuring primary selection is visible");
+    //     const columnPath = this.#selectionDir?.toString();
+    //     const selectedPath = this.#selected?.toString();
+    //     if (!columnPath || !selectedPath) return;
 
-        const columns = this.main.querySelectorAll("fs-column[data-column-path]");
-        let column = null;
-        columns.forEach(col => {
-            if (!column && col.getAttribute("data-column-path") === columnPath) {
-                column = col;
-            }
-        });
-        if (!column) return;
+    //     const columns = this.main.querySelectorAll("fs-column[data-column-path]");
+    //     let column = null;
+    //     columns.forEach(col => {
+    //         if (!column && col.getAttribute("data-column-path") === columnPath) {
+    //             column = col;
+    //         }
+    //     });
+    //     if (!column) return;
 
-        const scroller = column.firstElementChild;
-        if (!scroller) return;
+    //     const scroller = column.firstElementChild;
+    //     if (!scroller) return;
 
-        const selectedFiles = scroller.querySelectorAll("[data-file-path]");
-        let selectedFile = null;
-        selectedFiles.forEach(file => {
-            if (!selectedFile && file.getAttribute("data-file-path") === selectedPath) {
-                selectedFile = file;
-            }
-        });
-        if (!selectedFile) return;
+    //     const selectedFiles = scroller.querySelectorAll("[data-file-path]");
+    //     let selectedFile = null;
+    //     selectedFiles.forEach(file => {
+    //         if (!selectedFile && file.getAttribute("data-file-path") === selectedPath) {
+    //             selectedFile = file;
+    //         }
+    //     });
+    //     if (!selectedFile) return;
 
-        const itemTop = selectedFile.offsetTop;
-        const itemBottom = itemTop + selectedFile.offsetHeight;
-        const viewTop = scroller.scrollTop;
-        const viewBottom = viewTop + scroller.clientHeight;
+    //     const itemTop = selectedFile.offsetTop;
+    //     const itemBottom = itemTop + selectedFile.offsetHeight;
+    //     const viewTop = scroller.scrollTop;
+    //     const viewBottom = viewTop + scroller.clientHeight;
 
-        if (itemTop < viewTop) {
-            scroller.scrollTop = itemTop;
-        } else if (itemBottom > viewBottom) {
-            scroller.scrollTop = itemBottom - scroller.clientHeight;
-        }
-    }
+    //     if (itemTop < viewTop) {
+    //         scroller.scrollTop = itemTop;
+    //     } else if (itemBottom > viewBottom) {
+    //         scroller.scrollTop = itemBottom - scroller.clientHeight;
+    //     }
+    // }
 
     #render() {
         this.#captureColumnScrolls();
+        let lastScroll = this.main.parentNode.scrollLeft;
         this.main.innerHTML = "";
         this.head.titleEl.innerHTML = "";
         if (!this.fs) return;
@@ -556,8 +560,8 @@ class FileSystemUI extends SvgPlus {
             }
         }
         this.main.styles = {"--n": nAdjusted};
-        this.main.parentNode.scrollLeft = this.main.scrollWidth;
-        this.#ensurePrimarySelectionVisible();
+        this.main.parentNode.scrollLeft = this.#dontScroll ? lastScroll : this.main.scrollWidth;
+        this.#dontScroll = false;
     }
 
     render() {
@@ -721,6 +725,9 @@ class FileSystemUI extends SvgPlus {
         }
 
         if (changed) {
+            if (options.dontScroll) {
+                this.#dontScroll = true;
+            }
             this.render();
             this.dispatchEvent(new CustomEvent("selection-change"));
         }

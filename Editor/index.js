@@ -1,4 +1,7 @@
 import * as FB from "../src/Firebase/firebase.js";
+import { OpenBoardEditor } from "../src/Editor/editor.js";
+import { BoardWatcher } from "../src/Firebase/boards.js";
+import { addBoardToRecent } from "../src/shared.js";
 
 /**
  * User states
@@ -11,10 +14,6 @@ import * as FB from "../src/Firebase/firebase.js";
  */
 
 let userLoadedPromise = FB.initialise();
-
-import { OpenBoardEditor } from "../src/Editor/editor.js";
-import { BoardWatcher } from "../src/Firebase/boards.js";
-
 let styleSheetsLoader = await OpenBoardEditor.loadStyleSheets()
 OpenBoardEditor.defineHTMLElement(OpenBoardEditor);
 
@@ -89,6 +88,7 @@ class EditorSession {
     }
 
     async watchBoard(boardID) {
+        addBoardToRecent(boardID);
         if (this.boardWatcher) {
             this.boardWatcher.stop();
             this.boardWatcher = null;

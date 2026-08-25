@@ -36,6 +36,12 @@ export class AACFinder extends ShadowElement {
 			openEditor(stat.boardID);
 		}
 	}
+
+    selectByBoardID(boardID, options = {}) {
+        if (!this.#fs) return;
+        let stat = this.#fs.getPathByID(boardID);
+        this.fsUI.select(stat.path, options);
+    }
 	
     async assignUser(uid) {
 		this.uid = uid;
@@ -55,7 +61,6 @@ export class AACFinder extends ShadowElement {
 			this.#fs.stopWatch();
 			this.#fs = null;
 		}
-		// this.fsUI.setRoot(null, "", "")
 	}
 	
 	static get usedStyleSheets() {

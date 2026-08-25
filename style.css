@@ -1,5 +1,3 @@
-
-
 :host {
     --c-darkest: #1a1a1a;
     --c-lighter: #5b5a5a;
@@ -22,157 +20,96 @@
     --board-card-color: #e8e7e7;
     --board-card-color-hover: white;
     --board-text-color: black;
+
+    --main-spacing: 1em;
+    --card-spacing: 2em;
+
 }
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Root Layout ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 
 page-root {
-    color: var(--text-color);
-}
-
-* {
-    box-sizing: border-box;
-}
-
-button {
-    border: none;
-    outline: none;
-    padding: 0.4em;
-    border-radius: 0.4em;
-    background-color: transparent;
-    transition: 0.15s ease-in-out background-color;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: var(--button-bg-hover);
-}
-
-
-bg-img {
-    background-size: contain;
-    background-image: var(--bg-i);
-    background-repeat: no-repeat;
-    background-position: center;
-    display: inline-block;
-    position: relative;
-    overflow: hidden;
-}
-
-bg-img::after {
-    content: " ";
-    position: absolute;
-    top: 0;   
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    
-    /* Gradient loading effect */
-    background: linear-gradient(
-        110deg,
-        var(--color-1, #e0e0e0) 28%,
-        var(--color-2, #f5f5f5) 38%,
-        var(--color-1, #e0e0e0)  53%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s linear infinite;
-    transition: 0.3s ease-in-out opacity;
-}
-bg-img:not([loaded])::after {
-    opacity: 1;
-}
-
-@keyframes shimmer {
-  to {
-    background-position-x: -200%;
-  }
-}
-
-
-
-.scroll-wrap {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-}
-.scroll-element {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-
-
-.row {
-    display: flex;
-    align-items: center;
-}
-
-.logo {
-    filter: brightness(100);
-    cursor: pointer;
-}
-
-
-page-root radio-selection.side-bar {
-    grid-column: 1;
-    grid-row: 2;
-    width: 5em;
-    gap: 1em;
-    padding: 1em;
-
-    display: flex;
-    flex-direction: column;
-}
-
-radio-selection.side-bar > div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    gap: 0.2em;
-}
-
-radio-selection.side-bar > div:hover button {
-    background-color: var(--button-bg-hover);
-}
-
-radio-selection.side-bar > div[selected] button{
-    background-color: var(--button-bg-selected);
-    color: var(--text-color-light);
-}
-
-radio-selection.side-bar button {
-    width: 100%;
-    aspect-ratio: 1;
-    font-size: 1.5em;
-    display: flex;
-    color: var(--c-lighter);
-}
-radio-selection.side-bar span {
-    font-size: 0.8em;
-}
-
-
-page-root {
-    height: 100vh;
+    right: 0;
+    bottom: 0;
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: auto 1fr;
+    gap: var(--main-spacing);
+    /* padding: var(--main-spacing); */
+    color: var(--text-color);
+
+    padding-top: max(var(--main-spacing), env(safe-area-inset-top));
+    padding-bottom: max(var(--main-spacing), env(safe-area-inset-bottom));
+    padding-left: max(var(--main-spacing), env(safe-area-inset-left));
+    padding-right: max(var(--main-spacing), env(safe-area-inset-right));
 }
 
-page-root header {
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Header ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+page-root > header {
     grid-column: 1 / 3;
     grid-row: 1;
-    height: 4em;
+    height: 2.4em;
     display: flex;
     justify-content: space-between;
-    padding: 0.6em;
 }
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Side Bar ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+page-root > radio-selection.side-bar {
+    grid-column: 1;
+    grid-row: 2;
+    width: 3em;
+    gap: 1em;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Main ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+page-root main {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Media Query ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+@media (max-width: 38em) {
+    :host {
+        --main-spacing: 1em;
+        --card-spacing: 1em;
+    }
+    page-root {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+    }
+    page-root > header {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    page-root > main {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    page-root > radio-selection.side-bar {
+        grid-column: 1;
+        grid-row: 3;
+        flex-direction: row;
+    }
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Header ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
 
 page-root header i-bw[i="search"] {
     position: absolute;
@@ -198,7 +135,7 @@ page-root header button {
     height: 100%;
 }
 
-.user-icon {
+page-root header .user-icon {
     height: 100%;
     background-size: cover;
     aspect-ratio: 1;
@@ -206,27 +143,100 @@ page-root header button {
 }
 
 
-page-root main {
-    grid-column: 2;
-    grid-row: 2;
-    position: relative;
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Side Bar ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
+radio-selection.side-bar > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.2em;
 }
+
+radio-selection.side-bar > div:hover button {
+    background-color: var(--button-bg-hover);
+}
+
+radio-selection.side-bar > div[selected] button{
+    background-color: var(--button-bg-selected);
+    color: var(--text-color-light);
+}
+
+radio-selection.side-bar button {
+    width: 100%;
+    aspect-ratio: 1;
+    font-size: 1.5em;
+    display: flex;
+    color: var(--c-lighter);
+}
+
+radio-selection.side-bar span {
+    font-size: 0.8em;
+}
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Main ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
 
 page-root main > * {
     position: absolute;
     top: 0;
     left: 0;
-    right: 1em;
-    bottom: 1em;
+    right: 0;
+    bottom: 0;
     overflow: hidden;
     transition: 0.3s ease-in-out opacity;
 }
 
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Login page ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.login-page-container {
+    transition: 0.3s ease-in-out opacity;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+login-page {
+    --text-color: black;
+    --login-page-background: #00000073;
+    color: var(--text-color);
+    display: contents;
+  
+}
+
+.close-button {
+    --button-bg-hover: var(--c-light);
+    background-color: var(--panel-bg);
+    display: flex;
+    position: fixed;
+    color: white;
+    top: 0.5em;
+    right: 0.5em;
+    cursor: pointer;
+    font-size: 2em;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Explore page ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 explore-page {
     display: grid;
-    grid-template-columns: auto 20rem;
-    height: 100%;
-    width: 100%;
+    grid-template-columns: auto 18em;
     gap: 1em;
 }
 
@@ -237,13 +247,69 @@ explore-page .main {
    overflow: hidden;
 }
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Recent ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+explore-page aside {
+    background: var(--panel-bg);
+    border-radius: 1em;
+    position: relative;
+}
+
+explore-page aside h2 {
+    margin: 0;
+}
+
+explore-page aside .scroll-element {
+    padding: var(--card-spacing);
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-spacing);
+}
+
+explore-page aside board-card {
+    min-height: 13em;
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~ Preview Display ~~~~~~~~~~~~~~~~~~~~~~~ */
+
+preview-display {
+    --preview-width: 70vmin;
+    --preview-height: 42vmin;
+    position: fixed;
+    opacity: 0;
+    pointer-events: none;
+    width: var(--preview-width);
+    height: var(--preview-height);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 1em;
+    padding: 1em;
+    z-index: 1000;
+    transition: 0.3s ease-in-out opacity;
+}
+
+preview-display > * {
+    height: 100%;
+    --width: var(--preview-width);
+    --height: var(--preview-height);
+}
+
+preview-display[show] {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~ Gradient Header ~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
 .gradient-header {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2.5em;
-    padding: 2em;
+    padding: var(--card-spacing);
     color: var(--text-color-light);
 
 
@@ -273,7 +339,8 @@ explore-page .main {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: auto auto;
     gap: 1em;
-    width: 25em
+    width: 25em;
+    max-width: 100%;
 }
 .gradient-header .grid bg-img {
     width: 100%;
@@ -327,53 +394,14 @@ explore-page .main {
 }
 
 
-explore-page aside {
-    background: var(--panel-bg);
-    border-radius: 1em;
-    margin-right: 1em;
-    position: relative;
-}
-
-explore-page aside h2 {
-    margin: 0;
-}
-explore-page aside .scroll-element {
-    padding: 2em;
-    display: flex;
-    flex-direction: column;
-    gap: 2em;
-}
-
-
 .board-list {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    padding: 0 2em 2em 2em;
-    
+    padding: var(--card-spacing);
+    padding-top: 0;
 }
 
-.feature-set {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5em;
-}
-.feature-set h2 {
-    margin: 0;
-}
-
-
-.row-x {
-    display: grid;
-    grid-template-columns: repeat(var(--row, 3), 1fr);
-    gap: 1em;
-}
-
-.board-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: auto;
-    gap: 1em;
-}
 
 board-card {
     background-color: var(--board-card-color);
@@ -386,6 +414,8 @@ board-card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    overflow: hidden;
 }
 
 board-card:hover {
@@ -413,32 +443,157 @@ board-card span {
     font-size: 0.8em;
 }
 
-
-.login-page-container {
-    transition: 0.3s ease-in-out opacity;
+board-card[preview-timer]::after {
+    content: " ";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 0.3em;
+    background-color: #b0adac;
+    animation: preview-timer linear 3s forwards;
+    width: calc(var(--progress) * 100%);
 }
 
-login-page {
-    --text-color: black;
-    --login-page-background: #00000073;
-    color: var(--text-color);
-    display: contents;
-  
-}
-
-.close-button {
-    --button-bg-hover: var(--c-light);
-    background-color: var(--panel-bg);
+.board-set.root {
     display: flex;
-    position: fixed;
-    color: white;
-    top: 0.5em;
-    right: 0.5em;
-    cursor: pointer;
-    font-size: 2em;;
+    flex-direction: column;
+    gap: 1em;
+}
+.board-set.grid {
+    display: grid;
+    grid-template-rows: auto;
+    gap: 1em;
+}
+.board-set.head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    padding: 0.3em;
+    border-bottom: 1px solid var(--button-bg-hover);   
+}
+.board-set h2 { margin: 0;}
+
+.board-set .btn-text.more {
+    display: none;
+}
+
+/* 
+max board-card width: 16em;
+min board-card width: 12em;
+bc = board-card width
+n  = number of board-cards per row
+
+spacing     with recent             without
+            9em + n(bc + 1em)       12em + n(bc + 1em) + bc
+n = 1       [22em,26em]		        [37em,45em]
+n = 2       [35em,43em]		        [50em,62em]
+n = 3       [48em,60em]		        [63em,79em]
+n = 4       [61em,77em]		        [76em,96em]
+n = 5       [74em,94em]		        [89em,113em]
+
+=***===(x=x=x)===x=== */
+
+/* no recent 1 column */
+@media (max-width: 30em) {
+    explore-page aside { display: none; }
+    explore-page { grid-template-columns: repeat(1, 1fr); }
+    .board-set.grid { grid-template-columns: repeat(1, 1fr); }
+
+    
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+2) {
+        display: none;
+    }   
+
+    .board-set.root:has(board-card:nth-last-child(n+2)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+/* no recent 2 column */
+@media (min-width: 30em) and (max-width: 50em) {
+    explore-page aside { display: none; }
+    explore-page { grid-template-columns: repeat(1, 1fr); }
+    .board-set.grid { grid-template-columns: repeat(2, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+3) {
+        display: none;
+    } 
+    .board-set.root:has(board-card:nth-last-child(n+3)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+/* no recent 3 column */
+@media (min-width: 50em) and (max-width: 65em) {
+    explore-page aside { display: none; }
+    explore-page { grid-template-columns: repeat(1, 1fr); }
+
+    .board-set.grid { grid-template-columns: repeat(3, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+4) {
+        display: none;
+    } 
+
+    .board-set.root:has(board-card:nth-last-child(n+4)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+/* recent and 3 column */
+@media (min-width: 65em) and (max-width: 76em) {
+    .board-set.grid { grid-template-columns: repeat(3, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+4) {
+        display: none;
+    } 
+    .board-set.root:has(board-card:nth-last-child(n+4)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+/* recent and 4 column */
+@media (min-width: 76em) and (max-width: 93em) {
+    .board-set.grid { grid-template-columns: repeat(4, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+5) {
+        display: none;
+    } 
+    .board-set.root:has(board-card:nth-last-child(n+5)) .btn-text.more{
+        display: inline-block;
+    }
 }
 
 
+/* recent and 5 column */
+@media (min-width: 93em) and (max-width: 115em) {
+    .board-set.grid { grid-template-columns: repeat(5, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+6) {
+        display: none;
+    } 
+    .board-set.root:has(board-card:nth-last-child(n+6)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+/* recent and 6 column */
+@media (min-width: 115em) {
+    .board-set.grid { grid-template-columns: repeat(6, 1fr); }
+
+    .board-set.root:not([expanded]) board-card:nth-of-type(n+7) {
+        display: none;
+    } 
+    .board-set.root:has(board-card:nth-last-child(n+7)) .btn-text.more{
+        display: inline-block;
+    }
+}
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~ File System ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 file-system {
     --border-color: #ffffff44;
@@ -472,3 +627,106 @@ file-system[loaded]::after {
     opacity: 0;
     pointer-events: none;
 }
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Shared ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+* {
+    box-sizing: border-box;
+}
+
+
+.btn-text {
+    cursor: pointer;
+    user-select: none;
+    transition: 0.2s ease-in-out color;
+}
+.btn-text:hover {
+    color: var(--text-color-light);
+}
+
+button {
+    border: none;
+    outline: none;
+    padding: 0.4em;
+    border-radius: 0.4em;
+    background-color: transparent;
+    transition: 0.15s ease-in-out background-color;
+    cursor: pointer;
+}
+button:hover {
+    background-color: var(--button-bg-hover);
+}
+
+
+
+bg-img {
+    background-size: contain;
+    background-image: var(--bg-i);
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+}
+bg-img::after {
+    content: " ";
+    position: absolute;
+    top: 0;   
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    
+    /* Gradient loading effect */
+    background: linear-gradient(
+        110deg,
+        var(--color-1, #e0e0e0) 28%,
+        var(--color-2, #f5f5f5) 38%,
+        var(--color-1, #e0e0e0)  53%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+    transition: 0.3s ease-in-out opacity;
+}
+bg-img:not([loaded])::after {
+    opacity: 1;
+}
+
+
+@keyframes shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+
+.scroll-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+.scroll-element {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    filter: brightness(100);
+    cursor: pointer;
+}
+
+
+

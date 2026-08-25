@@ -1,9 +1,11 @@
-import { getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "./src/Firebase/boards.js";
-import { addAuthChangeListener } from "./src/Firebase/firebase.js";
-import { openViewer } from "./src/shared.js";
+import { AACGrid, AACGridWrapper } from "./src/AACWebComponent/aac.js";
+import { AutoPosition, ContextMenu } from "./src/ContextMenu/context-menu.js";
+import { getBoard, getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "./src/Firebase/boards.js";
+import { addAuthChangeListener, getUser, set } from "./src/Firebase/firebase.js";
+import { getRecentBoards, getViewerURL, openEditor, openViewer } from "./src/shared.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { Radio } from "./src/Utilities/simple.js";
-import { ShadowElement, SvgPlus } from "./src/Utilities/utils.js";
+import { ShadowElement, SvgPlus, Vector } from "./src/Utilities/utils.js";
 
 const FEATURED_BOARDS = [
     {
@@ -48,55 +50,201 @@ const FEATURED_BOARDS = [
     }
 ]
 
-const RECENT_BOARDS = [
-    "rTezEUKTUzcOGAdleZkh",
-    "zmnKiAkXdSTdjCtB6WmV",
-    "b8yQVLZjdRHweuhrrzfs",
-    "JdfvRskx5EcpPpUudK5o",
-]
 
 const ALL_FEATURED_BOARDS = new Set(FEATURED_BOARDS.flatMap(set => set.boards));
+
+
 class BoardCard extends SvgPlus {
-    constructor(boardID, showAuthor = true) {
+    #timerPromise = null;
+    #timerStarted = false;
+    #timerStopped = false;
+    #timerDuration = 1500;
+    #elapsedTime = 0;
+    
+    constructor(explorer, boardID, showAuthor = true) {
         super("board-card");
+        this.boardID = boardID;
+        this.explorer = explorer;
         let boardIcon = this.createChild("bg-img");
         let desc = this.createChild("div", {class: "description"});
         let d1 = desc.createChild("div");
         let boardTitle = d1.createChild("h2", {content: "..."});
         
         let boardAuthor = showAuthor ? d1.createChild("span", {content: "..."}) : null; 
-        desc.createChild("button").createChild(Icon, {}, "more");
+        desc.createChild("button", {
+            events: {
+                click: (e) => {
+                    this.openMenu(e);
+                }
+            }
+        }).createChild(Icon, {}, "more");
+
+
         getBoardMetadata(boardID).then(metadata => {
+            this.metadata = metadata;
             boardIcon.src = metadata.thumbnail || import.meta.resolve("./Assets/Icons/grid.svg");
             boardTitle.innerText = metadata.path.name;
             if (showAuthor) boardAuthor.innerText = `by ${metadata.owner.slice(0, 10)}`;
-        })
 
-        this.addEventListener("dblclick", () => {
-            openViewer(boardID);
+            this.events = {
+                "mouseenter": () => {
+                    this.startPreviewTimer();
+                },
+
+                "mouseleave": () => {
+                    this.stopPreviewTimer();
+                }
+            }
         })
+    }
+
+    openMenu(e) {
+        e.stopPropagation();
+
+        const {boardID, explorer, metadata} = this;
+        if (!metadata) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const desiredUser = urlParams.get("user");
+        let user = desiredUser || getUser()?.uid;
+
+        explorer.createContextMenu([
+            ...(user === this.metadata.owner ? [
+                {
+                    label: "Open in Files",
+                    icon: "<i-bw folder-bw></i-bw>",
+                    action: this.openInFileSystem.bind(this)
+                },
+                {
+                    label: "Open in Editor",
+                    icon: "<i-bw edit></i-bw>",
+                    action: () => openEditor(boardID)
+                },
+                "seperator"
+            ] : []),
+            {
+                label: "Open in Viewer",
+                icon: "<i-bw view></i-bw>",
+                action: () => {
+                    openViewer(boardID);
+                }
+            },
+            {
+                label: "Share",
+                icon: "<i-bw share></i-bw>",
+                action: () => {
+                    navigator.share({
+                        title: this.metadata.path.name,
+                        url: getViewerURL(boardID)
+                    }).catch(err => {
+                        navigator.clipboard.writeText(getViewerURL(boardID))
+                    });
+                }
+            }
+        ])
+    }
+
+    openInFileSystem() {
+        let event = new CustomEvent("open-file-system", {
+            detail: {boardID: this.boardID},
+            bubbles: true,
+        });
+        this.dispatchEvent(event);
+    }
+
+    onPreview() {
+        this.explorer.showPreview();
+    }
+    onHalfway() {
+        this.explorer.loadPreview(this.boardID);
+    }
+    startPreviewTimer() {
+        if (this.explorer.isOpenAndSamePreview(this.boardID) || this.#timerStarted) {
+            return;
+        }
+
+        let ratio = 0.3;
+
+        this.#timerPromise = (async () => {
+            this.#timerStarted = true;
+            this.#timerStopped = false;
+            this.toggleAttribute("preview-timer", true);
+
+            while (this.#elapsedTime < this.#timerDuration && !this.#timerStopped) {
+                let now = performance.now();
+                await new Promise(requestAnimationFrame);
+                let lastTime = this.#elapsedTime
+                this.#elapsedTime += performance.now() - now;
+            
+                this.styles = {
+                    "--progress": this.#elapsedTime / this.#timerDuration
+                }
+
+                if (lastTime < this.#timerDuration * ratio && this.#elapsedTime >= this.#timerDuration * ratio) {
+                    this.onHalfway();
+                }
+            }
+
+            if (!this.#timerStopped) {
+                this.onPreview();
+            } else {
+                await this.explorer.loadPreviewPromise();
+            }
+            this.toggleAttribute("preview-timer", false);
+            this.#timerStarted = false;
+            this.#elapsedTime = 0;
+        })();
+    }
+
+    async stopPreviewTimer() {
+        console.log("stop timer");
+        this.#timerStopped = true;
+        await this.#timerPromise;
+    }
+
+}
+
+class BoardSet extends SvgPlus {
+    constructor(explorer, boardIDs, title, showAuthor = true) {
+        super("div");
+        this.class = "board-set root";
+        if (typeof title === "string" && title !== undefined) {
+            const h = this.createChild("div", {class: "board-set head"});
+            h.createChild("h2", {content: title});
+            this.toggleButton = h.createChild("div", {class: "btn-text more", content: "View All", events: {
+                click: () => this.toggleExpanded()
+            }});
+            this.toggleExpanded(false);
+        } else {
+            this.toggleExpanded(true);
+        }
+        let grid = this.createChild("div", {class: "board-set grid"});
+        boardIDs.forEach(boardID => {
+            grid.createChild(BoardCard, {}, explorer, boardID, showAuthor);
+        })
+    }
+
+    toggleExpanded(bool) {
+        this.toggleAttribute("expanded", bool);
+        const expanded = this.hasAttribute("expanded");
+        if (this.toggleButton) {
+            this.toggleButton.innerText = expanded ? "Show Less" : "Show More";
+        }
     }
 }
 
-
 class FeaturedList extends SvgPlus {
-    constructor() {
+    constructor(explorer) {
         super("div");
         this.class = "featured-board board-list"
         for (let {boards, title} of FEATURED_BOARDS) {
-            if (title) {
-                this.createChild("div", {class: "feature-set", content: `<h2>${title}</h2>`});
-            }
-            let row3 = this.createChild("div", {class: "row-x", style: {"--row": 4}});
-            boards.slice(0, 4).forEach(boardID => {
-                row3.createChild(BoardCard, {}, boardID, false);
-            })
+            this.createChild(BoardSet, {}, explorer, boards, title, false);
         }
     }
 }
 
 class MyFavouritesList extends SvgPlus {
-    constructor() {
+    constructor(explorer) {
         super("div");
         this.class = "my-favourites board-list"
         addAuthChangeListener(user => {
@@ -113,10 +261,7 @@ class MyFavouritesList extends SvgPlus {
                     if (keys.length === 0) {
                         this.createChild("div", {content: "You have no favourite boards."});
                     } else {
-                        let lrow3 = this.createChild("div", {class: "board-card-grid"});
-                        keys.forEach(
-                            boardID => lrow3.createChild(BoardCard, {}, boardID, false)
-                        );
+                        this.createChild(BoardSet, {}, explorer, keys);
                     }
                 })
             } else {
@@ -127,7 +272,7 @@ class MyFavouritesList extends SvgPlus {
 }
 
 class PublicList extends SvgPlus {
-    constructor() {
+    constructor(explorer) {
         super("div");
         this.class = "public-board board-list"
         watchPublicBoards((changes) => {
@@ -142,29 +287,62 @@ class PublicList extends SvgPlus {
             if (keys.length === 0) {
                 this.createChild("div", {content: "No public boards."});
             } else {
-                const grid = this.createChild("div", {class: "board-card-grid"});
-                keys.forEach(
-                    boardID => grid.createChild(BoardCard, {}, boardID, true)
-                );
+                this.createChild(BoardSet, {}, explorer, keys);
             }
         })
     }
 }
 
+class PreviewDisplay extends AutoPosition {
+    constructor(boardID) {
+        super("preview-display");
+        this.grid = this.createChild(AACGridWrapper, {}, "div");
+    }
+
+
+    async load(boardID, timeTilSet = 300) {
+        this.boardID = boardID;
+        this.loadingPromise = (async () => {
+            let now = performance.now();
+            const board = await getBoard(boardID)
+            let rem = timeTilSet - (performance.now() - now);
+            if (rem > 0) {
+                await new Promise(r => setTimeout(r, rem));
+            }
+            this.grid.board = board;
+            await new Promise(r => setTimeout(r, 300));
+        })();
+    }
+
+    get shown() {
+        return this.hasAttribute("show");
+    }
+
+    set shown(bool) {
+        this.toggleAttribute("show", bool);
+    }
+
+}
+
 class ExplorePage extends SvgPlus {
     constructor() {
         super("explore-page");
+
+        this.preview = this.createChild(PreviewDisplay);
+
         const main = this.createChild("div", {class: "main"})
-            .createChild("div", {class: "scroll-wrap"})
-            .createChild("div", {class: "scroll-element"});
+            .createChild("div", {class: "scroll-wrap", events: {
+                scroll: (e) => { this.removeAllPopups(); }
+            }}).createChild("div", {class: "scroll-element"});
         
         const side = this.createChild("aside")
-            .createChild("div", {class: "scroll-wrap"})
-            .createChild("div", {class: "scroll-element"})
+            .createChild("div", {class: "scroll-wrap", events: {
+                scroll: (e) => { this.removeAllPopups(); }
+            }}).createChild("div", {class: "scroll-element"})
 
         side.createChild("h2", {content: "Recent Boards"});   
-        for (let boardID of RECENT_BOARDS) {
-            side.createChild(BoardCard, {}, boardID);
+        for (let boardID of getRecentBoards()) {
+            side.createChild(BoardCard, {}, this, boardID);
         }
 
         
@@ -197,14 +375,61 @@ class ExplorePage extends SvgPlus {
         ])
         
         this.lists = {
-            featured: main.createChild(FeaturedList),
-            favourites: main.createChild(MyFavouritesList),
-            public: main.createChild(PublicList),
+            featured: main.createChild(FeaturedList, {}, this),
+            favourites: main.createChild(MyFavouritesList, {}, this),
+            public: main.createChild(PublicList, {}, this),
         }
-        
-        this.radio.select("featured", true);
+        this.events = {
+            "mousemove": (e) => {
+                this.lastMouseMove = new Vector(e.clientX, e.clientY);
+            }
+        }
 
-    }   
+        this.radio.select("featured", true);
+    } 
+
+
+
+    createContextMenu(items) {
+        if (this.contextMenu) {
+            this.contextMenu.destroy();
+        }
+        this.contextMenu = this.createChild(ContextMenu, {}, items, this.lastMouseMove);
+    }
+
+
+    loadPreview(boardID) {
+        this.preview.load(boardID);
+        this.preview.shown = false;
+    }
+
+    hidePreview() {
+        this.preview.shown = false;
+    }
+
+    showPreview() {
+        this.preview.autoPosition(this.lastMouseMove);
+        this.preview.shown = true;
+    }
+
+    loadPreviewPromise() {
+        return this.preview.loadingPromise || Promise.resolve();
+    }
+
+
+    isOpenAndSamePreview(boardID) {
+        return this.preview.shown && this.preview.boardID === boardID;
+    }
+
+
+    removeAllPopups() {
+        if (this.contextMenu) {
+            this.contextMenu.destroy();
+            this.contextMenu = null;
+        }
+        this.hidePreview();
+    }
+    
 
     set shownMode(mode) {
         for (let key in this.lists) {
@@ -214,6 +439,11 @@ class ExplorePage extends SvgPlus {
                 this.lists[key].styles = {display: "none"};
             }
         }
+        this.removeAllPopups()
+    }
+
+    static get usedStyleSheets() {
+        return ContextMenu.usedStyleSheets;
     }
 }
 

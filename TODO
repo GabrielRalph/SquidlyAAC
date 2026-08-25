@@ -3,6 +3,7 @@ EDITOR
         - DONE: when you press find image the scroll bar to start at the top
         - DONE: hidden cells slightly opaque 
 
+
     bugs: 
         - Save causes old saved board to be drafted when two tabs open
         
@@ -15,6 +16,9 @@ EDITOR
         - If search then close, keep search results until a label is edited
         - r,c input to set grid size
         - text 2 speach preview
+        - tab + arrow keys to select next cell
+
+        - pop ups close when you click else where 
 
         - advanced hints similar ()
 
@@ -71,8 +75,10 @@ AAC SYSTEM
 
 EXPLORE
     feature-updates:
-        - Three dots to open menu
-        - Hover effect on board card
-        - Recent boards using local storage (if possible)
+        - DONE: Three dots to open menu
+        - DONE: Hover effect on board card
+        - DONE: Recent boards using local storage (if possible)
+        
         - drop down for user
         - upload obz
+        - copy public board

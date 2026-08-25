@@ -73,7 +73,7 @@ const TOP_TOOLS = [
             },
             {
                 name: "files",
-                icon: "folder",
+                icon: "folder-bw",
                 onClick(editor) {
                     openFiles();
                 }

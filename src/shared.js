@@ -1,5 +1,14 @@
+const MAX_RECENT_BOARDS = 10;
+
 const POPUP_CACHE = {};
 const DEBUG = (new URLSearchParams(window.location.search).get("debug") === "true")
+
+let RECENT_BOARDS = [];
+try {
+    RECENT_BOARDS = JSON.parse(window.localStorage.getItem("recentBoards") || "[]");
+    RECENT_BOARDS = RECENT_BOARDS.filter(board => typeof board === "string");
+    console.log("Loaded recent boards:", RECENT_BOARDS);
+} catch (e) {}
 
 
 function openCachedPopup(id, url) {
@@ -52,6 +61,16 @@ function openNewEditor() {
 function openViewer(board) {
     openWindow("View", board);
 } 
+
+function getViewerURL(board) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set("board", board);
+
+    const url = new URL(window.location.href);
+    url.pathname = "/View/";
+    url.search = urlParams.toString();
+    return url.toString();
+}
 
 function openDraftPreview(board) {
     openWindow("View", board, {mode: "preview-draft"}, "-draft");
@@ -253,8 +272,29 @@ function updateObject(target, changes) {
     return updatedValue;
 }
 
+function addBoardToRecent(boardID) {
+    if (!boardID || typeof boardID !== "string") return;
+    const index = RECENT_BOARDS.indexOf(boardID);
+    if (index !== -1) {
+        RECENT_BOARDS.splice(index, 1);
+    }
+    RECENT_BOARDS.unshift(boardID);
+    if (RECENT_BOARDS.length >  MAX_RECENT_BOARDS) {
+        RECENT_BOARDS = RECENT_BOARDS.slice(0, MAX_RECENT_BOARDS);
+    }
+    window.localStorage.setItem("recentBoards", JSON.stringify(RECENT_BOARDS));
+}
+
+function getRecentBoards() {
+    return [...RECENT_BOARDS];
+}
+
+
+
 export { 
     Debugger, 
+    getViewerURL, 
     openWindow, openEditor, openViewer, openDraftPreview, openFiles, openNewEditor,
-    copy, isEqual, differences, updateObject
+    copy, isEqual, differences, updateObject,
+    getRecentBoards, addBoardToRecent
 };

@@ -1,6 +1,8 @@
 import { AACBoard, AACGrid, AACGridWrapper } from "../src/AACWebComponent/aac.js";
 import { BoardSetWatcher, BoardWatcher, downloadBoardSet, getBoard, getBoardMetadata } from "../src/Firebase/boards.js";
 import * as FB from "../src/Firebase/firebase.js";
+import { addBoardToRecent } from "../src/shared.js";
+
 
 FB.initialise();
 
@@ -112,6 +114,10 @@ export async function setup() {
     let urlParams = new URLSearchParams(window.location.search);
     let rootID = urlParams.get("board")
     let mode = urlParams.get("mode") || "default";
+
+    if (rootID) {
+        addBoardToRecent(rootID);
+    }
 
     if (mode === "default") {
         await setupBoard(rootID);

@@ -2,11 +2,9 @@
 context-menu {
     position: fixed;
     z-index: 1000;
-    padding: 0.5em;
     font-size: 0.9em;
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
-    transform: translate(-0.7em, -0.7em);
 
     --_background: var(--context-menu-background, rgba(255, 255, 255, 0.794));
     --_border_color: var(--context-menu-border-color, #0000004d);
@@ -60,6 +58,7 @@ context-menu-item .binding {
     font-size: 0.95em;
     color: var(--_binding_color);
 }
+
 context-menu-item:hover .binding {
     color: var(--selected-fg);
 }

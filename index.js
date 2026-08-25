@@ -2,6 +2,7 @@ import { ExplorePage } from "./explore.js";
 import { AACFinder } from "./files.js";
 import { addAuthChangeListener, getUser, initialise, signOut } from "./src/Firebase/firebase.js";
 import { LoginPage } from "./src/loginPage/login-page.js";
+import { openEditor } from "./src/shared.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
 import { Radio } from "./src/Utilities/simple.js";
@@ -38,7 +39,7 @@ const SIDE_BAR_RADIO = [
         title: "Create",
         icon: "new-grid",
         onClick: () => {
-            window.location.href = "./Editor";
+            openEditor()
         }
     },
 ]
@@ -65,9 +66,6 @@ class AACHomePage extends ShadowElement {
             }
         });
 
-        const d1 = h.createChild("div")
-        d1.createChild(Icon, {}, "search");
-        this.searchInput = d1.createChild("input", { type: "text", placeholder: "Search", class: "search-bar" });
         this.displayPicture = h.createChild("div").createChild("button", {
             events: {
                 click: () => {
@@ -81,7 +79,7 @@ class AACHomePage extends ShadowElement {
         }).createChild("bg-img", {class: "user-icon"});
 
         const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get("mode");
+        const mode = urlParams.get("tab");
         this.radio = this.createChild(
             Radio, 
             { class: "side-bar" }, 
@@ -92,7 +90,11 @@ class AACHomePage extends ShadowElement {
         this.radio.select(mode === "explore" ? 0 : 1, false);
 
         const main = this.createChild("main");
-        this.explore = main.createChild(ExplorePage);
+        this.explore = main.createChild(ExplorePage, {events: {
+            "open-file-system": (e) => {
+                this.openFileSystem(e.detail.boardID);
+            }
+        }});
 
         // let finderContainer = main.createChild("div", {class: "finder-container"})
         this.finder = main.createChild(AACFinder, {}, "file-system");
@@ -144,12 +146,10 @@ class AACHomePage extends ShadowElement {
 
     }
 
-
-
     set viewMode(mode) {
         this.radio.select(mode === "explore" ? 0 : 1, false);
         const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set("mode", mode);
+        urlParams.set("tab", mode);
         window.history.replaceState({}, "", `${window.location.pathname}?${urlParams.toString()}`);
         this.explore.styles = mode === "explore" ? SHOW_STYLE : HIDE_STYLE;
         this.finder.styles = mode === "explore" ? HIDE_STYLE : SHOW_STYLE;
@@ -157,7 +157,7 @@ class AACHomePage extends ShadowElement {
     }
 
 
-    async openFileSystem() {
+    async openFileSystem(boardID) {
         this.finder.toggleAttribute("loaded", false);
         await this._waitingForAuth
         if (!getUser()) {
@@ -166,6 +166,9 @@ class AACHomePage extends ShadowElement {
         } else {
             this.viewMode = "finder";
             this.finder.toggleAttribute("loaded", true);
+            if (boardID) {
+                this.finder.selectByBoardID(boardID);
+            }
         }
     }
 
@@ -174,6 +177,7 @@ class AACHomePage extends ShadowElement {
         return [
             import.meta.resolve("./style.css"),
             import.meta.resolve("./Assets/Icons/icons.css"),
+            ...ExplorePage.usedStyleSheets
         ]
     }
 }
