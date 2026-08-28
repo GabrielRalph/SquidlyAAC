@@ -80,11 +80,10 @@ function openDraftPreview(board) {
 function openFiles() {
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete("board");
-    const id = "Files";
-    const url = `../Files/?${urlParams.toString()}`
-    openCachedPopup(id, url);
+    urlParams.set("tab", "finder");
+    const url = `../?${urlParams.toString()}`
+    openCachedPopup("files", url);
 }
-
 
 
 class Debugger {
