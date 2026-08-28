@@ -3,18 +3,69 @@ import { OBBoard } from "../OpenBoard/openboard.js";
 import { FirestoreFrame } from "./firestore-frame.js";
 import { OBBoardManager } from "../OpenBoard/openboard-manager.js";
 import { DataClass } from "../OpenBoard/dataclass.js";
-import { Debugger, timerLogger } from "../Utilities/shared.js";
+import { copy, Debugger, isEqual, timerLogger } from "../Utilities/shared.js";
 import { Path } from "../FileTree/FileSystem/Path.js";
+const {FStore: {where}} = FB;
+
+
+/***********************
+ * CONSTANTS AND CAHCES
+ /**********************/
+const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
+
+const META = new FirestoreFrame("boards");
+const DRAFTS = new FirestoreFrame("draft-boards");
+
+const MAX_RECENT_BOARDS = 10;
+
 const BOARD_CACHE = {};
 const BOARD_LISTENERS = {}
 const BOARD_META_CACHE = {};
+const META_DATA_CALLBACKS = {};
+const BOARD_LISTENERS_RESOLVED = {}
+const DRAFT_VERSION_CACHE = {};
+
 const USER_NAME_CACHE = {
-    squidly: Promise.resolve({name: "Squidly", pronouns: "they/them", displayPhoto: import.meta.resolve("../../Assets/logo.svg")})
+    squidly: Promise.resolve({
+        name: "Squidly", 
+        pronouns: "they/them", 
+        displayPhoto: import.meta.resolve("../../Assets/logo.svg")
+    })
 };
-const META = new FirestoreFrame("boards");
-const DRAFTS = new FirestoreFrame("draft-boards");
-const debug = new Debugger("OB-Boards", "background: black; color: limegreen; padding: 5px; border-radius: 5px;");
-const {FStore: {where}} = FB;
+
+let RECENT_BOARDS = [];
+
+
+/***************
+ * RECENT BOARDS
+ ***************/
+
+try {
+    RECENT_BOARDS = JSON.parse(window.localStorage.getItem("recentBoards") || "[]");
+    RECENT_BOARDS = RECENT_BOARDS.filter(board => typeof board === "string");
+} catch (e) {}
+
+
+function addBoardToRecent(boardID) {
+    if (!boardID || typeof boardID !== "string") return;
+    const index = RECENT_BOARDS.indexOf(boardID);
+    if (index !== -1) {
+        RECENT_BOARDS.splice(index, 1);
+    }
+    RECENT_BOARDS.unshift(boardID);
+    if (RECENT_BOARDS.length >  MAX_RECENT_BOARDS) {
+        RECENT_BOARDS = RECENT_BOARDS.slice(0, MAX_RECENT_BOARDS);
+    }
+    window.localStorage.setItem("recentBoards", JSON.stringify(RECENT_BOARDS));
+}
+
+function getRecentBoards() {
+    return [...RECENT_BOARDS];
+}
+
+/*****************************************
+ * DATA CLASSES AND OTHER CLASS STRUCTURES
+ *****************************************/
 
 class ServerTimestamp {
     constructor(value) {
@@ -42,7 +93,7 @@ class ServerTimestamp {
     }
 
     toJSON() {
-        return this.value;
+        return copy(this.value);
     }
 }
 
@@ -51,15 +102,28 @@ class MetadataError {
         this.code = code;
         this.sourceError = sourceError;
     }
+
+    toJSON() {
+        return {
+            code: this.code,
+            sourceError: this.sourceError
+        };
+    }
 }
 
-
 class BoardMetadata extends DataClass {
-    constructor(error = null) {
-        super();
-        this.error = error;
-    }
+ 
+
     error = null;
+    static error_parser(value) { 
+        if (typeof value === "number") {
+            return new MetadataError(value, null);
+        } else if (typeof value === "object" && value !== null) {
+            return new MetadataError(value?.code ?? 500, value?.sourceError ?? null);
+        } else {
+            return null;
+        }
+    }
 
     /** @type {string} */
     path = null;
@@ -92,11 +156,12 @@ class BoardMetadata extends DataClass {
     /** @type {boolean} */
     effectivePublic = false;
 
-    /** @type {boolean} */
-    valid = false;
-
     /** @type {boolean | string} */
     thumbnail = false;
+
+    get valid() {
+        return this.error === null && !this.deletedAt.valid;
+    }
 
     newer(other) {
         if (other instanceof BoardMetadata) {
@@ -109,12 +174,21 @@ class BoardMetadata extends DataClass {
     static make(data) {
         let boardMetadata = null;
         if (!data || typeof data !== "object") {
-            boardMetadata = new BoardMetadata();
+            boardMetadata = this.error(404, null);
         } else {
             boardMetadata = super.make(data);
-            boardMetadata.valid = true;
         }
         return boardMetadata;
+    }
+
+    static error(code, sourceError) {
+        let error;
+        if (code instanceof MetadataError) {
+            error = code;
+        } else {
+            error = new MetadataError(code, sourceError);
+        }
+        return this.make({error});
     }
 
     /**
@@ -141,9 +215,38 @@ class BoardMetadata extends DataClass {
         }
         return await USER_NAME_CACHE[this.owner];
     }
+
+
+    clone() {
+        return BoardMetadata.make(this.toJSON());
+    }
+
 }
 
+/***********************************
+ * METADATA AND BOARD CACHING SYSTEM
+ ***********************************/
+
 /**
+ * Returns weather the board needs to be reloaded.
+ * If the board is not in the cache, or if the metadata 
+ * is newer than the cached board, it needs to be reloaded.
+ *  
+ * @param {string} boardID
+ * @param {BoardMetadata} metadata
+ * @return {boolean}
+ */
+function needsReload(boardID, metadata) {
+    if (!(boardID in BOARD_CACHE)) {
+        return true;
+    }
+    const cachedBoard = BOARD_CACHE[boardID];
+    return metadata.newer(cachedBoard.lastUpdated);
+}
+
+
+/**
+ * Loads a board by its ID, either from a URL or from Firestore.
  * @param {string} id
  * 
  * @returns {Promise<OBBoard>}
@@ -174,63 +277,150 @@ async function _loadBoard(id) {
 }
 
 /**
- * Returns weather the board needs to be reloaded
- *  based on the metadata and the cached board.
- * @param {string} boardID
- * @param {BoardMetadata} metadata
- * @return {boolean}
+ * Calls all registered metadata callbacks for a given board ID.
+ * @param {string} id
  */
-function needsReload(boardID, metadata) {
-    if (!(boardID in BOARD_CACHE)) {
-        return true;
+function _callMetadataCallbacks(id) {
+    if (id in META_DATA_CALLBACKS) {
+        for (const callback of META_DATA_CALLBACKS[id]) {
+            callback(BOARD_META_CACHE[id].clone());
+        }
     }
-    const cachedBoard = BOARD_CACHE[boardID];
-    return metadata.newer(cachedBoard.lastUpdated);
 }
 
 /**
+ * Registers a callback function to be called whenever 
+ * the metadata for the specified board ID is updated.
  * @param {string} id
+ * @param {(metadata: BoardMetadata) => void} callback
+ */
+function _registerMetadataCallback(id, callback) {
+    if (callback instanceof Function) {
+        if (!(id in META_DATA_CALLBACKS)) {
+            META_DATA_CALLBACKS[id] = new Set()
+        }
+        META_DATA_CALLBACKS[id].add(callback);
+    }
+}
+
+/**
+ * Unregisters a callback function for the specified board ID.
+ * @param {string} id
+ * @param {(metadata: BoardMetadata) => void} callback
+ */
+function _unregisterMetadataCallback(id, callback) {
+    if (callback instanceof Function && id in META_DATA_CALLBACKS) {
+        META_DATA_CALLBACKS[id].delete(callback);
+        if (META_DATA_CALLBACKS[id].size === 0) {
+            delete META_DATA_CALLBACKS[id];
+        }
+    }
+}
+
+
+/**
+ * @param {string} id
+ * @param {(metadata: BoardMetadata) => void} [callback] - A function to be called when the metadata is updated.
  * 
  * @returns {Promise<BoardMetadata>}
  */
-async function getBoardMetadata(id) {
+async function _setupMetadataListener(id, callback = null) {
     timerLogger.tic("get metadata " + id);
+    let deregister = () => {}
 
     try {
+        // Register the metadata callback and set up the deregister function.
+        _registerMetadataCallback(id, callback);
+        deregister = () => _unregisterMetadataCallback(id, callback);
+
+        // If the board metadata is not already being
+        // listened to, set up a listener.
         if (!(id in BOARD_LISTENERS)) {
             debug.log("listening", id);
+
+            // Create the listener for the board metadata.
             BOARD_LISTENERS[id] = META.onValuePromise(id, async (data) => {
-                let metadata = BoardMetadata.make(data);
-                if (!data) metadata.error = new MetadataError(404);
-                else if (!metadata.updatedAt.valid) metadata.error = new MetadataError(204);
+                // Create the BoardMetadata object from the data.
+                const metadata = BoardMetadata.make(data);
+
+                // Error cases
+                //  data = null: 404, no metadata available 
+                //  metadata.updatedAt.invalid: 204, no board file saved yet
+                if (data === null || typeof data !== "object") {
+                    metadata.error = new MetadataError(404);
+                } else if (!metadata.updatedAt.valid) {
+                    metadata.error = new MetadataError(204);
+                } 
+
+                // Store metadata in the cache.
                 BOARD_META_CACHE[id] = metadata;
-                debug.log("metadata ", id, `updatedAt = ${BOARD_META_CACHE[id].updatedAt}`);
+
+                // Trigger all registered metadata callbacks for this board.
+                _callMetadataCallbacks(id);
+
+                // Mark the listener as resolved.
+                BOARD_LISTENERS_RESOLVED[id] = true;
+                debug.log("metadata ", id, metadata);
             });
+        } 
+
+        // If the listener has already been resolved, and a callback 
+        // is provided, call the provided callback immediately.
+        if (BOARD_LISTENERS_RESOLVED[id] === true && callback instanceof Function) {
+            _callMetadataCallbacks(id);
+
+        // Otherwise if the listener has not yet been resolved, 
+        // wait for it to resolve. In this case the callback will 
+        // be called once the listener resolves.
+        } else if (BOARD_LISTENERS_RESOLVED[id] !=- true) {
+            await BOARD_LISTENERS[id];
         }
-        await BOARD_LISTENERS[id];
+
     } catch (e) {
+        // If an error occurs while fetching the metadata the
+        // default code is 500.
         let newError = new MetadataError(500, e);
+
+        // Check for permission-denied errors and set 
+        // the appropriate error code.
         if (e.code === "permission-denied") {
             newError.code = 403;
-        } else {
-            newError.code = 500;
-        }
-        BOARD_META_CACHE[id] = new BoardMetadata(newError);
+        } 
+
+        // Create an invalid BoardMetadata object with the error.
+        BOARD_META_CACHE[id] = BoardMetadata.error(newError);
+
+        // Trigger all registered metadata callbacks for this board.
+        _callMetadataCallbacks(id);
     }
 
     timerLogger.toc("get metadata " + id);
 
-    return BOARD_META_CACHE[id];
+    return deregister;
 }
 
-
+/**
+ * Fetches the Squidly board for the given ID, using the cache if possible.
+ * If the board cannot be found or loaded, the promise resolves to null.
+ * 
+ * @param {string} id
+ * @returns {Promise<?OBBoard>}
+ */
 async function _getSquidlyBoard(id) {
-    let board = null;
-    const metadata = await getBoardMetadata(id);
+    // Ensure the metadata listener is set up before proceeding.
+    await _setupMetadataListener(id);
 
-    if (metadata && !metadata.error) {
-        // If the board is not in the cache, or if the board has 
-        // been updated since it was last cached, load it from the server
+    // Get the current metadata for the board from the cache.
+    const metadata = BOARD_META_CACHE[id];
+
+    let board = null;
+
+    // If metadata exists, there is no error and it is valid, 
+    // proceed to check if the board needs updating.
+    if (metadata && !metadata.error && metadata.valid) {
+
+        // If the board needs to be reloaded based 
+        // on the metadata, load it from the server.
         if (needsReload(id, metadata)) {
             debug.log("get board", id, "is new or updated, loading from server");
             BOARD_CACHE[id] = {
@@ -240,12 +430,53 @@ async function _getSquidlyBoard(id) {
         } else {
             debug.log("get board", id, "is up to date, using cached version");
         }
+
+        // Wait for the board to be loaded from the cache or server.
         board = await BOARD_CACHE[id].board;
     }
+
     return board;
 }
 
 /**
+ * Fetches the metadata for the specified board.
+ * This function also begins listening for metadata
+ * updates if it hasn't already.
+ * 
+ * @param {string} id
+ * @returns {Promise<BoardMetadata>}
+ */
+async function getBoardMetadata(id) {
+    await _setupMetadataListener(id);
+    return BOARD_META_CACHE[id].clone();
+}
+
+
+/**
+ * Starts listening for metadata updates for the specified board.
+ * When metadata updates are received for the specified board, 
+ * the provided callback is invoked. The function will resolve
+ * after the listener has been successfully set up and the callback 
+ * is invoked at least once with the current metadata. 
+ * The returned function can be called 
+ * to stop listening for updates.
+ * 
+ * @param {string} id
+ * @param {(metadata: BoardMetadata) => void}
+ * 
+ * @returns {() => void}
+ */
+async function setupMetadataListener(id, callback) {
+    return await _setupMetadataListener(id, callback);
+}
+
+
+/**
+ * Gets the board for the specified ID. 
+ * If the ID is a URL, it loads the board directly 
+ * from the server. Otherwise, it retrieves the board
+ * from the cache or loads it if necessary.
+ * 
  * @param {string} id
  * 
  * @returns {Promise<OBBoard>}
@@ -258,202 +489,174 @@ async function getBoard(id) {
     }
 }
 
-async function downloadBoardSet(rootID) {
-    let manager = {
-        boards: {},
-        manifest: {
-            root: rootID,
-            paths: {}
-        }
-    }
+/*****************************************
+ * BOARD WATCHER
+ *****************************************/
 
-    let rec = async (ids) => {
-        ids = ids.filter(id => !(id in manager.boards))
-        let boards = await Promise.all(ids.map(async id => {
-            manager.boards[id] = true;
-            const board = await getBoard(id, Date.now())
-            manager.boards[id] = board
-            let linkedBoards = board.linkedBoards.map(b => {
-                let id = b.data_url || b.id;
-                return id;
-            })
-            await rec(linkedBoards)
-        }))
-    }
-
-    await rec([rootID])
-
-    manager.manifest.paths.boards = Object.fromEntries(Object.entries(manager.boards).map(([id, board]) => [id, id]));
-
-    return OBBoardManager.make(manager)
-}
-
-const DRAFT_VERSION_CACHE = {};
 class BoardWatcher {
-    board = null;
-    version = 0;
-    metadata = null;
-    callback = null;
+    #id = null;
 
-    #exists = false;
+    #savedBoardPromise = null;
+    #savedBoard = null;
+    #draftBoard= null;
+
+    #version = 0;
+
+    #callback = null;
+    
+    #metadata = null;
+    #enders = [];
+    #watchProm = null;
+    
     #boardsUpdatedAt = new ServerTimestamp(null);
+    
     #initalised = false;
     #gettingBoard = false;
-
-    #id = null;
-    #enders = [];
     #saving = false;
-    #watchProm = null;
+
+    #isPendingChanges = false;
+
     constructor(id, callback) {
         if (id.startsWith("http")) {
             throw new Error("Drafts cannot be watched from URL");
         }
+
         this.#id = id;
-        this.callback = callback;
+        this.#callback = callback;
         this.debugger = new Debugger(`BW-${id.slice(-5)}`, "background: black; color: orange; padding: 5px; border-radius: 5px;");
     }
 
+   
+    #triggerCallback() { 
+        this.#isPendingChanges =!isEqual(this.#draftBoard, this.#savedBoard);
+        if (this.#initalised && this.#callback instanceof Function) {
+            this.log("Call")
+            this.#callback();
+        }
+    }
+
+
+    #onDraftUpdate(data) {
+        let change = false;
+        let [draft, version] = [null, 0];
+        if (data !== null && typeof data === "object") {
+            try {
+                version = data.version || 0;
+                draft = OBBoard.make(JSON.parse(data.board || "{}"));
+            } catch (e) {
+                this.log("Failed to parse draft data", e);
+            }
+        }
+        
+        if (version !== this.#version || !isEqual(draft, this.#draftBoard)) {
+            this.#version = version;
+            this.#draftBoard = draft;
+            this.log("Draft updated", { version: this.#version, draft: this.#draftBoard });
+            this.#triggerCallback();
+        }
+    }
+
+    async #onMetadataUpdate(metadata) {
+        if (!isEqual(metadata, this.#metadata)) {
+            this.log("Metadata changed", metadata);
+
+            this.#metadata = metadata;
+            this.#savedBoardPromise = getBoard(this.#id);
+            this.#savedBoard = await this.#savedBoardPromise;
+            this.#triggerCallback();
+        }
+    }
+
+     
     log(...args) {
         this.debugger.logBasic(...args);
     }
+
 
     stop() {
         this.#enders.forEach(end => end());
     }
 
-    async watch() {
-        this.log("Starting watch");
+
+    async watch() { 
         if (!this.#watchProm) {
             this.#watchProm = (async () => {
-                this.#enders = (await Promise.all([
-                    DRAFTS.onValuePromise(this.id, (data) => {
-                        this.draft = null;
-                        this.version = 0;
-                        this.log("Draft data changed", data);
-                        if (data) {
-                            try {
-                                this.draft = OBBoard.make(JSON.parse(data.board));
-                            } catch (e) {
-                                console.error("Error parsing draft board data", e);
-                            }
-                            this.version = data.version;
-                        }
-                        this.call();
-                    }),
-                    META.onValuePromise(this.id, async (data) => {
-                        await this.#updateMetadata(data);
-                    }),
-                ])).slice(0, 2);
-        
+                this.#enders = await Promise.all([
+                    DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this)),
+                    setupMetadataListener(this.#id, this.#onMetadataUpdate.bind(this))
+                ])
+                await this.#savedBoardPromise
                 this.#initalised = true;
-                this.call(true);
-            })()
+                this.#triggerCallback();
+            })();
         } 
         await this.#watchProm;
     }
-
-    async #forceMetadataUpdate() {
-        let data = await META.get(this.id);
-        await this.#updateMetadata(data);
-    }
-
-    async #updateMetadata(data) {
-        let meta = BoardMetadata.make(data);
-        if (!data) {
-            this.log("No metadata available for this board");
-            meta.error = new MetadataError(404);
-        }
-
-        this.log("Metadata updated", meta);
-        if (meta.valid) {
-            // Implement logic to handle if the board file has been 
-            // updated since the last time it was loaded
-            let log = `Checking if board file needs to be reloaded:\n\tlastUpdated = ${this.#boardsUpdatedAt}\n\tnewUpdated \t= ${meta.updatedAt}`;
-            if (!meta.updatedAt.valid) {
-                this.log(log + "\n\tboard is new");
-                this.#boardsUpdatedAt = new ServerTimestamp();
-                this.board = this.defaultBoard();
-            } else if (meta.newer(this.#boardsUpdatedAt)) {
-                this.log(log + "\n\treloading board file");
-                await this.#getBoardFile();
-            } else {
-                this.log(log + "\n\tboard file is up to date");   
-            }
-            this.#exists = true;
-        } else {
-            this.log("Meta data set to null, board does not exist");
-            this.#exists = false;
-        }   
-
-        this.metadata = meta;
-        this.call();
-    }
-
-    async #getBoardFile() {
-        if (this.#gettingBoard) {
-            await this.#gettingBoard;
-        } else {
-            this.#gettingBoard = (async () => {
-                this.#boardsUpdatedAt = this.metadata?.updatedAt;
-                let board = await _loadBoard(this.id)
-                this.log("Board file loaded", board);
-                this.board = board || OBBoard.makeEmptyBoard(4, 5, this.id);
-            })();
-            await this.#gettingBoard;
-            this.#gettingBoard = false;
-        }
-    }
+   
 
     async save(data) {
-        this.log("Saving board");
         if (this.#saving) return;
         this.#saving = true;
-        await this.updateDraft(data);
         this.log("Calling update function");
         let response = await FB.callFunction('OBBoards-update', {
             boardID: this.id,
         }, "australia-southeast1");
         this.log("Save response", response);
-        if (!response.error) {
-            this.draft = null;
-            await this.#forceMetadataUpdate();
-            if (this.#gettingBoard) {
-                await this.#gettingBoard;
-            }
-        }
         this.#saving = false;
-        this.call();
     }
 
     async updateDraft(data) {
-        this.version = (this.version || 0) + 1;
+        this.#version = (this.#version || 0) + 1;
+        this.#draftBoard = OBBoard.make(data);
+
         let update = {
-            board: JSON.stringify(OBBoard.make(data)),
-            version: this.version,
+            board: JSON.stringify(this.#draftBoard),
+            version: this.#version,
+            timestamp: FirestoreFrame.TimestampSymbol
         }
-        this.log("Updating draft");
-        await DRAFTS.set(this.id, update);
-    }
-  
-    call() { 
-        this.log("Call", !this.#saving && this.#initalised && this.callback instanceof Function)
-        if (!this.#saving && this.#initalised && this.callback instanceof Function) {
-            this.callback();
+
+        this.#isPendingChanges = !isEqual(this.#draftBoard, this.#savedBoard);
+
+        try {
+            this.log("Updating draft");
+            await DRAFTS.set(this.#id, update);
+        } catch (error) {
+            this.log("Failed to update draft for board", this.id, "with data", update, "Error:", error);
         }
     }
 
+    sameAsDraft(data) {
+        return isEqual(this.#draftBoard, data ? OBBoard.make(data) : null);
+    }
+  
+    get metadata() {
+        return this.#metadata ? this.#metadata.clone() : null;
+    }
+    
+    get draft() {
+        return this.#draftBoard ? OBBoard.make(this.#draftBoard) : null;
+    }
+
+    get saved() {
+        return this.#savedBoard ? OBBoard.make(this.#savedBoard) : null;
+    }
+
+    get pendingChanges() {
+        return this.#isPendingChanges;
+    }
+
     get currentBoard() {
-        if (this.draft) {
+        if (this.#draftBoard) {
             return this.draft;
-        } else if (this.board) {
-            return this.board;
+        } else if (this.#savedBoard) {
+            return this.saved;
         } else {
             return this.defaultBoard()
         }
     }
 
     get isSaving() {
-        return this.#saving;
+        // return this.#saving;
     }
 
     get id() {
@@ -464,6 +667,11 @@ class BoardWatcher {
         return OBBoard.makeEmptyBoard(4, 5, this.id);
     }
 }
+
+
+/*****************************************
+ * BOARD SET WATCHER
+ *****************************************/
 
 class BoardSetWatcher {
     #rootID = null;
@@ -518,23 +726,35 @@ class BoardSetWatcher {
     }
 }
 
+
+/*****************************************
+ * FAVOURITE / PUBLIC METADATA WATCHERS
+ *****************************************/
+
 async function watchMyFavouriteBoards(uid, callback) {
-    console.log("Watching favourite boards for user", uid);
     const boards = {};
+
     const q = META.query(
         where("owner", "==", uid), 
         where("deletedAt", "==", false)
     );
+
     const frame = META.onValue(q, (changes) => {
             changes.forEach(([id, data, type]) => {
                 if (data.favourite && type !== "removed") {
                     boards[id] = data;
-
                 } else if (id in boards) {
                     delete boards[id];
                 }
             })
-            callback(Object.fromEntries(Object.entries(boards).map(([id, data]) => [id, BoardMetadata.make(data)])));
+
+            callback(
+                Object.fromEntries(
+                    Object.entries(boards).map(
+                        ([id, data]) => [id, BoardMetadata.make(data)]
+                    )
+                )
+            );
         }
     );
     return () => frame.clearListeners()
@@ -564,13 +784,19 @@ async function watchPublicBoards(callback) {
 }
 
 
+
 export { 
-    getBoardMetadata, 
+    BoardMetadata,
+
     getBoard, 
-    downloadBoardSet, 
-    watchPublicBoards,
+    getBoardMetadata, 
+
     BoardWatcher, 
     BoardSetWatcher,
+
     watchMyFavouriteBoards,
-    BoardMetadata
+    watchPublicBoards,
+
+    addBoardToRecent,
+    getRecentBoards,
 };

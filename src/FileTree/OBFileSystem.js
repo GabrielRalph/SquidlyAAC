@@ -10,6 +10,7 @@ const DEBUG = new Debugger(
     "FileSystem",
     "background: #125cde; color: white; padding: 5px; border-radius: 5px;"
 );
+DEBUG.disable = true;
 
 const THUMBNAIL_SIZE = 200;
 

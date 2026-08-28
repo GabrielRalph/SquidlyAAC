@@ -1,8 +1,15 @@
 import { AACGrid, AACGridWrapper } from "../AACWebComponent/aac.js";
 import { AutoPosition, ContextMenu } from "../ContextMenu/context-menu.js";
-import { BoardMetadata, getBoard, getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "../Firebase/boards.js";
+import { 
+    BoardMetadata, 
+    getBoard, 
+    getBoardMetadata, 
+    getRecentBoards, 
+    watchMyFavouriteBoards, 
+    watchPublicBoards
+} from "../Firebase/boards.js";
 import { addAuthChangeListener, getUser, set } from "../Firebase/firebase.js";
-import { getRecentBoards, getViewerURL, openEditor, openViewer } from "../Utilities/shared.js";
+import { getViewerURL, openEditor, openViewer } from "../Utilities/shared.js";
 import { SvgPlus, Vector } from "../SvgPlus/4.js";
 import { ShadowElement } from "../SvgPlus/shadow-element.js";
 import { Icon } from "../Utilities/icons.js";
@@ -69,10 +76,10 @@ class BoardCard extends SvgPlus {
         super("board-card");
         this.boardID = boardID;
         this.explorer = explorer;
-        let boardIcon = this.createChild("bg-img");
+        this.boardIcon = this.createChild("bg-img");
         let desc = this.createChild("div", {class: "description"});
         let d1 = desc.createChild("div");
-        let boardTitle = d1.createChild("h2", {content: "..."});
+        this.boardTitle = d1.createChild("h2", {content: "..."});
         
         this.boardAuthor = showAuthor ? d1.createChild("div", {class: "author", content: "..."}) : null; 
         desc.createChild("button", {
@@ -84,41 +91,39 @@ class BoardCard extends SvgPlus {
             }
         }).createChild(Icon, {}, "more");
 
+        this.#loadMetadata(boardID, showAuthor);
+    }
 
-        getBoardMetadata(boardID).then(metadata => {
-            if (metadata.valid) {
+    async #loadMetadata(boardID, showAuthor) {
+        const metadata = await getBoardMetadata(boardID);
+        
+        if (metadata.valid) {
 
-                this.metadata = metadata;
-                boardIcon.src = metadata.thumbnail || import.meta.resolve("../../Assets/Icons/grid.svg");
-                boardTitle.innerText = metadata.path.name;
+            this.metadata = metadata;
+            this.boardIcon.src = metadata.thumbnail || import.meta.resolve("../../Assets/Icons/grid.svg");
+            this.boardTitle.innerText = metadata.path.name;
 
-                
-                if (showAuthor) {
-                    this.loadAuthorName(metadata); 
-                } 
-    
-                this.events = {
-                    "mouseenter": () => {
-                        this.startPreviewTimer();
-                    },
-    
-                    "mouseleave": () => {
-                        this.stopPreviewTimer();
-                    },
-                     
-                    "click": (e) => {
-                        openViewer(boardID);
-                        this.stopPreviewTimer();
-                    }
+            
+            if (showAuthor) {
+                this.#loadAuthorName(metadata); 
+            } 
+
+            this.events = {
+                "mouseenter": this.startPreviewTimer.bind(this),
+                "mouseleave": this.stopPreviewTimer.bind(this),
+                "click": (e) => {
+                    openViewer(boardID);
+                    this.stopPreviewTimer();
                 }
             }
-        })
+        }
     }
+
 
     /**
      * @param {BoardMetadata} metadata
      */
-    async loadAuthorName(metadata) {
+    async #loadAuthorName(metadata) {
         const info = await metadata.getOwnerName()
         this.boardAuthor.innerHTML = "";
         if (info.displayPhoto) {
@@ -362,6 +367,36 @@ class PreviewDisplay extends AutoPosition {
 
 }
 
+class RecentBoards extends SvgPlus {
+    constructor(explorer) {
+        super("aside");
+        this.class = ""
+        const scorllArea = this.createChild("div", {class: "scroll-wrap", events: {
+                scroll: (e) => { explorer.removeAllPopups(); }
+        }}).createChild("div", {class: "scroll-element"});
+        scorllArea.createChild("h2", {content: "Recent Boards"});   
+        this.scrollArea = scorllArea;
+        this.#load(explorer);
+    }
+
+    async #load(explorer) {
+        let metadata = await Promise.all(
+            getRecentBoards().map(async boardID => {
+                return [boardID, await getBoardMetadata(boardID)];
+            })
+        )
+
+        let filtered = metadata.filter((
+            [boardID, metadata]) => metadata && !metadata.error && metadata.valid
+        )
+
+        filtered.map(([boardID, metadata]) => 
+            this.scrollArea.createChild(BoardCard, {}, explorer, boardID, true)
+        );
+    
+    }
+}
+
 class ExplorePage extends SvgPlus {
     constructor() {
         super("explore-page");
@@ -373,17 +408,8 @@ class ExplorePage extends SvgPlus {
                 scroll: (e) => { this.removeAllPopups(); }
             }}).createChild("div", {class: "scroll-element"});
         
-        const side = this.createChild("aside")
-            .createChild("div", {class: "scroll-wrap", events: {
-                scroll: (e) => { this.removeAllPopups(); }
-            }}).createChild("div", {class: "scroll-element"})
+        const side = this.createChild(RecentBoards, {}, this)
 
-        side.createChild("h2", {content: "Recent Boards"});   
-        for (let boardID of getRecentBoards()) {
-            side.createChild(BoardCard, {}, this, boardID);
-        }
-
-        
         const gh = main.createChild("div", {class: "gradient-header"})
         gh.createChild("h1").createChild("img", {
             src: "./Assets/aac-banner.svg", 

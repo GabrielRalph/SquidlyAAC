@@ -143,6 +143,14 @@ class Path {
     }
 
     /**
+     * Returns the JSON representation of the path, which is the same as its string representation.
+     * @returns {string} the JSON representation of the path
+     */
+    toJSON() {
+        return this.toString();
+    }
+
+    /**
      * @returns {Path} a new Path object that is a clone of this path
      */
     clone() {

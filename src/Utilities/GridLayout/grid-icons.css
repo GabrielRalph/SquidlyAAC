@@ -149,7 +149,6 @@ grid-layout {
     text-align: center;
     width: 90%;
     word-wrap: break-word;
-    line-height: 1;
 }
 
 .grid-icon .content .subtitle {

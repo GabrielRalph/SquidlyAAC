@@ -161,6 +161,7 @@ class FirestoreFrame {
         } else {
             throw new Error("Invalid argument: id must be a string or a Firestore Query.");
         }
+        return res;
     }
 
     async set(id, data, options = { merge: false }) {

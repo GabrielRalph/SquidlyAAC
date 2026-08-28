@@ -1,7 +1,6 @@
 import * as FB from "../src/Firebase/firebase.js";
 import { OpenBoardEditor } from "../src/Editor/editor.js";
-import { BoardWatcher } from "../src/Firebase/boards.js";
-import { addBoardToRecent } from "../src/Utilities/shared.js";
+import { addBoardToRecent, BoardWatcher } from "../src/Firebase/boards.js";
 
 /**
  * User states
@@ -20,8 +19,6 @@ OpenBoardEditor.defineHTMLElement(OpenBoardEditor);
 class EditorSession {
     /** @type { BoardWatcher } */
     boardWatcher = null;
-    canSave = true;
-    canSaveDraft = false;
     isChange = false;
 
     constructor() {
@@ -29,23 +26,28 @@ class EditorSession {
         this.headTitle = document.head.querySelector("title");
 
         const editor = this.editor;
-        editor.getIsSaveable = () => { return this.canSave; }
+        
+        editor.getIsSaveable = () => { 
+            return this.boardWatcher?.pendingChanges ?? false; 
+        }
         editor.getIsSaving = () => { return this.boardWatcher?.isSaving ?? false; }
-        editor.onBeforeUpdate = () => { this.updateSaveStatus(); }
+
         editor.onUpdate = () => {
-            if (this.boardWatcher && this.canSaveDraft && !editor.editingLabel) {
+            if (this.boardWatcher && !this.boardWatcher.sameAsDraft(editor.board)) {
                 this.boardWatcher.updateDraft(editor.board);
+                this.editor.forceToolUpdate();
+
             }
         }
 
         editor.clearChanges = () => {
             if (this.boardWatcher) {
-                editor.board = this.boardWatcher.board;
+                editor.board = this.boardWatcher.saved;
             }
         }
 
         editor.save = async () => {
-            if (this.boardWatcher && this.canSave) {
+            if (this.boardWatcher && this.boardWatcher.pendingChanges) {
                 let promise = this.boardWatcher.save(editor.board);
                 editor.forceToolUpdate();
                 await promise;
@@ -62,7 +64,8 @@ class EditorSession {
     }
 
     updateTitle() {
-        if (this.boardWatcher && this.boardWatcher.metadata) {
+        if (this.boardWatcher && this.boardWatcher.metadata && this.boardWatcher.metadata.valid) {
+            console.log(this.boardWatcher.metadata)
             let path = this.boardWatcher?.metadata?.path;
             this.headTitle.innerHTML = `${path.name} | Board Editor | Squidly`;
             
@@ -74,15 +77,9 @@ class EditorSession {
 
     updateSaveStatus() {
         if (this.boardWatcher) {
-            const editorBoard = this.editor.board;
-            const draftBoard = this.boardWatcher?.draft;
-            const savedBoard = this.boardWatcher?.board;
-            this.canSave = !editorBoard.same(savedBoard);
-            this.canSaveDraft = !editorBoard.same(draftBoard);
-            // console.log(`update status: canSave=${this.canSave}, canSaveDraft=${this.canSaveDraft}`)
-            this.editor.titleNote.innerHTML = this.canSave ? 
-                (this.canSaveDraft ? "*" : "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Draft Saved") : ""
-            return !editorBoard.same(this.boardWatcher?.currentBoard) 
+            const canSave = this.boardWatcher?.pendingChanges;
+            this.editor.titleNote.innerHTML = canSave ? "&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Draft Saved" : "";
+            return true
         }
         return false;
     }
@@ -97,13 +94,14 @@ class EditorSession {
         if (boardID) {
             let started = false;
             console.log("Watching board:", boardID);
-            this.boardWatcher = new BoardWatcher(boardID, (isChange) => {
-                const { currentBoard, board, metadata, draft } = this.boardWatcher;
+            this.boardWatcher = new BoardWatcher(boardID, () => {
+                const { currentBoard, saved, metadata } = this.boardWatcher;
                 this.editor.metadata = metadata;
                 if (!started) {
                     started = true;
                     this.editor.board = currentBoard;
-                } else if (this.updateSaveStatus()) {
+                } else {
+                    this.updateSaveStatus();
                     this.editor.updateBoard(currentBoard);
                 }
                 this.updateTitle();

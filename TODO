@@ -5,6 +5,7 @@ EDITOR
 
 
     bugs: 
+        - delete should delete everything otherwise styles/image and more remain
         - Save causes old saved board to be drafted when two tabs open
         
         - DONE: load_board broken

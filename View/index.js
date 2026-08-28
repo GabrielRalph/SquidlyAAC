@@ -1,12 +1,13 @@
 import * as FB from "../src/Firebase/firebase.js";
 import { AACBoard, AACGridWrapper } from "../src/AACWebComponent/aac.js";
 import { 
+    addBoardToRecent,
     BoardSetWatcher, 
     BoardWatcher, 
     getBoardMetadata 
 } from "../src/Firebase/boards.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
-import { addBoardToRecent, timerLogger } from "../src/Utilities/shared.js";
+import { timerLogger } from "../src/Utilities/shared.js";
 
 (async () => {
     timerLogger.tic("initialise firebase");

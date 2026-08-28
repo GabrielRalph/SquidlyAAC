@@ -10,6 +10,7 @@ const DEBUG = new Debugger(
     "FSFS",
     "color: #c53e0d; border: 2px solid #c53e0d; border-radius: 5px;"
 );
+DEBUG.disable = true;
 
 /**
  * This is a basic interface for file stats that 
