@@ -1,67 +1,40 @@
-[shadow] {
-    --border: .25vw;
-    --gap: .125vw;
-    --pad: var(--border);
-    --shadow-color: #565048cf
-}
-
 [shadow] > grid-layout {
-    padding: var(--gap);
+    padding: var(--_grid-layout-gap);
 }
 
 grid-layout {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    --font-ratio: 0.015;
-    --_W: var(--width, 100vw);
-    --_H: var(--height, 100vh);
-    --_min: min(var(--_W), var(--_H));
-    --_fs_calc: calc(var(--_min) * var(--font-ratio));
-    --font-size: var(--_fs_calc);
-    font-size: var(--font-size);
+
+    --_capped_cols: clamp(4, var(--cols), 16);
+    --_fs-w-ratio: calc( 0.1 + 0.02 * (( var(--_capped_cols) - 4 ) / 12) );
+    --_font-size-w: calc( var(--_cell-width) * var(--_fs-w-ratio) );
+    --_font-size-h: calc( var(--_cell-height) * 0.2);
+
+    font-size: min( var(--_font-size-w), var(--_font-size-h) );
 }
 
 access-textarea {
     --caret-color: #9b0000;
-    --fs: var(--font-size, 1.3vmin);
     pointer-events: none;
     font-size: 1.6em;
-    --margin-x: calc(var(--font-size) * 0.8);
-    --margin-y: calc(var(--font-size) * 0.4);
+    height: 100%;
+    width: 100%;
 }
 access-textarea textarea {
     overflow: hidden;
 }
 
-access-button.grid-icon:not([label-at-bottom]) .content {
-    flex-direction: column-reverse !important;
-}
 
-access-button.grid-icon .content .symbol {
-    height: 100% !important;
-    position: relative;
+.grid-icon[color-theme="action"] {
+    font-size: 2em;
 }
 
 
-access-button.grid-icon .symbol img {
-    max-width: unset;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-access-button.grid-icon[card="folder"] .content {
-    padding-top: calc(var(--pad) + var(--height) / 10);
-}
-
-
-access-button.grid-icon .content {
-    padding: var(--pad);
-    padding-top: calc(var(--pad) + min(0.3em, var(--pad)));
-    box-sizing: border-box;
+.grid-icon[label-at-bottom] .content,
+.grid-icon[card="folder"][label-at-bottom] .content {
+    padding-bottom: calc( 2 * var(--_content-padding));
 }
 
 .grid-icon .outline {

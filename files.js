@@ -1,8 +1,8 @@
 import { OBFinder } from "./src/FileTree/OBFinder.js";
 import { OBLoadBoard } from "./src/OpenBoard/openboard.js";
-import { ShadowElement } from "./src/Utilities/utils.js";
+import { ShadowElement } from "./src/SvgPlus/shadow-element.js";
 import { initialise, addAuthChangeListener, signOut } from "./src/Firebase/firebase.js";
-import { openEditor } from "./src/shared.js";
+import { openEditor } from "./src/Utilities/shared.js";
 import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { OBFileSystem } from "./src/FileTree/OBFileSystem.js";

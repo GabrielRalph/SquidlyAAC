@@ -1,17 +1,17 @@
 import { OBBoard, OBButton, OBImage } from "../OpenBoard/openboard.js";
-import { AccessEvent, AccessTextArea, delay, GridCard, GridIcon, GridLayout, ShadowElement, SvgPlus, Vector } from "../Utilities/utils.js";
+import { GridCard, GridIcon, GridLayout } from "../Utilities/GridLayout/grid-icons.js";
+import { ShadowElement } from "../SvgPlus/shadow-element.js"
+import { AccessTextarea } from "../Utilities/Textarea/textarea.js";
 import { Color } from "../Utilities/color.js";
-import { Debugger } from "../shared.js";
 
+import { Debugger, delay } from "../Utilities/shared.js";
+import { AccessEvent } from "../Utilities/Access/access-buttons.js";
 
 const debug = new Debugger(
     "AACBoard",
     "background: #b43113; color: white; padding: 5px; border-radius: 5px;"
 );
 
-function relTo(path, from = "../Utilities", base = "https://session.squidly.com.au/main/") {
-    return path.replace(import.meta.resolve(from) + "/", base)
-}
 
 class AACClick extends AccessEvent {
     /** @type {OBButton} */
@@ -77,7 +77,8 @@ class AACButton extends GridIcon {
         super({
             displayValue: button.label,
             symbol: symbol,
-            type: (button.load_board ? "topic-" : "") + "white",
+            type: button.load_board ? "folder" : "plain",
+            colorTheme: "white",
             events: {
                 "access-click": (e) => this.dispatchEvent(new AACClick(e, button, this))
             },
@@ -93,7 +94,10 @@ class AACButton extends GridIcon {
         this.toggleAttribute("italic", button.italic);
         this.toggleAttribute("label-at-bottom", button.label_at_bottom)
 
-        this.styles = Object.fromEntries(Object.entries(button.colorTheme).map(([k, v]) => [`--${k}`, v]));
+        this.styles = Object.fromEntries(
+            Object.entries(button.colorTheme)
+                .map(([k, v]) => [`--${k}`, v])
+        );
         this.#button = button;
     }
 
@@ -160,7 +164,7 @@ class AACGrid extends GridLayout {
         } else {
             this.size = [1, 1];
         }
-        this.onBoardSet();
+        this.onBoardSet(board);
     }
 }
 
@@ -179,8 +183,10 @@ class AACBoard extends ShadowElement {
     #closeButton = null;
     #backspaceButton = null;
 
-    /** @type {AccessTextArea} */
+    /** @type {AccessTextarea} */
     #textArea = null;
+
+    #textAreaCard = null;
 
     #board = null;
     #holdBoard = null;
@@ -193,23 +199,24 @@ class AACBoard extends ShadowElement {
         
         this.#closeButton = this.#rootGrid.addGridIcon({
             symbol: "home",
-            type: "action",
+            colorTheme: "action",
             events: {"access-click": () => this.gotoBoard(this.#manager.rootBoardID)},
-            accessGroup: "apps"
+            accessGroup: "apps",
+            // labelOnBottom: true,
         });
+
         this.#closeButton.toggleAttribute("hide-for-squidly", true);
        
         this.#backspaceButton = this.#rootGrid.addGridIcon({
-            symbol: "leftArrow",
-            type: "action",
+            symbol: "backspace",
+            colorTheme: "action",
             events: {"access-click": (e) => this.#ACTION_SET.delete_word.call(this, e)},
-            accessGroup: "apps"
+            accessGroup: "apps",
+            // labelOnBottom: true,
         });
        
-        this.#textArea = this.#rootGrid.createChild(AccessTextArea, {
-            placeholder: "Output will appear here",
-            readonly: true,
-        });
+        this.#textAreaCard = this.#rootGrid.createChild(GridCard, {}, "div", "plain", "textarea");
+        this.#textArea = this.#textAreaCard.content.createChild(AccessTextarea, {});
     }
 
     /**
@@ -244,7 +251,7 @@ class AACBoard extends ShadowElement {
      */
     async #onButtonClick(e) {
         const {element, button} = e;
-        const {actions, load_board} = button;
+        const {load_board, allActions} = button;
         debug.logStart("button click", button.id, button)
         let gotoProm = null;
         if (load_board) {
@@ -252,7 +259,7 @@ class AACBoard extends ShadowElement {
             gotoProm = this.gotoBoard(id, e);
             debug.log("gotoBoard", id, this.historyString);
         }
-        let actionPorm = this.#runActions(e, actions, button);
+        let actionPorm = this.#runActions(e, allActions, button);
         debug.logEnd();
         await e.waitFor(Promise.all([gotoProm, actionPorm]));
     }
@@ -264,8 +271,11 @@ class AACBoard extends ShadowElement {
     /**
      * @param  {OBBoard|string} board
      */
-    async #setBoard(board) {
-        board = typeof board === "string" ? await this.#manager.getBoard(board) : board;
+    async #setBoard(id) {
+        let board = typeof id === "string" ? await this.#manager.getBoard(id) : id;
+        if (!(board instanceof OBBoard)) {
+            console.warn("Invalid board:", board, id);
+        }
         if (this.#renderedBoardID !== board.id) {
             const {columns, rows} = board.grid;
             this.#rootGrid.innerHTML = "";
@@ -273,7 +283,7 @@ class AACBoard extends ShadowElement {
             let x = this.keepCornerFree ? 1 : 0;
             this.#rootGrid.add(this.#closeButton, 0, x);
             this.#rootGrid.add(this.#backspaceButton, 0, columns-1);
-            this.#rootGrid.add(this.#textArea, 0, [1 + x, columns-2]);
+            this.#rootGrid.add(this.#textAreaCard, 0, [1 + x, columns-2]);
             let grid;
             if (board.id in this.#boardCache) {
                 grid = this.#boardCache[board.id];
@@ -479,9 +489,10 @@ class AACBoard extends ShadowElement {
     
     static get usedStyleSheets() {
         return [
-            relTo(GridIcon.styleSheet),
-            relTo(AccessTextArea.styleSheet),
-            new URL("./aac-style.css", import.meta.url).href
+            import.meta.resolve("../../Assets/AACIcons/icons.css"),
+            import.meta.resolve("./aac-style.css"),
+            ...GridIcon.usedStyleSheets,
+            ...AccessTextarea.usedStyleSheets,
         ];
     }
 }
@@ -499,11 +510,7 @@ class AACGridWrapper extends ShadowElement {
     }
 
     static get usedStyleSheets() {
-        return [
-            relTo(GridIcon.styleSheet),
-            relTo(AccessTextArea.styleSheet),
-            new URL("./aac-style.css", import.meta.url).href
-        ];
+        return AACBoard.usedStyleSheets;
     }
 }
 export { AACBoard, AACGrid, AACGridWrapper, AACButton, AACClick, AACChange, AACInsert }

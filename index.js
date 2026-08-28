@@ -1,15 +1,16 @@
-import { ExplorePage } from "./explore.js";
+import { ExplorePage } from "./src/Explore/explore.js";
 import { AACFinder } from "./files.js";
 import { addAuthChangeListener, getUser, initialise, signOut } from "./src/Firebase/firebase.js";
 import { LoginPage } from "./src/loginPage/login-page.js";
-import { openEditor } from "./src/shared.js";
+import { openEditor } from "./src/Utilities/shared.js";
+import { SvgPlus } from "./src/SvgPlus/4.js";
+import { ShadowElement } from "./src/SvgPlus/shadow-element.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
-import { Radio } from "./src/Utilities/simple.js";
-import { ShadowElement, SvgPlus } from "./src/Utilities/utils.js";
+import { Radio } from "./src/Utilities/radio.js";
+import "./src/Utilities/bg-img.js";
 
 initialise();
-
 
 class SideBarIcon extends SvgPlus {
     constructor({icon, title, selected}) {

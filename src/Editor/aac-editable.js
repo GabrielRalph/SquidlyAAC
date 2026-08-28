@@ -1,5 +1,4 @@
-import { AACBoard, AACButton, AACClick, AACGrid } from "../AACWebComponent/aac.js";
-import { AccessEvent, GridIcon, GridLayout, ShadowElement, SvgPlus } from "../Utilities/utils.js";
+import { AACButton, AACClick, AACGrid } from "../AACWebComponent/aac.js";
 import { OBBoard } from "../OpenBoard/openboard.js";
 import { OBBoardEditable } from "../OpenBoard/openboard-editable.js";
 
@@ -16,7 +15,7 @@ class AACButtonEditable extends AACButton {
         super(button_id, board, group)
         const {button} = this;
         if (!button || button.hidden) {
-            this.type = {theme: "hidden"}
+            this.colorTheme = "hidden";
         }
     }
 
@@ -86,9 +85,7 @@ class AACEditorGrid extends AACGrid {
                     let oldSelection = this.#isMultiSelectOn ? new Set(this.#selectedButtonIDs) : [];
                     this.#selectedButtonIDs = new Set([...oldSelection, ...dragSelection])
                     this.#updateSelection();
-                    if (this.onSelection instanceof Function) {
-                        this.onSelection([...this.#selectedButtonIDs]);
-                    }
+                    this.triggerSelectionUpdate();
                 }   
             }
             dragStarted = null;
@@ -151,6 +148,12 @@ class AACEditorGrid extends AACGrid {
         }
     }
 
+    triggerSelectionUpdate() {
+        if (this.onSelection instanceof Function) {
+            this.onSelection([...this.#selectedButtonIDs]);
+        }
+    }
+
     getAACButtonClass(board) {
         const root = this;
         class B extends AACButtonEditable { 
@@ -186,8 +189,75 @@ class AACEditorGrid extends AACGrid {
     }
 
 
-    onBoardSet(){  
+    /**
+     * @param {OBBoardEditable} board
+     */
+    onBoardSet(board){  
         this.#updateSelection();
+        this._boardOrder = board?.grid?.order ?? [[]]
+        this._boardSize = [
+            board?.grid?.rows ?? 1,  board?.grid?.columns ?? 1
+        ];
+    }
+
+
+    /**
+     * Selects the next button in the specified direction relative to the current selection.
+     * If the selection is at the edge of the grid, it will wrap around to the opposite side.
+     * @param {string} direction - The direction to move the selection ("up", "down", "left", "right").
+     */
+    selectNextCell(direction) {
+        const order = this._boardOrder;
+        const dirs = {"up": [0, -1], "down": [0, 1], "left": [-1, 0], "right": [1, 0]};
+        const [rows, cols] = this._boardSize;
+
+        let id2pos = {}
+        order.forEach((row, r) => {
+            row.forEach((id, c) => {
+                if (id) {
+                    id2pos[id] = [r, c];
+                }
+            });
+        });
+
+        const dir = dirs[direction] ?? [1, 0];
+
+        let oldIDs = [...this.#selectedButtonIDs];
+        let newIDs = oldIDs.map(id => {
+            let [r, c] = id2pos[id];
+            let [dc, dr] = dir;
+            let newR = r + dr;
+            let newC = c + dc;
+
+            // wrap around logic
+            if (newC < 0) {
+                if (newR > 0) {
+                    newC = cols-1;
+                    newR -= 1;
+                } else {
+                    newR = 0;
+                    newC = 0;
+                }
+            } else if (newC >= cols) {
+                if (newR < rows - 1) {
+                    newC = 0;
+                    newR += 1;
+                } else {
+                    newC = cols - 1;
+                    newR = rows - 1;
+                }
+            }
+
+            return order[newR]?.[newC] ?? null;
+        }).filter(Boolean);
+
+        if (this.#isMultiSelectOn) {
+            newIDs = [...oldIDs, ...newIDs];
+        } 
+
+        this.#selectedButtonIDs = new Set(newIDs);
+        this.#updateSelection();
+        this.triggerSelectionUpdate();
     }
 
     /**
@@ -228,9 +298,7 @@ class AACEditorGrid extends AACGrid {
             button.highlight = this.#selectedButtonIDs.has(button.buttonID);
             button.selected = this.#selectedButtonIDs.has(button.buttonID);
         }
-        if (this.onSelection instanceof Function) {
-            this.onSelection([...this.#selectedButtonIDs]);
-        }
+        this.triggerSelectionUpdate();
     }
 
     /**

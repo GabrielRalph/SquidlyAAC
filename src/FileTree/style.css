@@ -3,6 +3,10 @@
 
     --_selected-bg:         var(--selected-button-background, #104cff);
     --_selected-bg-darker:  var(--selected-button-hover-background, #083ddd);
+
+    --_button-bg:           var(--button-background, #f6f6ff);
+    --_button-bg-darker:    var(--button-hover-background, #d6d6d6);
+
     --_selected-fg:         var(--selected-button-color, #ffffff);
     --_selected-border:     var(--selected-button-border-color, #4978ff);
 
@@ -49,13 +53,14 @@ button {
     align-items: center;
     gap: 0.5em;
     justify-content: center;
+    background: var(--_button-bg);
 }
 button[primary] {
     background-color: var(--_selected-bg);
     color: var(--_selected-fg);
 }
 button:hover {
-    background-color: var(--_border_color);
+    background-color: var(--_button-bg-darker)
 }
 button[primary]:hover {
     background-color: var(--_selected-bg-darker);
@@ -303,12 +308,4 @@ fs-file-display > grid-layout {
 
 fs-file-display > grid-layout .grid-icon {
     --shadow-color: #2725234c;
-}
-
-fs-file-display access-button.grid-icon .content {
-    padding: var(--gap);
-}
-
-fs-file-display access-button.grid-icon[card="folder"] .content .display-value {
-    padding-top: calc(var(--width, 100vw) / 50);
 }

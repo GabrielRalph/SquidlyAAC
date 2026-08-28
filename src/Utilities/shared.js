@@ -7,7 +7,6 @@ let RECENT_BOARDS = [];
 try {
     RECENT_BOARDS = JSON.parse(window.localStorage.getItem("recentBoards") || "[]");
     RECENT_BOARDS = RECENT_BOARDS.filter(board => typeof board === "string");
-    console.log("Loaded recent boards:", RECENT_BOARDS);
 } catch (e) {}
 
 
@@ -30,6 +29,7 @@ function openCachedPopup(id, url) {
 
 function openWindow(name, board, other, extraKey = "") {
     const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete("tab");
     if (board) {
         urlParams.set("board", board);
     }
@@ -51,6 +51,7 @@ function openNewEditor() {
     let randomID = Math.random().toString(36).substring(2, 10);
     let urlParams = new URLSearchParams(window.location.search);
     urlParams.delete("board");
+    urlParams.delete("tab");
     let paramsString = urlParams.toString();
     if (paramsString) {
         paramsString = `?${paramsString}`;
@@ -90,6 +91,19 @@ class Debugger {
     constructor(name, style = "background: #b43113; color: white; padding: 5px; border-radius: 5px;") {
         this.name = name;
         this.style = style;
+        this.times = {}
+    }
+
+    tic(log) {
+        this.times[log] = performance.now();
+    }
+
+    toc(log, extraInfo = "") {
+        const end = performance.now();
+        const duration = end - (this.times[log] || end);
+        extraInfo = extraInfo ? ` ${extraInfo}` : "";
+        this.logBasic(`${log}${extraInfo}: ${Debugger.fTime(duration)}`);
+        return duration;
     }
 
     logStart(mode, info, ...args) {
@@ -120,6 +134,10 @@ class Debugger {
             console.log(stack);
             this.logEnd();
         }
+    }
+
+    static fTime(n) {
+        return n < 1000 ? Math.round(n) + "ms" : (n/1000).toFixed(2) + "s";
     }
 }
 
@@ -289,12 +307,21 @@ function getRecentBoards() {
     return [...RECENT_BOARDS];
 }
 
+async function delay(ms) {
+    if (typeof ms !== "number" || ms < 0) {
+        return new Promise(requestAnimationFrame);
+    } else {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
 
-
+const timerLogger = new Debugger("T", "background: #1a73e8; color: white; padding: 5px; border-radius: 5px;");
 export { 
     Debugger, 
     getViewerURL, 
     openWindow, openEditor, openViewer, openDraftPreview, openFiles, openNewEditor,
     copy, isEqual, differences, updateObject,
-    getRecentBoards, addBoardToRecent
+    getRecentBoards, addBoardToRecent,
+    delay,
+    timerLogger
 };

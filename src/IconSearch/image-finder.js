@@ -1,5 +1,15 @@
-import { SvgPlus } from "../Utilities/utils.js";
-import { addRecentImage, getRecentImages, textSearch, semanticSearch, getNumberOfOwnedImages, addMyIconCountWatcher, uniqueImages, uploadImage, SOBImageIcon } from "../Firebase/images.js";
+import { 
+    addRecentImage, 
+    getRecentImages,
+    textSearch,
+    semanticSearch,
+    getNumberOfOwnedImages,
+    addMyIconCountWatcher,
+    uniqueImages,
+    uploadImage,
+    SOBImageIcon 
+} from "../Firebase/images.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 
 const MAX_FILE_SIZE = 256 * 1024 ** 2;
 const STATUS_TEXT = {

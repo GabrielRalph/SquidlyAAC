@@ -1,4 +1,4 @@
-import { SvgPlus } from "../../Utilities/utils.js";
+import { SvgPlus } from "../../SvgPlus/4.js"
 import { ContextMenu } from "../../ContextMenu/context-menu.js";
 import { Path, PATH_SEPERATOR } from "./Path.js";
 
@@ -480,44 +480,44 @@ class FileSystemUI extends SvgPlus {
         }, {passive: true});
     }
 
-    // #ensurePrimarySelectionVisible() {
-    //     console.log("Ensuring primary selection is visible");
-    //     const columnPath = this.#selectionDir?.toString();
-    //     const selectedPath = this.#selected?.toString();
-    //     if (!columnPath || !selectedPath) return;
+    #ensurePrimarySelectionVisible() {
+        console.log("Ensuring primary selection is visible");
+        const columnPath = this.#selectionDir?.toString();
+        const selectedPath = this.#selected?.toString();
+        if (!columnPath || !selectedPath) return;
 
-    //     const columns = this.main.querySelectorAll("fs-column[data-column-path]");
-    //     let column = null;
-    //     columns.forEach(col => {
-    //         if (!column && col.getAttribute("data-column-path") === columnPath) {
-    //             column = col;
-    //         }
-    //     });
-    //     if (!column) return;
+        const columns = this.main.querySelectorAll("fs-column[data-column-path]");
+        let column = null;
+        columns.forEach(col => {
+            if (!column && col.getAttribute("data-column-path") === columnPath) {
+                column = col;
+            }
+        });
+        if (!column) return;
 
-    //     const scroller = column.firstElementChild;
-    //     if (!scroller) return;
+        const scroller = column.firstElementChild;
+        if (!scroller) return;
 
-    //     const selectedFiles = scroller.querySelectorAll("[data-file-path]");
-    //     let selectedFile = null;
-    //     selectedFiles.forEach(file => {
-    //         if (!selectedFile && file.getAttribute("data-file-path") === selectedPath) {
-    //             selectedFile = file;
-    //         }
-    //     });
-    //     if (!selectedFile) return;
+        const selectedFiles = scroller.querySelectorAll("[data-file-path]");
+        let selectedFile = null;
+        selectedFiles.forEach(file => {
+            if (!selectedFile && file.getAttribute("data-file-path") === selectedPath) {
+                selectedFile = file;
+            }
+        });
+        if (!selectedFile) return;
 
-    //     const itemTop = selectedFile.offsetTop;
-    //     const itemBottom = itemTop + selectedFile.offsetHeight;
-    //     const viewTop = scroller.scrollTop;
-    //     const viewBottom = viewTop + scroller.clientHeight;
+        const itemTop = selectedFile.offsetTop;
+        const itemBottom = itemTop + selectedFile.offsetHeight;
+        const viewTop = scroller.scrollTop;
+        const viewBottom = viewTop + scroller.clientHeight;
 
-    //     if (itemTop < viewTop) {
-    //         scroller.scrollTop = itemTop;
-    //     } else if (itemBottom > viewBottom) {
-    //         scroller.scrollTop = itemBottom - scroller.clientHeight;
-    //     }
-    // }
+        if (itemTop < viewTop) {
+            scroller.scrollTop = itemTop;
+        } else if (itemBottom > viewBottom) {
+            scroller.scrollTop = itemBottom - scroller.clientHeight;
+        }
+    }
 
     #render() {
         this.#captureColumnScrolls();
@@ -562,6 +562,7 @@ class FileSystemUI extends SvgPlus {
         this.main.styles = {"--n": nAdjusted};
         this.main.parentNode.scrollLeft = this.#dontScroll ? lastScroll : this.main.scrollWidth;
         this.#dontScroll = false;
+        this.#ensurePrimarySelectionVisible();
     }
 
     render() {

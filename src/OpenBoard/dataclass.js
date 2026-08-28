@@ -1,4 +1,4 @@
-import { isEqual } from "../shared.js";
+import { isEqual } from "../Utilities/shared.js";
 
 async function loadFile(url, type = "text", onprogress = () => {}) {
     if (!(onprogress instanceof Function)) {

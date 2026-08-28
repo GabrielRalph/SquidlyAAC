@@ -1,4 +1,4 @@
-import { SvgPlus } from "./utils.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 
 export class Icon extends SvgPlus {
     #value = null;
@@ -11,6 +11,12 @@ export class Icon extends SvgPlus {
     set value(value) {
         this.setAttribute("i", value)
         this.#value = value;
+    }
+
+    static get usedStyleSheets() {
+        return [
+            import.meta.resolve("../../Assets/Icons/icons.css")
+        ]
     }
 }
 

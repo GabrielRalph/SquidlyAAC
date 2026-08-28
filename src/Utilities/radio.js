@@ -1,29 +1,5 @@
-import { SvgPlus } from "./utils.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 
-class BackgroundImage extends HTMLElement {
-    constructor(el) {
-        super(el);
-    }
-
-    attributeChangedCallback(name, oldv, newv){
-        this[name] = newv;
-    }
-
-    set src(value) {
-        let img = new Image();
-        img.onload = () => {
-            this.toggleAttribute("loaded", true);
-        }
-        img.src = value;
-        this.style.backgroundImage = `url(${value})`;
-    }
-
-    static get observedAttributes() {
-        return ["src"];
-    }
-}
-
-customElements.define("bg-img", BackgroundImage);
 
 class RadioSelection extends SvgPlus {
   #selected = null;
@@ -90,4 +66,4 @@ class Radio extends RadioSelection {
 }
 
 
-export {BackgroundImage, RadioSelection, Radio};
+export {RadioSelection, Radio};

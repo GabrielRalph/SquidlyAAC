@@ -1,7 +1,7 @@
 import * as FB from "../src/Firebase/firebase.js";
 import { OpenBoardEditor } from "../src/Editor/editor.js";
 import { BoardWatcher } from "../src/Firebase/boards.js";
-import { addBoardToRecent } from "../src/shared.js";
+import { addBoardToRecent } from "../src/Utilities/shared.js";
 
 /**
  * User states

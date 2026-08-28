@@ -30,7 +30,7 @@
 </body>
 <script type = "module">
     const homePage = document.querySelector("aac-home-page");
-    homePage.waitStyles().then(() => {
+    homePage.loadStyles().then(() => {
         setTimeout(() => {
             homePage.style.opacity = "1";
             homePage.style.pointerEvents = "all";

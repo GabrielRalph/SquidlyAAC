@@ -1,9 +1,23 @@
+import { 
+    addAuthChangeListener,
+    callFunction,
+    forceAuthStateChange,
+    getUser,
+    GoogleAuthProvider,
+    linkWithCredential,
+    OAuthProvider,
+    signInWithCustomToken,
+    signInWithPopup,
+    signOut 
+} from "../Firebase/firebase.js";
 import { InputPlus } from "./input-plus.js";
-import { ShadowElement, SvgPlus, delay} from "../Utilities/utils.js";
-import { addAuthChangeListener, callFunction, forceAuthStateChange, getUser, GoogleAuthProvider, linkWithCredential, OAuthProvider, signInWithCustomToken, signInWithPopup, signOut } from "../Firebase/firebase.js";
-import { Debugger } from "../shared.js";
+import { SvgPlus} from "../SvgPlus/4.js";
+import { ShadowElement } from "../SvgPlus/shadow-element.js";
+import { Debugger } from "../Utilities/shared.js";
 
 const DEBUG = new Debugger("login-page", "color: white; background: rgb(203, 14, 89); padding: 5px; border-radius: 5px;");
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const OTP_RESEND_INTERVAL = 120; // seconds
 const ForceSignInWithMicrosoftEmails = [

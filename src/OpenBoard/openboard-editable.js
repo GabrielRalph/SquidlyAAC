@@ -1,21 +1,34 @@
 import { OBAction, OBBoard, OBButton, OBImage } from "./openboard.js";
 
 class ActionsSimple {
+    
+    openWordFinder = { on: false }
+    holdPage = { on: false }
+    space = { 
+        on: false,
+        lastWordOnly: false,
+    }
+    speak = {
+        on: false,
+        mode: null,
+    }
+    
+    inflect = { 
+        on: false,
+        mode: "s",
+    }
+
     clearText = { 
         on: false,
         mode: "all"
     }
+
     addText = {
         on: false,
         newWord: true,
         value: null,
         utterance: null,
     }
-
-    holdPage = { on: false }
-    space = { on: false }
-    speak = { on: false }
-    openWordFinder = { on: false }
 
     navigation =  {
         mode: null,
@@ -28,32 +41,56 @@ class ActionsSimple {
         amount: null,
     }
 
+    changeVolume = {
+        on: false,
+        level: null,
+    }
+
     ACTION_PARSERS = {
-        "hold_page": (action) => {
-            this.holdPage.on = true;
+        "hold_page": (action) => { this.holdPage.on = true; },
+        "hold": (action) => { this.holdPage.on = true; },
+
+        "speak": (action) => { this.speak.on = true; },
+        "speak_last_word": (action) => { 
+            this.speak.on = true; 
+            this.space.mode = "last_word";
         },
-        "hold": (action) => {
-            this.holdPage.on = true;
+        "space": (action) => { this.space.on = true; },
+        "open_word_finder": (action) => { this.openWordFinder.on = true; },
+
+        "inflect_s": (action) => { 
+            this.inflect.on = true; 
+            this.inflect.mode = "s";
         },
-        "speak": (action) => {
-            this.speak.on = true;
+        "inflect_ing": (action) => { 
+            this.inflect.on = true; 
+            this.inflect.mode = "ing";
         },
-        "space": (action) => {
-            this.space.on = true;
+        "inflect_ed": (action) => {
+            this.inflect.on = true; 
+            this.inflect.mode = "ed";
         },
+        "inflect_er": (action) => {
+            this.inflect.on = true; 
+            this.inflect.mode = "er";
+        },
+        "inflect_est": (action) => {
+            this.inflect.on = true; 
+            this.inflect.mode = "est";
+        },
+
+
         "insert_text": (action) => {
             this.addText.on = true;
             this.addText.value = action.value;
             this.addText.newWord = true;
-        },
-        "open_word_finder": (action) => {
-            this.openWordFinder.on = true;
         },
         "append_text": (action) => {
             this.addText.on = true;
             this.addText.value = action.value;
             this.addText.newWord = false;
         },
+
         "delete_word": (action) => {
             this.clearText.on = true;
             this.clearText.mode = "word";
@@ -66,6 +103,8 @@ class ActionsSimple {
             this.clearText.on = true;
             this.clearText.mode = "all";
         },
+
+
         "cursor_up": (action) => {
             this.moveCursor.on = true;
             this.moveCursor.direction = "up";
@@ -85,7 +124,134 @@ class ActionsSimple {
             this.moveCursor.on = true;
             this.moveCursor.direction = "right";
             this.moveCursor.amount = 1;
+        },
+
+
+        "volume_up": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = "up";
+        },
+        "volume_down": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = "down";
+        },
+        "volume_mute": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = "mute";
+        },
+        "volume_1": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.1;
+        },
+        "volume_2": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.2;
+        },
+        "volume_3": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.3;
+        },
+        "volume_4": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.4;
+        },
+        "volume_5": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.5;
+        },
+        "volume_6": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.6;
+        },
+        "volume_7": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.7;
+        },
+        "volume_8": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.8;
+        },
+        "volume_9": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 0.9;
+        },
+        "volume_10": (action) => {
+            this.changeVolume.on = true;
+            this.changeVolume.level = 1.0;
         }
+    }
+    ACTION_APPLIERS = {
+
+        addText: (actions, button) => {
+            if (this.addText.on) {
+                let mode = this.addText.newWord ? "insert_text" : "append_text";
+                let value = this.addText.value;
+                value = ActionsSimple.sameAsLabel(value, button) ? null : value;
+                actions.push({mode, value});
+
+                if (this.addText.utterance) {
+                    button.setProperty("vocalization", this.addText.utterance);
+                }
+            }
+        },
+
+        changeVolume: (actions, button) => {
+            if (this.changeVolume.on) {
+                let level = this.changeVolume.level;
+                actions.push({mode: "volume_" + level});
+            }
+        },
+
+        inflect: (actions, button) => {
+            this.inflect.on && actions.push({mode: "inflect_" + this.inflect.mode});
+        },
+
+
+        space: (actions, button) => this.space.on && actions.push({mode: "space"}),
+
+
+        clearText: (actions, button) => {
+            if (this.clearText.on) {
+                if (this.clearText.mode === "word") {
+                    actions.push({mode: "delete_word"});
+                } else if (this.clearText.mode === "backspace") {
+                    actions.push({mode: "backspace"});
+                } else {
+                    actions.push({mode: "clear"});
+                }
+            }
+        },
+
+
+        moveCursor: (actions, button) => {
+            if (this.moveCursor.on) {
+                let direction = this.moveCursor.direction;
+                actions.push({mode: "cursor_" + direction});
+            }
+        },
+
+        
+        speak: (actions, button) => {
+            this.speak.on && actions.push({mode: "speak" + (this.speak.mode ? "_" + this.speak.mode : "")})
+        },
+        
+  
+        openWordFinder: (actions, button) => this.openWordFinder.on && actions.push({mode: "open_word_finder"}),
+
+        navigation: (actions, button) => {
+            if (this.navigation.mode === "load_board") {
+                if (!button.load_board) {
+                    button.setProperty("load_board", this.navigation.value);
+                }
+            } else {
+                button.load_board = null;
+                if (this.navigation.mode) {
+                    actions.push({mode: this.navigation.mode, value: null});
+                }
+            }
+        },
+
+        holdPage: (actions, button) => this.holdPage.on && actions.push({mode: "hold"}),
     }
 
     /** @param {OBButtonEditable} button */
@@ -123,64 +289,15 @@ class ActionsSimple {
     /** @param {OBButtonEditable} button */
     applyTo(button) {
         let actions = []
-        if (this.clearText.on) {
-            if (this.clearText.mode === "word") {
-                actions.push({mode: "delete_word"});
-            } else if (this.clearText.mode === "backspace") {
-                actions.push({mode: "backspace"});
-            } else {
-                actions.push({mode: "clear"});
-            }
-        }
-        
-        if (this.addText.on) {
-            let value = this.addText.value;
-            value = ActionsSimple.sameAsLabel(value, button) ? null : value;
-            let mode = this.addText.newWord ? "insert_text" : "append_text";
-            actions.push({mode, value: value});
-        }
-
-        if (this.holdPage.on) {
-            actions.push({mode: "hold_page"});
-        }
-
-        if (this.moveCursor.on && this.moveCursor.direction) {
-            let mode = `cursor_${this.moveCursor.direction}`;
-            actions.push({mode});
-        }
-
-        if (this.speak.on) {
-            actions.push({mode: "speak"});
-        }
-
-
-        if (this.openWordFinder.on) {
-            actions.push({mode: "open_word_finder"});
-        }
-
-        if (this.space.on) {
-            actions.push({mode: "space"});
-        }
-
-        if (this.navigation.mode === "load_board") {
-            if (!button.load_board) {
-                button.setProperty("load_board", this.navigation.value);
-            }
-        } else {
-            button.load_board = null;
-            if (this.navigation.mode) {
-                actions.push({mode: this.navigation.mode, value: null});
-            }
-        }
-
-        if (this.addText.utterance) {
-            button.setProperty("vocalization", this.addText.utterance);
+        for (let key in this.ACTION_APPLIERS) {
+            let applier = this.ACTION_APPLIERS[key];
+            applier(actions, button);
         }
         button.setProperty("actions", actions);
     }
 
     static get basicActions() {
-        return ["holdPage", "speak", "openWordFinder", "clearText", "navigation", "moveCursor", "space"];
+        return ["holdPage", "speak", "openWordFinder", "clearText", "navigation", "moveCursor", "space", "pulralise", "changeVolume"];
     }
 
     static make(value, button) {

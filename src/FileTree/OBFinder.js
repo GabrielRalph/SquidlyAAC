@@ -1,10 +1,10 @@
 import { AACBoard, AACGrid } from "../AACWebComponent/aac.js";
-import { SvgPlus } from "../Utilities/utils.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 import { Path, PATH_SEPERATOR } from "./FileSystem/Path.js";
 import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js";
 import { getBoard } from "../Firebase/boards.js";
 import { META_KEY, registerKeyBindings } from "../Utilities/keybindings.js";
-import { openDraftPreview, openEditor, openViewer } from "../shared.js";
+import { openDraftPreview, openEditor, openViewer } from "../Utilities/shared.js";
 import { OBFStats } from "./OBFileSystem.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
 import { Icon } from "../Utilities/icons.js";
@@ -271,16 +271,6 @@ class OBFileViewer extends SvgPlus {
     constructor(fstat, root) {
         super("fs-file-display");
         this.class = "aac-grid-wrapper";
-        
-        let resizeObserver = new ResizeObserver(() => {
-            this.styles = {
-                "--width": `${this.clientWidth}px`,
-                "--height": `${this.clientHeight}px`
-            }
-        });
-
-        resizeObserver.observe(this);
-
         if (fstat && fstat.isBoard) {
             this.loadBoard(fstat.boardID, root);
         }

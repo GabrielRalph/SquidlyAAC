@@ -1,4 +1,4 @@
-import { SvgPlus } from "../Utilities/utils.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 /**
  * @typedef {Object} ContextMenuItem
  * @property {string} label - The text to display for the menu item.
@@ -14,12 +14,12 @@ window.addEventListener("click", e => {
         activeMenu.destroy();
     }
 }, true);
+
 window.addEventListener("keydown", e => {
     if (e.key === "Escape" && activeMenu) {
         activeMenu.destroy();
     }
 });
-
 
 class ContextMenuItem extends SvgPlus {
     constructor(item, root) {

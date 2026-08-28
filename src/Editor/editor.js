@@ -1,15 +1,16 @@
 import { AACBoard} from "../AACWebComponent/aac.js";
-import { delay, ShadowElement, SvgPlus } from "../Utilities/utils.js";
 import { AACEditorGrid, OBBoardEditable } from "./aac-editable.js";
 import { ColorPicker } from "../Utilities/color-picker.js";
 import { FastFindImageList, ImageFinder } from "../IconSearch/image-finder.js";
-import { OBAction, OBBoard, OBLoadBoard } from "../OpenBoard/openboard.js";
+import { OBBoard, OBLoadBoard } from "../OpenBoard/openboard.js";
 import { ActionsPanel, NavigationPanel } from "./editor-actions.js";
 import { Icon } from "../Utilities/icons.js";
 import { BoardFinder } from "./editor-finder.js";
 import { META_KEY, registerKeyBindings, setActiveKeyBindingSet } from "../Utilities/keybindings.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
-import { openEditor, openFiles, openNewEditor } from "../shared.js";
+import { openFiles, openNewEditor } from "../Utilities/shared.js";
+import { SvgPlus } from "../SvgPlus/4.js";
+import { ShadowElement } from "../SvgPlus/shadow-element.js";
 
 // Editor -----------
 function hideIfNoSelection({selection}) {
@@ -446,6 +447,16 @@ const KEY_BINDINGS = {
 
     "Meta+=": (editor) => editor.increaseFontSize(),
     "Meta+-": (editor) => editor.decreaseFontSize(),
+
+    "Tab": (editor) => editor.selectNextCell("right"),
+    "ArrowRight": (editor) => editor.selectNextCell("right"),
+    "ArrowLeft": (editor) => editor.selectNextCell("left"),
+    "ArrowUp": (editor) => editor.selectNextCell("up"),
+    "ArrowDown": (editor) => editor.selectNextCell("down"),
+    "Shift+ArrowRight": (editor) => editor.selectNextCell("right"),
+    "Shift+ArrowLeft": (editor) => editor.selectNextCell("left"),
+    "Shift+ArrowUp": (editor) => editor.selectNextCell("up"),
+    "Shift+ArrowDown": (editor) => editor.selectNextCell("down"),
 }
 
 
@@ -478,6 +489,7 @@ class ImageList extends FastFindImageList {
         }
     }
 }
+
 class FontSizeList extends SvgPlus {
     constructor(onSelect) {
         super("div");
@@ -916,6 +928,9 @@ class OpenBoardEditor extends ShadowElement {
 		}
 	}
 
+    selectNextCell(direction) {
+        this.grid.selectNextCell(direction);
+    }
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ NAVIGATION ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 

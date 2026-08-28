@@ -1,6 +1,6 @@
 import { FStore, get } from "../../Firebase/firebase.js";
 import { FirestoreFrame } from "../../Firebase/firestore-frame.js";
-import { copy, Debugger, differences, isEqual, updateObject } from "../../shared.js";
+import { copy, Debugger, differences, isEqual, updateObject } from "../../Utilities/shared.js";
 import { FileSystemInterface } from "./FileSystemInterface.js";
 import { Path } from "./Path.js";
 import { PathNode } from "./PathNode.js";

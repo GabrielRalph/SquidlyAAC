@@ -203,7 +203,7 @@ class OBButton extends OpenBoardObject {
     
     /** 
      * The actions to perform when the button is pressed.
-     * @type {OBAction[]} */
+     * @type {?OBAction[]} */
     actions = null;   
     static actions_parser(value) { 
         let actions = (value ? (Array.isArray(value) ? value : [value]) : []).map(v => new OBAction(v)); 
@@ -214,6 +214,11 @@ class OBButton extends OpenBoardObject {
     }  
     
 
+    /**
+     * The action to perform when the button is pressed,
+     * which can be a string or an OBAction object.
+     * @type {?OBAction}
+     */
     action = null;
     static action_parser(value) { return value ? new OBAction(value) : null; }  
 
@@ -257,6 +262,12 @@ class OBButton extends OpenBoardObject {
      * in format see background_color.
      * @type {?string} */
     text_color = null;  
+
+     /** 
+     * Feature color of the button, 
+     * in format see background_color.
+     * @type {?string} */
+    feature_color = null;  
     
     /** 
      * The vocalization associated with the button,
@@ -374,6 +385,7 @@ class OBButton extends OpenBoardObject {
         const bg = new Color(this.background_color);
         const outline = new Color(this.border_color);
         const text = new Color(this.text_color);
+        const tab = new Color(this.feature_color);
 
         let styles = { };
 
@@ -394,31 +406,45 @@ class OBButton extends OpenBoardObject {
             styles["main-active"] = mc.toHex();
 
 
+            let tabCol;
             // Tab color
-            const tc = bg.clone();
+            if (!tab.valid) {
+                const tc = bg.clone();
 
-            tc.s *= 0.8
-            tc.l *= 0.6
-            styles["tab-color"] = tc.toHex();
+                tc.s *= 0.9
+                tc.l *= 0.7
+                styles["tab-color"] = tc.toHex();
+                tabCol = tc.clone();
 
-            tc.l *= 5/6
-            styles["tab-hover"] = tc.toHex()
+                tc.l *= 5/6
+                styles["tab-hover"] = tc.toHex()
 
-            tc.l *= 5/6
-            styles["tab-active"] = tc.toHex();
+                tc.l *= 5/6
+                styles["tab-active"] = tc.toHex();
+            
+            } else {
+                styles["tab-color"] = tab.toHex();
+                tabCol = tab.clone();
+
+                const tc = tab.clone();
+                tc.l *= 5/6
+                styles["tab-hover"] = tc.toHex();
+
+                tc.l *= 5/6
+                styles["tab-active"] = tc.toHex();
+            }
 
             if (!text.valid) {
                 styles["text"] = bg.brightness > 128 ? "black" : "white";
             }
 
             if (!outline.valid) {
-                // const oc = bg.clone()
-                // if (oc.s < 0.05) {
-                //     oc.l *= 0.3;
-                // }
-                // oc.s *= 1.5;
-                // oc.l *= 0.5;
-                styles["outline"] = styles["tab-color"];
+                if (tabCol.s < 0.05) {
+                    tabCol.l *= 0.3;
+                } 
+                tabCol.s *= 1.2;
+                tabCol.l *= 0.6;
+                styles["outline"] = tabCol.toHex();
             }
         }
         return styles;

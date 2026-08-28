@@ -4,15 +4,20 @@ board-finder {
 }
 
 board-finder:not([save-mode]) .finder-options input {
+    
     opacity: 0;
     pointer-events: none;
 }
 
 board-finder[save-mode] .finder-options {
     grid-template-columns: auto 1fr auto;
+    --_input-bg: var(--c-dark);
+    --_input-focused-bg: var(--c-darker);
+    --_input-hover-border: var(--border-color);
 }
 board-finder[save-mode] .finder-options input {
     grid-area: 1 / 2;
+    color: white;
 }
 board-finder[save-mode] .finder-options button.cancel {
     grid-area: 1 / 1;

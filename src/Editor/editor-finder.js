@@ -3,7 +3,7 @@ import { OBFileSystem, OBFStats } from "../FileTree/OBFileSystem.js";
 import { OBFinder } from "../FileTree/OBFinder.js";
 import { OBLoadBoard } from "../OpenBoard/openboard.js";
 import { Icon } from "../Utilities/icons.js";
-import { ShadowElement } from "../Utilities/utils.js";
+import { ShadowElement } from "../SvgPlus/shadow-element.js";
 
 export class BoardFinder extends ShadowElement {
     /** @type {OBFileSystem} */

@@ -23,12 +23,7 @@
     --c-light: #4f4f4e;
     --c-text: #fffb;
 
-/* 
-    --c-lighter: #f2f2f5;
-    --c-darker: #dbdbdf;
-    --c-dark: #e9e9ec;
-    --c-light: #eaeaed;
-    --c-text: #141415; */
+
 }
 
 editor-root {
@@ -41,9 +36,6 @@ editor-root {
     background: var(--c-bg);
 }
 
-editor-root grid-layout {
-    background-color: transparent
-}
 
 .logo {
     position: absolute;
@@ -79,8 +71,8 @@ editor-root grid-layout {
 }
 
 .editor-main grid-layout {
-    padding: var(--gap);
-    box-sizing: border-box;
+    padding: var(--_grid-layout-gap);
+    background: transparent;
 }
 
 image-finder {
@@ -144,17 +136,41 @@ i-bw {
 
 .grid-icon[color-theme = "hidden"] {
     --main: rgba(255, 255, 255, 0.079);
-    --tab: transparent;
+    
+    --main-hover: hsl(0, 0%, 90%);
+    --main-active: hsl(0, 0%, 80%);
+
+    --tab: hsl(0, 0%, 90%);
+    --tab-hover: hsl(0, 0%, 80%);
+    --tab-active: hsl(0, 0%, 70%);
+
     --text: black;
-    --main-hover: white;
-    --tab-hover: transparent;
-    --main-active: white;
-    --tab-active: grey;
-    --outline: hsla(0, 1%, 14%, 1.00);
-    --icon-color: black;
-    --icon-color-hover: black;
+    --outline: hsl(0, 0%, 60%);
+    
+    --icon-color: hsl(0, 0%, 30%);
+    --icon-color-hover: hsl(0, 0%, 15%);
 }
 
+
+.grid-icon[color-theme="white"] {
+    --main: hsl(0, 0%, 100%);
+    --main-hover: hsl(0, 0%, 90%);
+    --main-active: hsl(0, 0%, 80%);
+
+    --tab: hsl(0, 0%, 90%);
+    --tab-hover: hsl(0, 0%, 80%);
+    --tab-active: hsl(0, 0%, 70%);
+
+    --text: black;
+    --outline: hsl(0, 0%, 60%);
+    
+    --icon-color: hsl(0, 0%, 30%);
+    --icon-color-hover: hsl(0, 0%, 15%);
+}
+
+.editor-main .grid-icon .content .display-value:empty {
+    display: unset;
+}
 
 /* ~~~~~~~~~~~~~~ Some generic styles ~~~~~~~~~~~~~~ */
 
@@ -579,7 +595,9 @@ color-picker .inputs {
     min-height: 0; 
 }
 
-
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~ Board Finder ~~~~~~~~~~~~~~~~~ */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 board-finder  {
     --a: 1.8;
@@ -587,16 +605,30 @@ board-finder  {
     --h: min(calc(100vh - 2em), calc((100vw - 2em) / var(--a)));
     width: var(--w);
     height: var(--h);
+
     display: grid;
     grid-template-rows: 1fr auto;
+   
     position: absolute;
     left: calc((100vw - var(--w))/2);
     top: calc((100vh - var(--h))/2);
-    border-radius: 1em;
-    background: white;
-    box-shadow: 0 0 1em #0000002c;
     z-index: 1000;
+
+    border-radius: 1em;
+    background: #262625d7;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 0 3em #0000002c;
+    border: 1px solid var(--border-color);
+    
+    color: white;
+    --header-color: rgba(255, 255, 255, 0.871);
+    --button-background: rgba(255, 255, 255, 0.871);
+    --button-hover-background: rgb(255, 255, 255);
+    --context-menu-background: rgba(17, 16, 16, 0.589);
+    --border-color: #ffffff44;
+     --column-drop-color: var(--c-dark);
 }
+
 aac-finder {
     display: block;
 }

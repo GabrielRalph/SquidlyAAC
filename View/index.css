@@ -1,0 +1,38 @@
+aac-viewer-root > *{
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+aac-viewer-root:not([mode = "default"]) aac-board,
+aac-viewer-root[mode = "default"] aac-board-preview {
+    display: none;
+}
+
+.error-window {
+    background: var(--error-window-background, #1a1a1a);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+    transition: 0.3s ease-in-out opacity;
+    color: white;
+    font-size: 1.5em;
+}
+
+.error-window h1, 
+.error-window p {
+    max-width: 50%;
+    text-align: center;
+}
+.error-window i-bw {
+    font-size: 5em;
+}
+aac-viewer-root[error] .error-window {
+    opacity: 1;
+    pointer-events: all;
+}

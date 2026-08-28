@@ -1,7 +1,7 @@
 import { deleteFile, FStore,  } from "../Firebase/firebase.js";
 import { FirestoreFrame } from "../Firebase/firestore-frame.js";
 import { ThumbnailUploader } from "../Firebase/thumbnail-uploader.js";
-import { copy, Debugger } from "../shared.js";
+import { copy, Debugger } from "../Utilities/shared.js";
 import { FirestoreFileSystem } from "./FileSystem/FirestoreFileSystem.js";
 import { Path } from "./FileSystem/Path.js";
 const {where, serverTimestamp} = FStore;

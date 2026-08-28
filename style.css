@@ -9,12 +9,14 @@
 
     --button-bg-hover: rgba(255, 255, 255, 0.126);
     --button-bg-selected: rgba(255, 255, 255, 0.2);
+    
     --panel-bg: #2d2c2c;
     --text-color: var(--c-text);
     --text-color-light: white;
     --text-shadow: #0002;
 
     --context-menu-background: rgba(17, 16, 16, 0.589);
+    --column-drop-color: var(--c-dark);
 
     --border-color: #ffffff44;
     --board-card-color: #e8e7e7;
@@ -422,7 +424,7 @@ board-card:hover {
     background-color: var(--board-card-color-hover);
 }
 
-board-card bg-img {
+board-card > bg-img {
     width: 100%;
     aspect-ratio: 1.5;
     border-radius: 1em;
@@ -439,8 +441,18 @@ board-card h2 {
     font-size: 1.2em;
 }
 
-board-card span {
+board-card .author {
     font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+board-card .author bg-img {
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 50%;
+    background-size: cover;
 }
 
 board-card[preview-timer]::after {
@@ -453,6 +465,7 @@ board-card[preview-timer]::after {
     animation: preview-timer linear 3s forwards;
     width: calc(var(--progress) * 100%);
 }
+
 
 .board-set.root {
     display: flex;

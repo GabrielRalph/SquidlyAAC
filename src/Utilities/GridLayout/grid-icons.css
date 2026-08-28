@@ -1,0 +1,244 @@
+:host {
+    --_grid-icon-border: 4px;
+    --_grid-layout-gap: var(--grid-layout-gap, calc(0.5 * var(--_grid-icon-border)));
+    --_content-padding: var(--card-padding, calc( 1.25 * var(--_grid-icon-border)));
+}
+
+
+grid-layout {
+    --_W: var(--width, 100vw);
+    --_H: var(--height, 100vh);
+    --_min: min(var(--_W), var(--_H));
+    
+    --_content-padding: calc( 1.25 * var(--_grid-icon-border));
+    
+    --_cell-width: calc( (var(--_W) - (var(--cols) - 1) * var(--_grid-layout-gap) ) / var(--cols) - 2 * var(--_content-padding) );
+    --_cell-height: calc( (var(--_H) - (var(--rows) - 1) * var(--_grid-layout-gap) ) / var(--rows) - 2 * var(--_content-padding) );
+
+    display: grid;
+    gap: var(--_grid-layout-gap);
+
+}
+
+
+
+.grid-icon {
+    --outline: var(--color-danger);
+    --icon-color: rgb(245, 244, 244);
+    --icon-color-hover: white;
+    --text: white;
+    --main: rgb(250, 70, 199);
+    --tab: rgb(200, 50, 150);
+    --main-hover: rgb(220, 66, 184);
+    --tab-hover: rgb(169, 22, 120);
+    --main-active: rgb(180, 54, 150);
+    --tab-active: rgb(150, 10, 100);
+
+    --tab-color: var(--tab);
+    --main-color: var(--main);
+
+    --outline-color: transparent;
+    --transition-time: 0.2s;
+
+    width: 100%;
+    height: 100%;
+    position: relative;
+
+	-webkit-user-drag: none;
+
+    cursor: pointer;
+    color: var(--text);
+
+    transition: transform var(--transition-time) ease;
+}
+
+.grid-icon[i-hidden] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.grid-icon[i-disabled] {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.grid-icon[i-display-only] {
+    pointer-events: none;
+}
+
+.grid-icon .content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    user-select: none;
+    gap: 0.3em;
+
+    padding: var(--_content-padding);
+}
+
+.grid-icon[card="folder"] .content {
+    padding-top: calc(var(--_content-padding) + var(--_H) / 10 / var(--rows));
+}
+
+.grid-icon:not([label-at-bottom]) .content {
+    flex-direction: column-reverse !important;
+}
+
+/* Grid icon images and symbols */
+
+
+.grid-icon .symbol {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-color);
+}
+
+.grid-icon .symbol > * {
+    height: 100%;
+    width: 100%;
+}
+
+.grid-icon .symbol bg-img {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.grid-icon .symbol bg-img::after {
+    content: " ";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 1em;
+    pointer-events: none;
+
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+
+    background: var(--tab-color);
+}
+
+.grid-icon .symbol bg-img[loaded]::after {
+    opacity: 0;
+}
+
+/* Grid icon display values */
+
+.grid-icon .content .display-value:empty {
+    display: none;
+}
+
+.grid-icon .content .display-value {
+    font-size: 1.2em;
+    font-weight: 300;
+    text-align: center;
+    width: 90%;
+    word-wrap: break-word;
+    line-height: 1;
+}
+
+.grid-icon .content .subtitle {
+    font-weight: 300;
+    text-align: center;
+    word-wrap: break-word;
+    font-size: 0.85em;
+    font-style: italic;
+    opacity: 0.9;
+    width: 90%;
+}
+
+/* Grid icon background card icon */
+
+.grid-icon .card-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0px 0px 10px var(--shadow-color));
+}
+
+.grid-icon .card-icon .outline {
+    fill: none;
+    stroke: var(--outline);
+}
+
+.grid-icon .card-icon .outline.for-active {
+    stroke: var(--outline-active, var(--outline));
+}
+
+.grid-icon .card-icon .card {
+    fill: var(--main-color);
+}
+
+.grid-icon .card-icon .card.for-hover {
+    fill: var(--main-hover);
+}
+
+.grid-icon .card-icon .card.for-active {
+    fill: var(--main-active);
+}
+
+.grid-icon .card-icon .tab {
+    fill: var(--tab-color);
+}
+
+.grid-icon .card-icon .tab.for-hover {
+    fill: var(--tab-hover);
+}
+
+.grid-icon .card-icon .tab.for-active {
+    fill: var(--tab-active);
+}
+
+.grid-icon .for-hover, .grid-icon .for-active, .grid-icon .outline {
+    opacity: 0;
+    transition: opacity var(--transition-time) ease;
+}
+
+/* Hover state */
+
+.grid-icon:not([i-disable-hover])[hover] .for-hover,
+.grid-icon:not([i-disable-hover]):hover .for-hover{
+    opacity: 1;
+} 
+
+.grid-icon:not([i-disable-hover]):hover .symbol,
+.grid-icon:not([i-disable-hover])[hover] .symbol {
+    color: var(--icon-color-hover);
+}
+
+/* Active state */
+
+.grid-icon:not([i-disable-active]):active,
+.grid-icon:not([i-disable-active])[active] {
+    transform: scale(0.97);
+}
+
+.grid-icon:not([i-disable-active]):active .for-active,
+.grid-icon:not([i-disable-active])[active] .for-active {
+    opacity: 1;
+}
+
+.grid-icon[type = "image"] .card-icon {
+    display: none;
+}
+
+

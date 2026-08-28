@@ -1,8 +1,7 @@
 import { ActionsSimple } from "../OpenBoard/openboard-editable.js";
-import { openEditor } from "../shared.js";
+import { openEditor } from "../Utilities/shared.js";
 import { Icon } from "../Utilities/icons.js";
-import { SvgPlus } from "../Utilities/utils.js";
-
+import { SvgPlus } from "../SvgPlus/4.js";
 
 class Checkbox extends SvgPlus {
 	#value = false;
@@ -36,7 +35,6 @@ class Checkbox extends SvgPlus {
 		this.dispatchEvent(new CustomEvent("change", {detail: {checked: this.checked}}))
 	}
 }
-
 
 
 const NAVIGATION_ACTIONS = {
@@ -442,13 +440,15 @@ class ActionsPanel extends SvgPlus {
 			}
 			
 			let actions = [
-				this.main.createChild(ClearTextAction, {},  action, editor),
 				this.main.createChild(AddTextAction, {},  action, editor),
-				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak", "Speaks the text in the text box."),
-				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage", "Keeps the current or loaded board open after the button is selected."),
+				// TODO CHANGE VOLUME
+				// TODO INFLECT
 				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space", "Adds a space to the text box."),
-				// this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder", "If enabled, will open the word finder when pressed."),
+				this.main.createChild(ClearTextAction, {},  action, editor),
 				this.main.createChild(MoveCursorAction, {},  action, editor),
+				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak", "Speaks the text in the text box."),
+				// this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder", "If enabled, will open the word finder when pressed."),
+				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage", "Keeps the current or loaded board open after the button is selected."),
 			];
 
 			actions.map(a => {

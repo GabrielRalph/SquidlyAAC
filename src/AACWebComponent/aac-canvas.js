@@ -1,5 +1,6 @@
 import { OBBoard } from "../OpenBoard/openboard.js";
-import { SvgPlus, Vector, wrapText } from "../Utilities/utils.js";
+import { SvgPlus, Vector } from "../SvgPlus/4.js";
+import { wrapText } from "../Utilities/Textarea/textarea.js";
 
 const F45RAD = 1 / Math.tan(3 * Math.PI / 8);
 const TEXT_FONT_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif";

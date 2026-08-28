@@ -2,11 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const assetsDir = path.join(__dirname, "../Assets/Icons");
-const outFile = path.join(assetsDir, "icons.css");
 
 // Keep legacy variable names currently used by FileTree/style.css.
 const NAME_ALIASES = {
@@ -68,7 +68,13 @@ function varNameFromFile(fileName) {
   return NAME_ALIASES[base] || base;
 }
 
-async function main() {
+
+
+
+async function main(dir, outName = "icons.css") {
+  const assetsDir = path.join(__dirname, dir);
+  const outFile = path.join(assetsDir, outName);
+
   const entries = await fs.readdir(assetsDir, { withFileTypes: true });
   const svgFiles = entries
     .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".svg"))
@@ -128,7 +134,10 @@ i-c {
   console.log(`Updated ${path.relative(__dirname, outFile)} with ${svgFiles.length} SVG icons.`);
 }
 
-main().catch((error) => {
+Promise.all([
+  main("../Assets/Icons"),
+  main("../Assets/AACIcons")
+]).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

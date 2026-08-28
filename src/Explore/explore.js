@@ -1,16 +1,19 @@
-import { AACGrid, AACGridWrapper } from "./src/AACWebComponent/aac.js";
-import { AutoPosition, ContextMenu } from "./src/ContextMenu/context-menu.js";
-import { getBoard, getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "./src/Firebase/boards.js";
-import { addAuthChangeListener, getUser, set } from "./src/Firebase/firebase.js";
-import { getRecentBoards, getViewerURL, openEditor, openViewer } from "./src/shared.js";
-import { Icon } from "./src/Utilities/icons.js";
-import { Radio } from "./src/Utilities/simple.js";
-import { ShadowElement, SvgPlus, Vector } from "./src/Utilities/utils.js";
+import { AACGrid, AACGridWrapper } from "../AACWebComponent/aac.js";
+import { AutoPosition, ContextMenu } from "../ContextMenu/context-menu.js";
+import { BoardMetadata, getBoard, getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "../Firebase/boards.js";
+import { addAuthChangeListener, getUser, set } from "../Firebase/firebase.js";
+import { getRecentBoards, getViewerURL, openEditor, openViewer } from "../Utilities/shared.js";
+import { SvgPlus, Vector } from "../SvgPlus/4.js";
+import { ShadowElement } from "../SvgPlus/shadow-element.js";
+import { Icon } from "../Utilities/icons.js";
+import { Radio } from "../Utilities/radio.js";
+import "../Utilities/bg-img.js";
 
 const FEATURED_BOARDS = [
     {
         boards: [
-            "x2h8SqITc3SLz4IO6Pt2",
+            "JLYix9KezJaosLusUhkl",
+
         ]
     },
     {   
@@ -23,9 +26,10 @@ const FEATURED_BOARDS = [
     {
         title: "PRC Saltillo",
         boards: [
-        "rTezEUKTUzcOGAdleZkh",
-        "zmnKiAkXdSTdjCtB6WmV",
-        "b8yQVLZjdRHweuhrrzfs",
+            "tVO399IgcEuTW6FLTDZP",
+            "rTezEUKTUzcOGAdleZkh",
+            "zmnKiAkXdSTdjCtB6WmV",
+            "HWRGaqWL8AjrRfAFW4ik"
         ]
     },
     {   
@@ -70,32 +74,57 @@ class BoardCard extends SvgPlus {
         let d1 = desc.createChild("div");
         let boardTitle = d1.createChild("h2", {content: "..."});
         
-        let boardAuthor = showAuthor ? d1.createChild("span", {content: "..."}) : null; 
+        this.boardAuthor = showAuthor ? d1.createChild("div", {class: "author", content: "..."}) : null; 
         desc.createChild("button", {
             events: {
                 click: (e) => {
                     this.openMenu(e);
+                    e.stopPropagation();
                 }
             }
         }).createChild(Icon, {}, "more");
 
 
         getBoardMetadata(boardID).then(metadata => {
-            this.metadata = metadata;
-            boardIcon.src = metadata.thumbnail || import.meta.resolve("./Assets/Icons/grid.svg");
-            boardTitle.innerText = metadata.path.name;
-            if (showAuthor) boardAuthor.innerText = `by ${metadata.owner.slice(0, 10)}`;
+            if (metadata.valid) {
 
-            this.events = {
-                "mouseenter": () => {
-                    this.startPreviewTimer();
-                },
+                this.metadata = metadata;
+                boardIcon.src = metadata.thumbnail || import.meta.resolve("../../Assets/Icons/grid.svg");
+                boardTitle.innerText = metadata.path.name;
 
-                "mouseleave": () => {
-                    this.stopPreviewTimer();
+                
+                if (showAuthor) {
+                    this.loadAuthorName(metadata); 
+                } 
+    
+                this.events = {
+                    "mouseenter": () => {
+                        this.startPreviewTimer();
+                    },
+    
+                    "mouseleave": () => {
+                        this.stopPreviewTimer();
+                    },
+                     
+                    "click": (e) => {
+                        openViewer(boardID);
+                        this.stopPreviewTimer();
+                    }
                 }
             }
         })
+    }
+
+    /**
+     * @param {BoardMetadata} metadata
+     */
+    async loadAuthorName(metadata) {
+        const info = await metadata.getOwnerName()
+        this.boardAuthor.innerHTML = "";
+        if (info.displayPhoto) {
+            this.boardAuthor.createChild("bg-img", {src: info.displayPhoto});
+        }
+        this.boardAuthor.createChild("span").textContent = info.name;
     }
 
     openMenu(e) {
@@ -155,9 +184,11 @@ class BoardCard extends SvgPlus {
     onPreview() {
         this.explorer.showPreview();
     }
+
     onHalfway() {
         this.explorer.loadPreview(this.boardID);
     }
+
     startPreviewTimer() {
         if (this.explorer.isOpenAndSamePreview(this.boardID) || this.#timerStarted) {
             return;
@@ -201,7 +232,6 @@ class BoardCard extends SvgPlus {
         this.#timerStopped = true;
         await this.#timerPromise;
     }
-
 }
 
 class BoardSet extends SvgPlus {
@@ -297,6 +327,14 @@ class PreviewDisplay extends AutoPosition {
     constructor(boardID) {
         super("preview-display");
         this.grid = this.createChild(AACGridWrapper, {}, "div");
+
+        window.addEventListener("click", (e) => {
+            this.shown = false;
+        })
+
+        this.addEventListener("mouseleave", (e) => {
+            this.shown = false;
+        })
     }
 
 
@@ -446,6 +484,5 @@ class ExplorePage extends SvgPlus {
         return ContextMenu.usedStyleSheets;
     }
 }
-
 
 export {ExplorePage};
