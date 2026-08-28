@@ -18,22 +18,24 @@ const ERROR_SCREENS = {
     404: `
     <i-bw no-board></i-bw>
     <h1>
-        The board you are <br>
-        looking for does not exist. 
+        Missing Board
     </h1>
     <p>
-        This may occur if the board <br>
-        has been deleted or the URL is incorrect.<br>
-        Please check the link and try again.
+        The board you are <br>
+        looking for does not exist. <br>
+        This may occur if the board has been <br>
+        deleted or the URL is incorrect. <br>
+        Please check the link <br>
+        and try again.
     </p>
     `,
     403: `
     <i-bw lock></i-bw>
     <h1>
-        You do not have access <br>
-        to view this board.
+        Locked Board
     </h1>
     <p>
+        You do not have access to this board. <br>
         If someone has shared this board with you, <br> 
         please ensure they have made the board public <br>
         If this is your board, please make sure you <br>
@@ -41,7 +43,7 @@ const ERROR_SCREENS = {
     </p>
     `,
     500:`
-    <i-bw i-error></i-bw>
+    <i-bw error></i-bw>
     <h1>Something went wrong.</h1>
     <p>
         An unexpected error occurred while <br>
@@ -51,18 +53,21 @@ const ERROR_SCREENS = {
     `,
     204:`
     <i-bw empty></i-bw>
-    <h1>No content available.</h1>
+    <h1>        
+        No Content  <br> 
+        Available
+    </h1>
     <p>
         The board exists but contains <br> 
         no content to display. This may <br> 
-        occur if the board has not been saved yet.
+        occur if the board has not  <br> 
+        been saved yet.
     </p>
     `,
     400: `
     <i-bw no-board></i-bw>
     <h1>
-        This link does not contain <br> 
-        a valid board ID.
+        Missing Board ID
     </h1>
     <p>
         The request to link was malformed or  <br> 
@@ -193,7 +198,6 @@ class AACViewer extends ShadowElement {
         }
 
         await this.loadStyles();
-
 
         document.body.toggleAttribute("loaded", true);  
     }

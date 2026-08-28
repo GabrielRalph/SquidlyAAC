@@ -5,6 +5,8 @@ aac-viewer-root > *{
     bottom: 0;
     right: 0;
 }
+aac-viewer-root[error] aac-board,
+aac-viewer-root[error] aac-board-preview,
 aac-viewer-root:not([mode = "default"]) aac-board,
 aac-viewer-root[mode = "default"] aac-board-preview {
     display: none;
