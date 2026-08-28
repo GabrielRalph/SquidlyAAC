@@ -13,7 +13,7 @@ const FEATURED_BOARDS = [
     {
         boards: [
             "JLYix9KezJaosLusUhkl",
-
+            "bO8yY3GEkU8o3g0rkcTv",
         ]
     },
     {   
