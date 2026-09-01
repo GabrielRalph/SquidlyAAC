@@ -753,6 +753,11 @@ class OpenBoardEditor extends ShadowElement {
 			content: ""
 		})
 
+        this.userSpan = head.createChild("span", {
+			class: "user",
+            styles: {position: "absolute", top: "0.4em", right: "1em"}
+		})
+
         let tools = this.createChild(GridTools, {}, this)
         tools.onCategorySelected = (category) => {
             if (this.#dropDown) {

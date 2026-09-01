@@ -136,7 +136,8 @@ i-c {
 
 Promise.all([
   main("../Assets/Icons"),
-  main("../Assets/AACIcons")
+  main("../Assets/AACIcons"),
+  main("../Assets/LoginIcons")
 ]).catch((error) => {
   console.error(error);
   process.exitCode = 1;

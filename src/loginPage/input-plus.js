@@ -1,4 +1,5 @@
 import { SvgPlus } from "../SvgPlus/4.js";
+import { Icon } from "../Utilities/icons.js";
 
 
 class InputProxy extends SvgPlus {
@@ -127,11 +128,7 @@ class FileInputWrapper extends ErrorFieldInput {
 
     set icon(name) {
         this.buttonIcon.innerHTML = "";
-        if (name.startsWith("fa")) {
-            this.buttonIcon.createChild("i", {class: "icon " + name});
-        } else {
-            this.buttonIcon.createChild("span", {class: "icon material-symbols-outlined", content: name});
-        }
+        this.buttonIcon.createChild(Icon, {}, name);
     }
 
     #updateFileName() {
@@ -190,11 +187,7 @@ class TextInputWrapper extends ErrorFieldInput {
         this._icon = name;
         if (this.iconContainer) {
             this.iconContainer.innerHTML = "";
-            if (name.startsWith("fa")) {
-                this.iconContainer.createChild("i", {class: "icon " + name});
-            } else {
-                this.iconContainer.createChild("span", {class: "icon material-symbols-outlined", content: name});
-            }
+            this.iconContainer.createChild(Icon, {}, name);
         }
     }
 

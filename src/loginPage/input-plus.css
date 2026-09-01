@@ -1,10 +1,16 @@
 input-plus {
+    --side-margin: 1.35em;
+    --top-margin: 1.5em;
+    --bottom-margin: 0.75em;
+    --line-height: 1.5em;
+
     --background-color: var(--input-bg);
     --background-color-hover: var(--input-bg-hover);
     --text-color: var(--color-dark);
     --label-text-color: var(--color-info-dark);
     --icon-color: var(--input-text);
     --slider-color: rgb(122, 162, 255);
+
     display: contents;
 }
 
@@ -15,7 +21,7 @@ input-plus {
     display: flex;
     position: absolute;
     bottom: -1.4em;
-    left: 1.35em;
+    left: var(--side-margin);
     gap: 0.5em;
     align-items: center;
     font-size: 0.8em;
@@ -33,7 +39,9 @@ input-plus {
 .text-input-wrapper  select {
     width: 100%;
     background-color: var(--background-color);
-    padding: 1.5em 1.35em calc(0.75em - 2px) 1.35em;
+    padding: var(--top-margin) var(--side-margin) var(--bottom-margin) var(--side-margin);
+    line-height: var(--line-height);
+
     border: none;
     outline: none;
     font-family: inherit;
@@ -43,17 +51,21 @@ input-plus {
     border: 2px solid transparent;
     box-shadow: 0 0 0 0px var(--input-shadow);
     transition: 0.3s;
+
     color: var(--text-color);
+
 }
 .text-input-wrapper textarea {
     resize: none;
     width: 100%;
     min-height: 150px;
 }
+
 .text-input-wrapper textarea ~ label {
     top: 1.2em;
     transform: none;
 }
+
 .text-input-wrapper textarea ~ .icon {
     top: 1.3em;
     transform: none;
@@ -63,19 +75,35 @@ input-plus {
 .text-input-wrapper  select:hover {
     background-color: var(--background-color-hover);
 }
+
+
 .text-input-wrapper label {
     position: absolute;
-    top: 50%;
-    left: calc(1.35em + 2px);
-    transform: translateY(-50%);
+    top: 0;
+    left: var(--side-margin);
+
+    transform: translateY(calc((var(--top-margin) + var(--bottom-margin) + var(--line-height)) / 2 - 50%));
+
     color: var(--label-text-color);
     pointer-events: none;
-    transition: 0.25s;
-    font-size: 0.95em;
+    transition: 0.25s ease-in-out transform;
 }
+.text-input-wrapper.focus label {
+    color: var(--color-primary);
+}
+.text-input-wrapper[type="datetime-local"] label,
+.text-input-wrapper.not-empty label {
+    transform: scale(0.75) translate(-0.4em, calc(var(--top-margin) / 1.6 - 50%));
+}
+.text-input-wrapper[invalid] label {
+    color: var(--color-great);
+}
+
+
+
 .text-input-wrapper > .icon {
     position: absolute;
-    right: calc(1.35em + 2px);
+    right: var(--side-margin);
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -83,6 +111,7 @@ input-plus {
     font-size: 1.25em;
     transition: 0.3s;
 }
+
 .text-input-wrapper.focus input, 
 .text-input-wrapper.focus textarea,
 .text-input-wrapper.focus select {
@@ -90,29 +119,20 @@ input-plus {
     border: 2px solid var(--color-primary);
     box-shadow: 0 0 0 5px var(--input-shadow);
 }
-.text-input-wrapper.focus label {
+
+.text-input-wrapper.focus i-bw {
     color: var(--color-primary);
 }
-.text-input-wrapper.focus .icon {
-    color: var(--color-primary);
-}
-.text-input-wrapper[type="datetime-local"] label,
-.text-input-wrapper.not-empty label {
-    font-size: 0.66em;
-    top: 0.75em;
-    transform: translateY(0);
-}
+
 .text-input-wrapper[invalid] input, 
 .text-input-wrapper[invalid] textarea,
 .text-input-wrapper[invalid] select {
     border: 2px solid var(--color-great);
 }
-.text-input-wrapper[invalid] label {
-    color: var(--color-great);
-}
-.text-input-wrapper .icon {
+
+.text-input-wrapper i-bw {
     position: absolute;
-    right: calc(1.35em + 2px);
+    right: calc(var(--side-margin) / 1.25);
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -178,7 +198,7 @@ input-plus {
     display: flex;
     position: absolute;
     bottom: -1.4em;
-    left: 1.35em;
+    left: var(--side-margin);
     gap: 0.5em;
     align-items: center;
     font-size: 0.8em;
@@ -266,4 +286,5 @@ otp-input input:focus {
     border-color: var(--color-primary);
     outline: none;
 }
+
 

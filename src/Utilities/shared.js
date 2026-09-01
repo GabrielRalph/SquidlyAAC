@@ -2,6 +2,19 @@
 const POPUP_CACHE = {};
 const DEBUG = (new URLSearchParams(window.location.search).get("debug") === "true")
 
+const KNOWN_PAGES = new Set(['Editor', 'View', 'Files']);
+
+// Returns the app root URL regardless of which page is calling
+function getRootURL() {
+    const url = new URL(window.location.href);
+    const segments = url.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+    if (segments.length > 0 && KNOWN_PAGES.has(segments[segments.length - 1])) {
+        segments.pop();
+    }
+    url.pathname = (segments.length > 0 ? '/' + segments.join('/') : '') + '/';
+    return url.origin + url.pathname;
+}
+
 function openCachedPopup(id, url) {
     let openedCached = false;
     if (id in POPUP_CACHE) {
@@ -19,7 +32,9 @@ function openCachedPopup(id, url) {
 }
 
 
+
 function openWindow(name, board, other, extraKey = "") {
+    const root = getRootURL();
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete("tab");
     if (board) {
@@ -31,7 +46,7 @@ function openWindow(name, board, other, extraKey = "") {
         }
     }
     const popupID = `${name}-${board}${extraKey}`;
-    const url = `./${name}/?${urlParams.toString()}`;
+    const url = `${root}${name}/?${urlParams.toString()}`;
     openCachedPopup(popupID, url);
 }
 
@@ -40,6 +55,7 @@ function openEditor(board) {
 }
 
 function openNewEditor() {
+    const root = getRootURL();
     let randomID = Math.random().toString(36).substring(2, 10);
     let urlParams = new URLSearchParams(window.location.search);
     urlParams.delete("board");
@@ -48,7 +64,7 @@ function openNewEditor() {
     if (paramsString) {
         paramsString = `?${paramsString}`;
     }
-    openCachedPopup(`Editor-${randomID}`, `./Editor/${paramsString}`);
+    openCachedPopup(`Editor-${randomID}`, `${root}Editor/${paramsString}`);
 }
 
 function openViewer(board) {
@@ -56,13 +72,10 @@ function openViewer(board) {
 } 
 
 function getViewerURL(board) {
-    const urlParams = new URLSearchParams(window.location.search);
+    const root = getRootURL();
+    const urlParams = new URLSearchParams();
     urlParams.set("board", board);
-
-    const url = new URL(window.location.href);
-    url.pathname = "/View/";
-    url.search = urlParams.toString();
-    return url.toString();
+    return `${root}View/?${urlParams.toString()}`;
 }
 
 function openDraftPreview(board) {
@@ -70,11 +83,15 @@ function openDraftPreview(board) {
 }
 
 function openFiles() {
+    const root = getRootURL();
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete("board");
     urlParams.set("tab", "finder");
-    const url = `../?${urlParams.toString()}`
-    openCachedPopup("files", url);
+    openCachedPopup("files", `${root}?${urlParams.toString()}`);
+}
+
+function openProfile() {
+    openCachedPopup("user-profile", "https://squidly.com.au/Console/#profile-panel");
 }
 
 
@@ -300,6 +317,7 @@ export {
     Debugger, 
     getViewerURL, 
     openWindow, openEditor, openViewer, openDraftPreview, openFiles, openNewEditor,
+    openProfile,
     copy, isEqual, differences, updateObject,
 
     delay,

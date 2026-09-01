@@ -1,5 +1,6 @@
 
 .login-page {
+    --close-button-display: block;
 
     --wclamp: clamp(500px, 100vw, 1000px);
     --fw: min(500px, 90vw);
@@ -22,6 +23,25 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
+}
+
+.close-button {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s ease-in-out transform;
+    display: var(--close-button-display);
+}
+.close-button:hover {
+    transform: scale(1.05);
+}
+.close-button:active {
+    transform: scale(0.95);
+}
+.close-button > i-bw {
+    font-size: 3em;
 }
 
 .login-page .container{

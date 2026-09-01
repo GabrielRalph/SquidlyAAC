@@ -8,12 +8,12 @@ import {
     OAuthProvider,
     signInWithCustomToken,
     signInWithPopup,
-    signOut 
 } from "../Firebase/firebase.js";
 import { InputPlus } from "./input-plus.js";
 import { SvgPlus} from "../SvgPlus/4.js";
 import { ShadowElement } from "../SvgPlus/shadow-element.js";
 import { Debugger } from "../Utilities/shared.js";
+import { Icon } from "../Utilities/icons.js";
 
 const DEBUG = new Debugger("login-page", "color: white; background: rgb(203, 14, 89); padding: 5px; border-radius: 5px;");
 
@@ -182,6 +182,7 @@ class SignInContainer extends SvgPlus {
             name: "email",
             type: "email",
             label: "Email",
+            icon: "email",
             autocomplete: "off",
             required: true
         }).build();
@@ -226,6 +227,7 @@ class SignUpContainer extends SvgPlus {
             name: "firstName",
             type: "text",                        
             label: "First name",
+            icon: "first-name",
             autocomplete: "off",
             required: true
         }).build()
@@ -233,6 +235,7 @@ class SignUpContainer extends SvgPlus {
             name: "lastName",
             type: "text",
             label: "Last name",
+            icon: "last-name",
             autocomplete: "off",
             required: true
         }).build();    
@@ -298,9 +301,16 @@ class LoginPage extends ShadowElement {
         this.signIn = c.createChild(SignInContainer, {}, this);
         this.signUp = c.createChild(SignUpContainer, {}, this);
         this.vOTP = c.createChild(OTPVerifyContainer, {}, this);
+        this.createChild("div", {
+            class: "close-button",
+            events: {click: () => {
+                if (this.onClose instanceof Function) this.onClose();
+                this.dispatchEvent(new CustomEvent("close", {bubbles: true}));
+            }}
+        }).createChild(Icon, {}, "close")
         this.overlay = this.createChild("div", {class: "overlay"});
         this.overlayTextEl = this.overlay.createChild("div", {class: "ctext", name: "overlayText"});
-        const loader = this.overlay.createChild("div", {class: "simple-loader", content: `<b></b><b></b><b></b>`});
+        this.overlay.createChild("div", {class: "simple-loader", content: `<b></b><b></b><b></b>`});
     }
 
     set overlayText(text) {
@@ -553,6 +563,7 @@ class LoginPage extends ShadowElement {
 
     static get usedStyleSheets() {
         return [
+            import.meta.resolve("../../Assets/LoginIcons/icons.css"),
             import.meta.resolve("./login-page.css"),
             InputPlus.styleSheet,
             import.meta.resolve("./theme.css")

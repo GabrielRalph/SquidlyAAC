@@ -317,7 +317,7 @@ async function queryImages(text, isEqual = false, includePublic = true) {
             results = await getResultsFromTextSearchCache(text, includePublic, isEqual);
         }
     }
-    return results;
+    return results || [];
 }
 
 

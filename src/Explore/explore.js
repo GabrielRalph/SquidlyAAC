@@ -8,10 +8,9 @@ import {
     watchMyFavouriteBoards, 
     watchPublicBoards
 } from "../Firebase/boards.js";
-import { addAuthChangeListener, getUser, set } from "../Firebase/firebase.js";
+import { addAuthChangeListener, getUser } from "../Firebase/firebase.js";
 import { getViewerURL, openEditor, openViewer } from "../Utilities/shared.js";
 import { SvgPlus, Vector } from "../SvgPlus/4.js";
-import { ShadowElement } from "../SvgPlus/shadow-element.js";
 import { Icon } from "../Utilities/icons.js";
 import { Radio } from "../Utilities/radio.js";
 import "../Utilities/bg-img.js";
@@ -61,7 +60,6 @@ const FEATURED_BOARDS = [
     }
 ]
 
-
 const ALL_FEATURED_BOARDS = new Set(FEATURED_BOARDS.flatMap(set => set.boards));
 
 
@@ -76,7 +74,6 @@ class BoardCard extends SvgPlus {
         super("board-card");
         this.boardID = boardID;
         this.explorer = explorer;
-        console.log(boardID, this)
         this.boardIcon = this.createChild("bg-img");
         let desc = this.createChild("div", {class: "description"});
         let d1 = desc.createChild("div");
@@ -97,7 +94,6 @@ class BoardCard extends SvgPlus {
 
     async #loadMetadata(boardID, showAuthor) {
         const metadata = await getBoardMetadata(boardID);
-        
         if (metadata.valid) {
 
             this.metadata = metadata;
@@ -116,6 +112,12 @@ class BoardCard extends SvgPlus {
                     openViewer(boardID);
                     this.stopPreviewTimer();
                 }
+            }
+        } else {
+            this.boardIcon.src = import.meta.resolve("../../Assets/Icons/grid.svg");
+            this.boardTitle.innerText = "...";
+            if (this.boardAuthor) {
+                this.boardAuthor.innerText = "...";
             }
         }
     }
@@ -143,8 +145,9 @@ class BoardCard extends SvgPlus {
         const desiredUser = urlParams.get("user");
         let user = desiredUser || getUser()?.uid;
 
+        const {owner, path, effectivePublic} = this.metadata;
         explorer.createContextMenu([
-            ...(user === this.metadata.owner ? [
+            ...(user === owner ? [
                 {
                     label: "Open in Files",
                     icon: "<i-bw folder-bw></i-bw>",
@@ -164,18 +167,20 @@ class BoardCard extends SvgPlus {
                     openViewer(boardID);
                 }
             },
-            {
-                label: "Share",
-                icon: "<i-bw share></i-bw>",
-                action: () => {
-                    navigator.share({
-                        title: this.metadata.path.name,
-                        url: getViewerURL(boardID)
-                    }).catch(err => {
-                        navigator.clipboard.writeText(getViewerURL(boardID))
-                    });
+            ...(effectivePublic ? [
+                {
+                    label: "Share",
+                    icon: "<i-bw share></i-bw>",
+                    action: () => {
+                        navigator.share({
+                            title: path.name,
+                            url: getViewerURL(boardID)
+                        }).catch(e => {
+                            navigator.clipboard.writeText(getViewerURL(boardID))
+                        });
+                    }
                 }
-            }
+            ] : [])
         ])
     }
 
@@ -234,7 +239,6 @@ class BoardCard extends SvgPlus {
     }
 
     async stopPreviewTimer() {
-        console.log("stop timer");
         this.#timerStopped = true;
         await this.#timerPromise;
     }
@@ -284,15 +288,17 @@ class MyFavouritesList extends SvgPlus {
         super("div");
         this.class = "my-favourites board-list"
         addAuthChangeListener(user => {
-            if (this.myFavouritesWatcher) {
-                this.myFavouritesWatcher();
-                this.myFavouritesWatcher = null;
+            this.innerHTML = "";
+
+            if (this.unSubscribe) {
+                this.unSubscribe();
+                this.unSubscribe = null;
             }
+
             if (user) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const desiredUser = urlParams.get("user");
-                this.myFavouritesWatcher = watchMyFavouriteBoards(desiredUser || user.uid, changes => {
-                    console.log(changes);
+                this.unSubscribe = watchMyFavouriteBoards(desiredUser || user.uid, changes => {
                     this.innerHTML = "";    
                     const keys = Object.keys(changes);
                     if (keys.length === 0) {
@@ -301,6 +307,7 @@ class MyFavouritesList extends SvgPlus {
                         this.createChild(BoardSet, {}, explorer, keys);
                     }
                 })
+                console.log(this.unSubscribe)
             } else {
                 this.createChild("div", {content: "Please log in to see your favourites."});
             }
@@ -389,10 +396,10 @@ class RecentBoards extends SvgPlus {
         )
 
         let filtered = metadata.filter((
-            [boardID, metadata]) => metadata && !metadata.error && metadata.valid
+            [_, metadata]) => metadata && metadata.valid
         )
 
-        filtered.map(([boardID, metadata]) => 
+        filtered.map(([boardID, _]) => 
             this.scrollArea.createChild(BoardCard, {}, explorer, boardID, true)
         );
     
@@ -410,7 +417,7 @@ class ExplorePage extends SvgPlus {
                 scroll: (e) => { this.removeAllPopups(); }
             }}).createChild("div", {class: "scroll-element"});
         
-        const side = this.createChild(RecentBoards, {}, this)
+        this.createChild(RecentBoards, {}, this)
 
         const gh = main.createChild("div", {class: "gradient-header"})
         gh.createChild("h1").createChild("img", {
@@ -445,6 +452,7 @@ class ExplorePage extends SvgPlus {
             favourites: main.createChild(MyFavouritesList, {}, this),
             public: main.createChild(PublicList, {}, this),
         }
+
         this.events = {
             "mousemove": (e) => {
                 this.lastMouseMove = new Vector(e.clientX, e.clientY);

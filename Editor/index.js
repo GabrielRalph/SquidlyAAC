@@ -1,7 +1,12 @@
 import * as FB from "../src/Firebase/firebase.js";
 import { OpenBoardEditor } from "../src/Editor/editor.js";
-import { addBoardToRecent, BoardWatcher } from "../src/Firebase/boards.js";
+import { addBoardToRecent, BoardWatcher, getUserInfo } from "../src/Firebase/boards.js";
 import { Path } from "../src/FileTree/FileSystem/Path.js";
+import { SvgPlus } from "../src/SvgPlus/4.js";
+import { LoginPage } from "../src/loginPage/login-page.js";
+import { OBBoardEditable } from "../src/OpenBoard/openboard-editable.js";
+
+FB.initialise();
 
 function addBoardIDToURL(boardID) {
     const query = new URLSearchParams(window.location.search);
@@ -28,40 +33,33 @@ function addBoardIDToURL(boardID) {
  *                          temporarily in local storage.
  */
 
-let styleSheetsLoader = await OpenBoardEditor.loadStyleSheets()
-OpenBoardEditor.defineHTMLElement(OpenBoardEditor);
+// let styleSheetsLoader = await OpenBoardEditor.loadStyleSheets()
+const ERROR_SCREEN =  `
+<i-bw lock></i-bw>
+<h1>
+    Permission Denied
+</h1>
+<p>
+    You do not have permision  <br>
+    to edit this board. <br>
+    <br>
+    <a href="/Editor">
+        New Board
+    </a>
+</p>
+`;
 
-const ERROR_SCREENS = {
-     404: `
-    <i-bw no-board></i-bw>
-    <h1>
-        Missing Board
-    </h1>
-    <p>
-        The board you are <br>
-        looking for does not exist. <br>
-        This may occur if the board has been <br>
-        deleted or the URL is incorrect. <br>
-        Please check the link <br>
-        and try again.
-    </p>
-    `,
-    403: `
-    <i-bw lock></i-bw>
-    <h1>
-        Locked Board
-    </h1>
-    <p>
-        You do not have access to this board. <br>
-        If someone has shared this board with you, <br> 
-        please ensure they have made the board public <br>
-        If this is your board, please make sure you <br>
-        have signed in to view the board.
-    </p>
-    `,
+const HIDE_STYLE = {
+    opacity: 0,
+    "pointer-events": "none",
 }
 
-class EditorSession {
+const SHOW_STYLE = {
+    opacity: 1,
+    "pointer-events": "all",
+}
+
+class EditorSession extends SvgPlus {
     /** @type { OpenBoardEditor } */
     editor = null;
 
@@ -72,9 +70,41 @@ class EditorSession {
 
     #isSaving = false;
     #isSaveable = true;
+    #pendingSave = false;
 
-    constructor() {
-        this.editor = document.querySelector("open-board-editor");
+    constructor(el) {
+        super(el);
+
+        this.editor = this.createChild(OpenBoardEditor, {}, "open-board-editor")
+        this.loginPage = this.createChild(LoginPage, {
+            styles: {
+                ...HIDE_STYLE,
+                transition: "0.3s ease-in opacity",
+            },
+            events: {
+                close: () => {
+                    addBoardIDToURL(null);
+                    this.watchBoard(null);
+                    this.editor.board = OBBoardEditable.makeEmptyBoard(4,5);
+                    this.updateSaveStatus();
+                    this.updateTitle();
+                    this.loginPage.styles = HIDE_STYLE;
+                }
+            }
+        }, "login-page");
+
+        this.errorOverlay = this.createChild("div", {
+            class: "error-overlay",
+            styles: {
+                ...HIDE_STYLE,
+                transition: "0.3s ease-in opacity",
+            },
+            content: ERROR_SCREEN
+        }, "error-overlay");
+        this.errorOverlay.createChild("h1", {content: "Permission Denied"});
+        this.errorOverlay.createChild("p", {content: "You do not have permision<br>to edit this board."});
+        this.errorOverlay.createChild("button", {content: "New Board"})
+
         this.headTitle = document.head.querySelector("title");
 
         const editor = this.editor;
@@ -83,11 +113,21 @@ class EditorSession {
         editor.getIsSaving = () => this.isSaving
         editor.onUpdate =  this.onBoardUpdated.bind(this);
         editor.clearChanges = this.revertToSavedVersion.bind(this);
-
         editor.save = this.save.bind(this);
 
         this.updateTitle();
         this.updateSaveStatus();
+    }
+
+
+    showLoginPage() {
+        this.loginPage.style.opacity = 1;
+        this.loginPage.style["pointer-events"] = "all";
+    }
+
+    hideLoginPage() {
+        this.loginPage.style.opacity = 0;
+        this.loginPage.style["pointer-events"] = "none";
     }
 
 
@@ -169,12 +209,18 @@ class EditorSession {
                 if (id) {
                     this.saveAsAndWatch(id);
                 }
+            } else {
+                this.#pendingSave = true;
+                this.showLoginPage();
             }
         }
 
     }
 
     async watchBoard(boardID, started = false) {
+        const pendingSave = this.#pendingSave
+        this.#pendingSave = false;
+
         if (this.boardWatcher) {
             this.boardWatcher.stop();
             this.boardWatcher = null;
@@ -206,32 +252,55 @@ class EditorSession {
                 this.updateSaveStatus();
                 this.updateTitle();
                 console.log("Board not found, redirecting to no board state");
-            } else if (metadata.error?.code == 403) {
-                alert("You do not have permission to access this board");
-            } 
+            } else if (metadata.error?.code == 403 || this.boardWatcher.editable === false) {
+                this.errorOverlay.styles = SHOW_STYLE;
+            }
+        } else if (pendingSave) {
+            this.save();
         }
     }
 
+    async updateUserInfo(desired) {
+        const user = FB.getUser();
+        if (user) {
+            const info = await getUserInfo(FB.getUser()?.uid ?? null);
+            this.editor.userSpan.textContent = (info?.name ?? "Unknown User") + (desired ? ` (${desired})` : "");
+            this.editor.userSpan.styles = { cursor: null };
+            this.editor.userSpan.onclick = null;
+        } else {
+            this.editor.userSpan.textContent = "Sign In";
+            this.editor.userSpan.styles = { cursor: "pointer" };
+            this.editor.userSpan.onclick = () => this.showLoginPage();
+        }
+    }
 
     async onUserChange(user) {
         document.body.toggleAttribute("loaded", false);
+        const query = new URLSearchParams(window.location.search);
+        const boardID = query.get("board") ?? null;
+        const desired = query.get("user")
+
+        this.updateUserInfo(desired);
+
         if (user) {
-            const query = new URLSearchParams(window.location.search);
-            const boardID = query.get("board") ?? null;
-            const uid = query.get("user") || (user?.uid ?? null); 
-            
+            const uid = desired || (user?.uid ?? null); 
             await Promise.all([ 
                 this.watchBoard(boardID), 
                 uid && session.editor.assignFinderUser(uid),
-                styleSheetsLoader
             ]);
-        } else {
-            // Display a message or redirect to login page
-            console.log("User is not logged in. Please log in to access the editor.");
-        }
+            this.hideLoginPage();
+        } else if (boardID) {
+            this.showLoginPage();
+        } 
+
+        // Ensure styles are applied before showing the editor
+        await Promise.all([
+            this.editor.waitStyles(),
+            this.loginPage.waitStyles()
+        ]);
+
         document.body.toggleAttribute("loaded", true);
     }
-
 
     get isSaveable() {
         return this.boardWatcher ? this.boardWatcher.pendingChanges : this.#isSaveable;
@@ -243,5 +312,6 @@ class EditorSession {
 
 }
 
-const session = new EditorSession();
+const session = new EditorSession("editor-session");
+document.body.appendChild(session);
 FB.addAuthChangeListener(session.onUserChange.bind(session));

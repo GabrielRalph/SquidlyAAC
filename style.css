@@ -112,7 +112,6 @@ page-root main {
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 
-
 page-root header i-bw[i="search"] {
     position: absolute;
     left: 1.6em;
@@ -132,9 +131,12 @@ page-root header div {
     align-items: center;
     position: relative;
 }
-
 page-root header button {
     height: 100%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 page-root header .user-icon {
@@ -144,6 +146,71 @@ page-root header .user-icon {
     border-radius: 50%;
 }
 
+
+page-root header .user-drop-down {    
+    z-index: 10;
+    flex-direction: column;
+    align-items: flex-start;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    transform: translate(0, calc(100% + 5px));
+    background: #262625e0;
+    backdrop-filter: blur(10px);
+    border-radius: 1em;
+    border: 1px solid var(--button-bg-hover);
+    box-shadow: 0px 0px 15px #0000007d;
+    overflow: hidden;
+    min-width: 10em;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s ease-in-out opacity;
+}
+
+page-root header .user-drop-down[open] {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.user-drop-down > div {
+    padding: 0.5em 1em;
+    width: 100%;
+    white-space: pre;
+    cursor: pointer;
+}
+.user-drop-down > div:nth-child(n+2) {
+    border-top: 1px solid var(--button-bg-hover);
+}
+.user-drop-down > div:hover {
+    background-color: var(--button-bg-hover);
+}
+
+.user-drop-down[user] > div:not([user]),
+.user-drop-down:not([user]) > div[user] {
+    display: none;
+}
+
+
+.user-drop-down .user-info {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    background: var(--button-bg-hover);
+    cursor: auto;
+}
+.user-drop-down .user-info .user-icon {
+    width: 3em;
+}
+.user-drop-down .user-info .email {
+    font-size: 0.8em;
+}
+
+.user-drop-down .user-info > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25em;
+}
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,7 +254,6 @@ radio-selection.side-bar span {
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 
-
 page-root main > * {
     position: absolute;
     top: 0;
@@ -210,6 +276,7 @@ page-root main > * {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 1000;
 }
 
 login-page {
@@ -217,7 +284,6 @@ login-page {
     --login-page-background: #00000073;
     color: var(--text-color);
     display: contents;
-  
 }
 
 .close-button {
@@ -434,6 +500,12 @@ board-card .description {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: end;
+}
+
+board-card .description > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
 }
 
 board-card h2 {

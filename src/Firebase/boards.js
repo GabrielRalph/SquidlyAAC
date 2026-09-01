@@ -36,6 +36,29 @@ const USER_NAME_CACHE = {
 let RECENT_BOARDS = [];
 
 
+async function getUserInfo(uid) {
+    if (!(uid in USER_NAME_CACHE)) {
+        USER_NAME_CACHE[uid] = (async () => {
+            let [dName, firstName, lastName, pronouns, displayPhoto] = await Promise.all([
+                (await FB.get(FB.ref(`users/${uid}/info/displayName`))).val(),
+                (await FB.get(FB.ref(`users/${uid}/info/firstName`))).val(),
+                (await FB.get(FB.ref(`users/${uid}/info/lastName`))).val(),
+                (await FB.get(FB.ref(`users/${uid}/info/pronouns`))).val(),
+                (await FB.get(FB.ref(`users/${uid}/info/displayPhoto`))).val(),
+            ]);
+        
+            let name = !dName || dName.trim() === "" ? 
+                `${firstName || ""} ${lastName || ""}`.trim() 
+                : 
+                dName;
+            return {name, pronouns, displayPhoto};
+        })();
+    }
+    return await USER_NAME_CACHE[uid];
+}
+
+
+
 /***************
  * RECENT BOARDS
  ***************/
@@ -195,25 +218,7 @@ class BoardMetadata extends DataClass {
      * @returns {Promise<{name: string, pronouns: string, displayPhoto: string}>}
      */
     async getOwnerName() {
-        if (!(this.owner in USER_NAME_CACHE)) {
-            USER_NAME_CACHE[this.owner] = (async () => {
-                const uid = this.owner;
-                let [dName, firstName, lastName, pronouns, displayPhoto] = await Promise.all([
-                    (await FB.get(FB.ref(`users/${uid}/info/displayName`))).val(),
-                    (await FB.get(FB.ref(`users/${uid}/info/firstName`))).val(),
-                    (await FB.get(FB.ref(`users/${uid}/info/lastName`))).val(),
-                    (await FB.get(FB.ref(`users/${uid}/info/pronouns`))).val(),
-                    (await FB.get(FB.ref(`users/${uid}/info/displayPhoto`))).val(),
-                ]);
-
-                let name = !dName || dName.trim() === "" ? 
-                    `${firstName || ""} ${lastName || ""}`.trim() 
-                    : 
-                    dName;
-                return {name, pronouns, displayPhoto};
-            })();
-        }
-        return await USER_NAME_CACHE[this.owner];
+        return await getUserInfo(this.owner);
     }
 
 
@@ -516,6 +521,8 @@ class BoardWatcher {
 
     #isPendingChanges = false;
 
+    #editable = false;
+
     constructor(id, callback) {
         if (id.startsWith("http")) {
             throw new Error("Drafts cannot be watched from URL");
@@ -575,13 +582,14 @@ class BoardWatcher {
 
     async watch() { 
         if (!this.#watchProm) {
+            this.#editable = true;
             this.#watchProm = (async () => {
                 this.#enders = await Promise.all([
                     (async () => {
                         try {
                             return await DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this))
                         } catch (e) {
-                            this.log("Failed to watch draft", e);
+                            this.#editable = false;
                             return () => {};
                         }
                     })(),
@@ -645,6 +653,10 @@ class BoardWatcher {
 
     get pendingChanges() {
         return this.#isPendingChanges;
+    }
+
+    get editable() {
+        return this.#editable;
     }
 
     get currentBoard() {
@@ -748,7 +760,14 @@ class BoardSetWatcher {
  * FAVOURITE / PUBLIC METADATA WATCHERS
  *****************************************/
 
-async function watchMyFavouriteBoards(uid, callback) {
+/**
+ * Watches the favourite boards of a specific user and
+ * triggers a callback whenever there are changes.
+ * @param {string} uid - The user ID whose favourite boards are being watched.
+ * @param {function} callback - The callback function to be triggered on changes.
+ * @returns {function} - A function to unsubscribe from the watcher.
+ */
+function watchMyFavouriteBoards(uid, callback) {
     const boards = {};
 
     const q = META.query(
@@ -756,7 +775,7 @@ async function watchMyFavouriteBoards(uid, callback) {
         where("deletedAt", "==", false)
     );
 
-    const frame = META.onValue(q, (changes) => {
+    const unSubscribe = META.onValue(q, (changes) => {
             changes.forEach(([id, data, type]) => {
                 if (data.favourite && type !== "removed") {
                     boards[id] = data;
@@ -764,7 +783,6 @@ async function watchMyFavouriteBoards(uid, callback) {
                     delete boards[id];
                 }
             })
-
             callback(
                 Object.fromEntries(
                     Object.entries(boards).map(
@@ -774,9 +792,15 @@ async function watchMyFavouriteBoards(uid, callback) {
             );
         }
     );
-    return () => frame.clearListeners()
+    return unSubscribe;
 }
 
+
+/**
+ * Watches the public favourite boards and triggers a callback whenever there are changes.
+ * @param {function} callback - The callback function to be triggered on changes.
+ * @returns {function} - A function to unsubscribe from the watcher.
+ */
 async function watchPublicBoards(callback) {
     const boards = {};
     const q = META.query(
@@ -785,7 +809,7 @@ async function watchPublicBoards(callback) {
         where("deletedAt", "==", false)
     );
 
-    const frame = META.onValue(q, (changes) => {
+    const unSubscribe = META.onValue(q, (changes) => {
             changes.forEach(([id, data, type]) => {
                 if (data.favourite && type !== "removed") {
                     boards[id] = data;
@@ -803,7 +827,7 @@ async function watchPublicBoards(callback) {
             );
         }
     );
-    return () => frame.clearListeners()
+    return unSubscribe;
 }
 
 
@@ -822,4 +846,5 @@ export {
 
     addBoardToRecent,
     getRecentBoards,
+    getUserInfo,
 };

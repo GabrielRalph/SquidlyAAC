@@ -2,13 +2,14 @@ import { ExplorePage } from "./src/Explore/explore.js";
 import { AACFinder } from "./files.js";
 import { addAuthChangeListener, getUser, initialise, signOut } from "./src/Firebase/firebase.js";
 import { LoginPage } from "./src/loginPage/login-page.js";
-import { openEditor } from "./src/Utilities/shared.js";
+import { openEditor, openProfile } from "./src/Utilities/shared.js";
 import { SvgPlus } from "./src/SvgPlus/4.js";
 import { ShadowElement } from "./src/SvgPlus/shadow-element.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
 import { Radio } from "./src/Utilities/radio.js";
 import "./src/Utilities/bg-img.js";
+import { getUserInfo } from "./src/Firebase/boards.js";
 
 initialise();
 
@@ -54,6 +55,7 @@ const SHOW_STYLE = {
     "pointer-events": "all",
 }
 
+
 class AACHomePage extends ShadowElement {
     constructor(el) {
         super(el, "page-root");
@@ -67,17 +69,33 @@ class AACHomePage extends ShadowElement {
             }
         });
 
-        this.displayPicture = h.createChild("div").createChild("button", {
+        const userTool = h.createChild("div")
+        this.displayPicture = userTool.createChild("button", {
             events: {
                 click: () => {
-                    if (!getUser()) {
-                        this.loginPageContainer.styles = SHOW_STYLE
-                    } else {
-                        signOut();
-                    }
+                    this.dropDown.toggleAttribute("open");
                 }
             }
-        }).createChild("bg-img", {class: "user-icon"});
+        })
+        this.root.addEventListener("click", (e) => {
+            if (!userTool.contains(e.target)) {
+                this.dropDown.removeAttribute("open");
+            }
+        });
+
+        const dropDown = userTool.createChild("div", {class: "user-drop-down"});
+        const userInfo = dropDown.createChild("div", {class: "user-info", user: true})
+
+        this.userImage = userInfo.createChild("bg-img", {class: "user-icon"})
+        const c = userInfo.createChild("div");
+        this.userName = c.createChild("div", {class: "name"})
+        this.userEamil = c.createChild("div", {class: "email"})
+
+        dropDown.createChild("div", {content: "Sign Out", user: true, events: {click: () => signOut()}})
+        dropDown.createChild("div", {content: "Sign In", events: {click: () => this.loginPageContainer.styles = SHOW_STYLE}})
+        dropDown.createChild("div", {content: "Profile", user: true, events: {click: () => openProfile()}})
+        this.dropDown = dropDown;
+
 
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get("tab");
@@ -109,31 +127,26 @@ class AACHomePage extends ShadowElement {
         });
 
         const loginPage = this.loginPageContainer.createChild(LoginPage, {}, "login-page");
-        this.loginPageContainer.createChild("button", {
-            class: "close-button",
-            events: {
-                click: () => {
-                    this.loginPageContainer.styles = {
-                        opacity: 0,
-                        "pointer-events": "none",
-                    }
-                }
+        loginPage.onClose = () => {
+            this.loginPageContainer.styles = {
+                opacity: 0,
+                "pointer-events": "none",
             }
-        }).createChild(Icon, {}, "e-delete");
-
+        }
+      
         this._waitingForAuth = new Promise(resolve => {
             addAuthChangeListener(user => {
                 this.finder.removeUser();
+                this.updateUserInfo(user);
                 if (user) {
-                    this.displayPicture.src = user.photoURL;
                     const urlParams = new URLSearchParams(window.location.search);
                     const desiredUser = urlParams.get("user");      
                     this.finder.assignUser(desiredUser || user?.uid);
+
                     this.loginPageContainer.styles = HIDE_STYLE
                     this.finder.toggleAttribute("loaded", true);
                 } else {
                     this.finder.toggleAttribute("loaded", false);
-                    this.displayPicture.toggleAttribute("loaded", false);
                 }
                 resolve();
             })
@@ -144,7 +157,26 @@ class AACHomePage extends ShadowElement {
         } else {
             this.viewMode = "explore";
         }
+    }
 
+
+    async updateUserInfo(user) {
+        this.displayPicture.innerHTML = "";
+        this.dropDown.toggleAttribute("user", !!user);
+        if (user) { 
+            const info = await getUserInfo(user.uid);
+            this.userName.textContent = info.name;
+            this.userEamil.textContent = user.email;
+            this.userImage.src = info.displayPhoto;
+            this.displayPicture.createChild("bg-img", {class: "user-icon",src: info.displayPhoto});
+        } else {
+            this.userName.textContent = "-";
+            this.userEamil.textContent = "-";
+            this.userImage.src = "";
+
+            this.userName.textContent = "NO USER";
+            this.displayPicture.createChild(Icon, {}, "more")
+        }
     }
 
     set viewMode(mode) {
