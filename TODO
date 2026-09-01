@@ -3,7 +3,6 @@ EDITOR
         - DONE: when you press find image the scroll bar to start at the top
         - DONE: hidden cells slightly opaque 
 
-
     bugs: 
         - *delete should delete everything otherwise styles/image and more remain
         - path for boards not owned by the user in the nav preview apear blank
@@ -11,6 +10,7 @@ EDITOR
           if its technically the same as the current board. This is because the 
           hidden buttons are given new ids. Not super critical but causes the user 
           to double undo.
+        - Context menu in files not anchored correctly 
         
         
         - DONE: Save causes old saved board to be drafted when two tabs open
@@ -39,6 +39,8 @@ EDITOR
         - DONE: copy accross tabs
         - DONE: edit label -> go to content
 
+
+
 FINDER
     fast-fixes:
         - DONE: information when files is blank
@@ -54,11 +56,12 @@ FINDER
     feature updates:
         - DONE: adding file thumbnails
         - DONE: Favorite root boards automatically
-        
+
+
 
  VIEWER 
     bugs:
-        - Show message when permision is denied
+        - DONE: Show message when permision is denied
 
     feature updates:
         - text 2 speach in preview
@@ -66,8 +69,11 @@ FINDER
         - DONE: text area to scroll into view
 
 
+
 AAC GENERIC
     bugs:
+        - font size in text area to big 
+
 
     feature updates:
         - export to pdf + export grid set
@@ -77,7 +83,7 @@ AAC GENERIC
 
 
 AAC SYSTEM
-    - migrate all boards
+    - DONE: migrate all boards
 
 
 EXPLORE
@@ -85,7 +91,7 @@ EXPLORE
         - DONE: Three dots to open menu
         - DONE: Hover effect on board card
         - DONE: Recent boards using local storage (if possible)
-        
-        - drop down for user
+        - DONE: drop down for user
+
         - upload obz
         - copy public board

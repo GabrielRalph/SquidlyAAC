@@ -165,10 +165,11 @@ class AACHomePage extends ShadowElement {
         this.dropDown.toggleAttribute("user", !!user);
         if (user) { 
             const info = await getUserInfo(user.uid);
+            const dp = info.displayPhoto || import.meta.resolve("./Assets/LoginIcons/user-white.svg");
             this.userName.textContent = info.name;
             this.userEamil.textContent = user.email;
-            this.userImage.src = info.displayPhoto;
-            this.displayPicture.createChild("bg-img", {class: "user-icon",src: info.displayPhoto});
+            this.userImage.src = dp;
+            this.displayPicture.createChild("bg-img", {class: "user-icon",src: dp});
         } else {
             this.userName.textContent = "-";
             this.userEamil.textContent = "-";

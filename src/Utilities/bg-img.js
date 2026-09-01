@@ -11,22 +11,26 @@ class BackgroundImage extends HTMLElement {
     }
 
     set src(value) {
-        if (LOADED_CACHE.has(value)) {
-            this.toggleAttribute("loaded", true);
-        } else {
-            this.toggleAttribute("loaded", false);
-            let load = () => {
+        if (typeof value === "string" && value.length > 0) {
+            if (LOADED_CACHE.has(value)) {
                 this.toggleAttribute("loaded", true);
-                LOADED_CACHE.set(value, true);
+            } else {
+                this.toggleAttribute("loaded", false);
+                let load = () => {
+                    this.toggleAttribute("loaded", true);
+                    LOADED_CACHE.set(value, true);
+                }
+                let img = new Image();
+                img.onload = load;
+                img.onerror = load;
+                img.src = value;
             }
-            let img = new Image();
-            img.onload = load;
-            img.onerror = load;
-            img.src = value;
+    
+            const url = value.replace(/"/g, "%22");
+            this.style.backgroundImage = `url("${url}")`;
+        } else {
+            this.style.backgroundImage = "";
         }
-
-        const url = value.replace(/"/g, "%22");
-        this.style.backgroundImage = `url("${url}")`;
     }
 
     static get observedAttributes() {
