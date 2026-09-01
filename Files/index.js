@@ -1,5 +1,4 @@
 import { OBFinder } from "../src/FileTree/OBFinder.js";
-import { OBLoadBoard } from "../src/OpenBoard/openboard.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
 import { initialise, addAuthChangeListener, signOut } from "../src/Firebase/firebase.js";
 import { LoginPage } from "../src/loginPage/login-page.js";

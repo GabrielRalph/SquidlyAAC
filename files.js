@@ -1,18 +1,13 @@
 import { OBFinder } from "./src/FileTree/OBFinder.js";
-import { OBLoadBoard } from "./src/OpenBoard/openboard.js";
 import { ShadowElement } from "./src/SvgPlus/shadow-element.js";
-import { initialise, addAuthChangeListener, signOut } from "./src/Firebase/firebase.js";
 import { openEditor } from "./src/Utilities/shared.js";
-import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
 import { Icon } from "./src/Utilities/icons.js";
 import { OBFileSystem } from "./src/FileTree/OBFileSystem.js";
-
 
 export class AACFinder extends ShadowElement {
 	/** @type {OBFileSystem} */
     #fs = null;
     #loading = null;
-    #lastSelected = null;
 	constructor(el) {
 		super(el, "board-finder");
 		this.fsUI = this.createChild(OBFinder)
