@@ -84,10 +84,6 @@ class AACViewer extends ShadowElement {
     /** @type {Object.<string, BoardWatcher>} */
     #boardWatchers = {};
 
-
-
-    #boardSetWatcher = null;
-
     #boardID = null;
 
     constructor(el) {
@@ -102,7 +98,6 @@ class AACViewer extends ShadowElement {
 
     set mode(mode) {
         if (mode !== this.#mode) {
-            console.log(`Switching mode from ${this.#mode} to ${mode}`);
             this.#mode = mode;
 
             this.root.setAttribute("mode", mode);
@@ -129,8 +124,10 @@ class AACViewer extends ShadowElement {
         }
         window.addEventListener("popstate", update);
         window.addEventListener("message", async (event) => {
+            console.log("Received message:", event);
             if (event.data.type === "updateBoard") {
-                await this.setBoard(event.data.id);
+                this.mode = event.data.mode;
+                this.setBoard(event.data.id);
             } else if (event.data.type === "setMode") {
                 this.mode = event.data.mode;
             }
@@ -144,18 +141,17 @@ class AACViewer extends ShadowElement {
         if (!(boardID in this.#boardWatchers)) {
             this.#boardWatchers[boardID] = new BoardWatcher(boardID, () => {
                 if (boardID == this.#boardID) {
-                    const { board, draft } = this.#boardWatchers[boardID];
-                    this.preview.board = isDraft ? draft : board;
+                    const { saved, draft } = this.#boardWatchers[boardID];
+                    this.preview.board = isDraft ? draft : saved;
                 }
             });
         } else {
             reUpdate = true;
         }
+
         await this.#boardWatchers[boardID].watch();
 
         const {metadata} = this.#boardWatchers[boardID];
-
-        console.log("Metadata:", metadata);
         if (metadata && !metadata.error) {
             let name = metadata.path.name;
             document.head.querySelector("title").innerHTML = `${name} | Board Viewer | Squidly`;
@@ -166,8 +162,8 @@ class AACViewer extends ShadowElement {
         }
 
         if (reUpdate) {
-            const { board, draft } = this.#boardWatchers[boardID];
-            this.preview.board = isDraft ? draft : board;
+            const { saved, draft } = this.#boardWatchers[boardID];
+            this.preview.board = isDraft ? draft : saved;
         }
 
         await this.loadStyles();
@@ -204,7 +200,6 @@ class AACViewer extends ShadowElement {
     }
 
     setBoard(board) {
-
         this.root.toggleAttribute('error', false);
         this.#boardID = board;
         if (board) {
@@ -217,7 +212,6 @@ class AACViewer extends ShadowElement {
                 this.#setPreviewBoard(board, true);
             }
         } else {
-            console.log("No board specified.");
             this.root.toggleAttribute('error', true);
             this.errorWindow.innerHTML = ERROR_SCREENS[400];
             document.body.toggleAttribute('loaded', true);

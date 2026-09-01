@@ -481,7 +481,6 @@ class FileSystemUI extends SvgPlus {
     }
 
     #ensurePrimarySelectionVisible() {
-        console.log("Ensuring primary selection is visible");
         const columnPath = this.#selectionDir?.toString();
         const selectedPath = this.#selected?.toString();
         if (!columnPath || !selectedPath) return;

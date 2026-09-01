@@ -362,6 +362,7 @@ const TOP_TOOLS = [
         ]
     },
 ]
+
 const TOP_TOOLS_STATIC = [
     {
         name: "save",
@@ -370,13 +371,17 @@ const TOP_TOOLS_STATIC = [
 			this.toggleAttribute("disabled", !editor.isSaveable);
             this.toggleAttribute("loading", editor.isSaving);
 		},
+
 		onClick(editor) {
 			editor.save();
 		},
+
         build(element, editor) {
             element.createChild("loader", {class: "loader"})
         }
     },
+
+
     {
         name: "undo",
         icon: "e-undo",
@@ -384,6 +389,7 @@ const TOP_TOOLS_STATIC = [
         onSelection(editor) {
             this.toggleAttribute("disabled", !editor.canUndo());
         },
+
         onClick(editor) {
             editor.undo();
         }
@@ -401,6 +407,7 @@ const TOP_TOOLS_STATIC = [
             editor.redo();
         }
     },
+
 	{
 		name: "clearChanges",
 		icon: "trash",
@@ -412,6 +419,7 @@ const TOP_TOOLS_STATIC = [
 		}
 	}
 ]
+
 const KEY_BINDINGS = {
     /** 
      * @param {OpenBoardEditor} editor
@@ -458,6 +466,7 @@ const KEY_BINDINGS = {
     "Shift+ArrowUp": (editor) => editor.selectNextCell("up"),
     "Shift+ArrowDown": (editor) => editor.selectNextCell("down"),
 }
+
 
 
 class ImageList extends FastFindImageList {
@@ -708,16 +717,15 @@ class OpenBoardEditor extends ShadowElement {
     #board = null;
 
     #dropDown = null;
+
+    /** @type {?Promise} */
     #dropDownPromise = null;
     #dropDownTool = null;
 	
 	#editingLabel = false;
 
-    #topTools = null;
-    #buttonTools = null;
     #history = [];
-    #historyIndex = 1;
-    #coppiedButtons = [];
+    #historyIndex = 0;
     #clipboardFallbackJSON = null;
     #imageLists = [];
     #imageUpdateTimeout = null;
@@ -809,12 +817,12 @@ class OpenBoardEditor extends ShadowElement {
         this.grid.board = this.#board;
 
         if (commitToHistory) {
-            const lastState = this.#history[this.#historyIndex - 1];
+            const lastState = this.#history[this.#historyIndex];
             const state = JSON.stringify(this.#board);
             if (lastState !== state) {
-                this.#history = this.#history.slice(0, this.#historyIndex);
+                this.#history = this.#history.slice(0, this.#historyIndex + 1);
                 this.#history.push(state);
-                this.#historyIndex = this.#history.length;
+                this.#historyIndex = this.#history.length - 1;
             }
         }
 
@@ -1204,8 +1212,7 @@ class OpenBoardEditor extends ShadowElement {
                     "text/plain": textBlob,
                 });
     
-                let res = await navigator.clipboard.write([item]);
-                console.log("Copied to clipboard");
+                await navigator.clipboard.write([item]);
             } catch (e) {
                 console.warn("clipboard.write failed, falling back to writeText", e);
                 try {
@@ -1408,11 +1415,11 @@ class OpenBoardEditor extends ShadowElement {
 
 
     canRedo() {
-        return this.#historyIndex < this.#history.length - 1 && this.#history.length > 0;
+        return  this.#history.length > 0 && this.#historyIndex < this.#history.length - 1;
     }
 
     redo() {
-        if (this.#historyIndex < this.#history.length - 1) {    
+        if (this.canRedo()) {    
             this.#historyIndex++;
             const state = JSON.parse(this.#history[this.#historyIndex]);
             this.#board = OBBoardEditable.make(state);
@@ -1426,9 +1433,9 @@ class OpenBoardEditor extends ShadowElement {
     }
 
     undo() {
-        if (this.#historyIndex > 0) {
+        if (this.canUndo()) {
             this.#historyIndex -= 1;
-            const state = JSON.parse(this.#history[this.#historyIndex-1]);
+            const state = JSON.parse(this.#history[this.#historyIndex]);
             this.#board = OBBoardEditable.make(state);
             this.#updateBoard(false);
         }
@@ -1459,6 +1466,10 @@ class OpenBoardEditor extends ShadowElement {
 	clearChanges() { }
 
 	save() { }
+
+    getIsSaveable() { return true; }
+
+    getIsSaving() { return false; }
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~ GETTERS AND SETTERS ~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -1492,7 +1503,7 @@ class OpenBoardEditor extends ShadowElement {
 	set board(board) {
 		this.#board = OBBoardEditable.make(board);
 		this.#history = [];
-		this.#historyIndex = 1;
+		this.#historyIndex = 0;
 		this.#updateBoard();
 	}
 

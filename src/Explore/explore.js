@@ -76,6 +76,7 @@ class BoardCard extends SvgPlus {
         super("board-card");
         this.boardID = boardID;
         this.explorer = explorer;
+        console.log(boardID, this)
         this.boardIcon = this.createChild("bg-img");
         let desc = this.createChild("div", {class: "description"});
         let d1 = desc.createChild("div");
@@ -291,6 +292,7 @@ class MyFavouritesList extends SvgPlus {
                 const urlParams = new URLSearchParams(window.location.search);
                 const desiredUser = urlParams.get("user");
                 this.myFavouritesWatcher = watchMyFavouriteBoards(desiredUser || user.uid, changes => {
+                    console.log(changes);
                     this.innerHTML = "";    
                     const keys = Object.keys(changes);
                     if (keys.length === 0) {
@@ -412,7 +414,7 @@ class ExplorePage extends SvgPlus {
 
         const gh = main.createChild("div", {class: "gradient-header"})
         gh.createChild("h1").createChild("img", {
-            src: "./Assets/aac-banner.svg", 
+            src: import.meta.resolve("../../Assets/aac-banner.svg"), 
             class: "logo",
             styles: {height: "1.4em"},
         });

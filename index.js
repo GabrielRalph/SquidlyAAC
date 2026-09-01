@@ -59,7 +59,7 @@ class AACHomePage extends ShadowElement {
         super(el, "page-root");
         const h = this.createChild("header");
         h.createChild("img", { 
-            src: "./Assets/Icons/logo-banner.svg", class: "logo",
+            src: import.meta.resolve("./Assets/Icons/logo-banner.svg"), class: "logo",
             events: {
                 click: () => {
                     window.location.href = "https://squidly.com.au";

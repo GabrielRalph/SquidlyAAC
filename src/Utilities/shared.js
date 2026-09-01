@@ -31,7 +31,7 @@ function openWindow(name, board, other, extraKey = "") {
         }
     }
     const popupID = `${name}-${board}${extraKey}`;
-    const url = `../${name}/?${urlParams.toString()}`;
+    const url = `./${name}/?${urlParams.toString()}`;
     openCachedPopup(popupID, url);
 }
 
@@ -48,7 +48,7 @@ function openNewEditor() {
     if (paramsString) {
         paramsString = `?${paramsString}`;
     }
-    openCachedPopup(`Editor-${randomID}`, `../Editor/${paramsString}`);
+    openCachedPopup(`Editor-${randomID}`, `./Editor/${paramsString}`);
 }
 
 function openViewer(board) {

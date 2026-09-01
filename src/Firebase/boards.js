@@ -496,7 +496,11 @@ async function getBoard(id) {
 class BoardWatcher {
     #id = null;
 
-    #savedBoardPromise = null;
+    #savedBoardPromise = Promise.resolve();
+
+    /** @type {Promise<void> | null} */
+    #watchProm = null;
+
     #savedBoard = null;
     #draftBoard= null;
 
@@ -506,12 +510,8 @@ class BoardWatcher {
     
     #metadata = null;
     #enders = [];
-    #watchProm = null;
-    
-    #boardsUpdatedAt = new ServerTimestamp(null);
     
     #initalised = false;
-    #gettingBoard = false;
     #saving = false;
 
     #isPendingChanges = false;
@@ -537,7 +537,6 @@ class BoardWatcher {
 
 
     #onDraftUpdate(data) {
-        let change = false;
         let [draft, version] = [null, 0];
         if (data !== null && typeof data === "object") {
             try {
@@ -558,31 +557,34 @@ class BoardWatcher {
 
     async #onMetadataUpdate(metadata) {
         if (!isEqual(metadata, this.#metadata)) {
-            this.log("Metadata changed", metadata);
-
             this.#metadata = metadata;
             this.#savedBoardPromise = getBoard(this.#id);
             this.#savedBoard = await this.#savedBoardPromise;
             this.#triggerCallback();
         }
     }
-
      
     log(...args) {
         this.debugger.logBasic(...args);
     }
 
-
     stop() {
         this.#enders.forEach(end => end());
+        this.#watchProm = null;
     }
-
 
     async watch() { 
         if (!this.#watchProm) {
             this.#watchProm = (async () => {
                 this.#enders = await Promise.all([
-                    DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this)),
+                    (async () => {
+                        try {
+                            return await DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this))
+                        } catch (e) {
+                            this.log("Failed to watch draft", e);
+                            return () => {};
+                        }
+                    })(),
                     setupMetadataListener(this.#id, this.#onMetadataUpdate.bind(this))
                 ])
                 await this.#savedBoardPromise
@@ -594,7 +596,7 @@ class BoardWatcher {
     }
    
 
-    async save(data) {
+    async save() {
         if (this.#saving) return;
         this.#saving = true;
         this.log("Calling update function");
@@ -656,7 +658,7 @@ class BoardWatcher {
     }
 
     get isSaving() {
-        // return this.#saving;
+        return this.#saving;
     }
 
     get id() {
@@ -665,6 +667,21 @@ class BoardWatcher {
 
     defaultBoard() {
         return OBBoard.makeEmptyBoard(4, 5, this.id);
+    }
+
+    static async forceSave(boardData, boardID) {
+        const lastDraft = await DRAFTS.get(boardID);
+        const board = OBBoard.make(boardData);
+        board.id = boardID;
+        await DRAFTS.set(boardID, {
+            board: JSON.stringify(board),
+            version: (lastDraft?.version ?? 0) + 1,
+            timestamp: FirestoreFrame.TimestampSymbol
+        });
+        let response = await FB.callFunction('OBBoards-update', {
+            boardID,
+        }, "australia-southeast1");
+        return response;
     }
 }
 
@@ -752,7 +769,7 @@ async function watchMyFavouriteBoards(uid, callback) {
                 Object.fromEntries(
                     Object.entries(boards).map(
                         ([id, data]) => [id, BoardMetadata.make(data)]
-                    )
+                    ).filter(([_, data]) => data.updatedAt.valid) // remove empty boards
                 )
             );
         }
@@ -777,7 +794,13 @@ async function watchPublicBoards(callback) {
                     delete boards[id];
                 }
             })
-            callback(Object.fromEntries(Object.entries(boards).map(([id, data]) => [id, BoardMetadata.make(data)])));
+            callback(
+                Object.fromEntries(
+                    Object.entries(boards).map(
+                        ([id, data]) => [id, BoardMetadata.make(data)]
+                    ).filter(([_, data]) => data.updatedAt.valid) // remove empty boards
+                )
+            );
         }
     );
     return () => frame.clearListeners()
