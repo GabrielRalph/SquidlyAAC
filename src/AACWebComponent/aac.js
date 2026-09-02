@@ -286,7 +286,10 @@ class AACBoard extends ShadowElement {
             console.warn("Invalid board:", board, id);
         }
         if (this.#renderedBoardID !== board.id) {
-            const {columns, rows} = board.grid;
+            let {columns, rows} = board.grid;
+            rows = Math.max(rows + 1, 4)
+            columns = Math.max(columns, 5)
+
             this.#rootGrid.innerHTML = "";
             this.#rootGrid.size = [rows+1, columns];
             let x = this.keepCornerFree ? 1 : 0;
