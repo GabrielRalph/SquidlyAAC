@@ -295,8 +295,48 @@ class AddTextAction extends Action {
 	}
 }
 
+class SpeakAction extends Action {
+	constructor(actionsSimple) {
+		super("Speak", "Speaks the text in the text box.");
+		let speak = actionsSimple.speak;
+		this.on.checked = speak.on;
+
+		this.select = this.main.createChild("select", {
+			events: {
+				change: () => this.onValueChange()
+			}
+		});
+
+		[["sentance", null], ["last word", "last_word"]].map(
+			([content, value]) => {
+				let o = this.select.createChild("option", {content, value});
+				console.log(content, value, speak.mode);
+				o.selected = speak.mode === value;
+				return o;
+			}
+		);
+
+		if (speak.mode === undefined) {
+			this.select.selectedIndex = -1;
+		}
+	}
+
+	get value() {
+		const mode = this.select.value == "last_word" ? "last_word" : null;
+		console.log("get value ", mode)
+		return {
+			on: this.on.checked,
+			mode
+		}
+	}
+	get key() {
+		return "speak";
+	}
+}
+
+
 class ClearTextAction extends Action {
-	constructor(actionsSimple, editor) {
+	constructor(actionsSimple) {
 		super("Clear Text", "Choose all, word, or backspace to remove text.");
 		let clearText = actionsSimple.clearText
 		this.on.checked = clearText.on;
@@ -304,13 +344,13 @@ class ClearTextAction extends Action {
 			events: {
 				change: () => this.onValueChange()
 			}
-		})
+		});
 
-		let op = ["all", "word", "backspace"].map((v) => {
+		["all", "word", "backspace"].map((v) => {
 			let o = this.select.createChild("option", {content: v, value: v});
 			o.selected = clearText.mode === v;
 			return o;
-		})
+		});
 
 		if (clearText.mode === undefined) {
 			this.select.selectedIndex = -1;
@@ -327,6 +367,7 @@ class ClearTextAction extends Action {
 		return "clearText";
 	}
 }
+
 class SimpleAction extends Action {
 	constructor(actionsSimple, editor, title, key = title, description = "") {
 		super(title, description);
@@ -351,6 +392,7 @@ const CURSOR_DIRECTIONS = {
     down: {icon: "▼", title: "Move Cursor Down"},
     right: {icon: "▶", title: "Move Cursor Right"}
 }
+
 class MoveCursorAction extends Action {
     /**
      * @param {ActionsSimple} actionsSimple
@@ -408,7 +450,7 @@ class ActionsPanel extends SvgPlus {
     /**
      * @param {import("./editor.js").OpenBoardEditor} editor
      */
-	constructor(editor) {
+	constructor() {
 		super("div");
 		this.class = "actions"
 		this.createChild("div", {class: "header no-select p-top p-bottom", content: "Actions"});
@@ -438,7 +480,8 @@ class ActionsPanel extends SvgPlus {
 					}
 				}
 			}
-			
+
+			console.log(sActions, action)
 			let actions = [
 				this.main.createChild(AddTextAction, {},  action, editor),
 				// TODO CHANGE VOLUME
@@ -446,7 +489,7 @@ class ActionsPanel extends SvgPlus {
 				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space", "Adds a space to the text box."),
 				this.main.createChild(ClearTextAction, {},  action, editor),
 				this.main.createChild(MoveCursorAction, {},  action, editor),
-				this.main.createChild(SimpleAction, {},  action, editor, "Speak Sentence", "speak", "Speaks the text in the text box."),
+				this.main.createChild(SpeakAction, {},  action, editor),
 				// this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder", "If enabled, will open the word finder when pressed."),
 				this.main.createChild(SimpleAction, {},  action, editor, "Hold Page", "holdPage", "Keeps the current or loaded board open after the button is selected."),
 			];

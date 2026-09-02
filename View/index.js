@@ -8,12 +8,17 @@ import {
 } from "../src/Firebase/boards.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
 import { timerLogger } from "../src/Utilities/shared.js";
+import { changeVoice } from "../src/Firebase/text2speech.js";
 
 (async () => {
     timerLogger.tic("initialise firebase");
     let user = await FB.initialise();
     timerLogger.toc("initialise firebase", `[user: ${user ? user.uid.slice(0, 5)+ "..." : "none"}]`);
 })();
+
+const urlParams = new URLSearchParams(window.location.search);
+const voice = urlParams.get("voice") || "default";
+changeVoice(voice);
 
 const ERROR_SCREENS = {
     404: `

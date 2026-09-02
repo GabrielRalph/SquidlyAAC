@@ -4,10 +4,12 @@ class ActionsSimple {
     
     openWordFinder = { on: false }
     holdPage = { on: false }
+
     space = { 
         on: false,
         lastWordOnly: false,
     }
+    
     speak = {
         on: false,
         mode: null,
@@ -51,10 +53,12 @@ class ActionsSimple {
         "hold": (action) => { this.holdPage.on = true; },
 
         "speak": (action) => { this.speak.on = true; },
+
         "speak_last_word": (action) => { 
             this.speak.on = true; 
-            this.space.mode = "last_word";
+            this.speak.mode = "last_word";
         },
+
         "space": (action) => { this.space.on = true; },
         "open_word_finder": (action) => { this.openWordFinder.on = true; },
 
@@ -257,6 +261,7 @@ class ActionsSimple {
     /** @param {OBButtonEditable} button */
     updateFrom(button) {
         let allActions = button.allActions
+        console.log("allActions", allActions);
         
         for (let action of allActions) {
             let parser = this.ACTION_PARSERS[action.mode];

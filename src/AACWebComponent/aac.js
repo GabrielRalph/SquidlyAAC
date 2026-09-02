@@ -6,6 +6,7 @@ import { Color } from "../Utilities/color.js";
 
 import { Debugger, delay } from "../Utilities/shared.js";
 import { AccessEvent } from "../Utilities/Access/access-buttons.js";
+import { loadUtterances, speak } from "../Firebase/text2speech.js";
 
 const debug = new Debugger(
     "AACBoard",
@@ -269,6 +270,14 @@ class AACBoard extends ShadowElement {
     }
 
     /**
+     * @param {OBBoard<OBButton>} board
+     */
+    async #loadBoardUtterances(board) {
+        const utterances = board.buttons.map(button => button.utterance);
+        await loadUtterances(utterances);
+    }
+
+    /**
      * @param  {OBBoard|string} board
      */
     async #setBoard(id) {
@@ -284,6 +293,7 @@ class AACBoard extends ShadowElement {
             this.#rootGrid.add(this.#closeButton, 0, x);
             this.#rootGrid.add(this.#backspaceButton, 0, columns-1);
             this.#rootGrid.add(this.#textAreaCard, 0, [1 + x, columns-2]);
+
             let grid;
             if (board.id in this.#boardCache) {
                 grid = this.#boardCache[board.id];
@@ -292,6 +302,9 @@ class AACBoard extends ShadowElement {
                 grid.board = board;
                 this.#boardCache[board.id] = grid;
             }
+
+            this.#loadBoardUtterances(board);
+
             this.#rootGrid.add(grid, [1, rows], [0, columns-1]);
             this.#renderedBoardID = board.id;
             await delay();
@@ -306,6 +319,10 @@ class AACBoard extends ShadowElement {
         return historyStr;
     }
 
+    /**
+     * @typedef {(this: AACBoard, e: Event, ...args: any[]) => boolean} ActionHandler
+     * @type {Object.<string, ActionHandler>}
+     */
     #ACTION_SET = {
         space(e) {
             this.#textArea.insert(" ");
@@ -371,6 +388,7 @@ class AACBoard extends ShadowElement {
 
         insert_text(e, s, button) {
             s = s || button.label || "";
+
             let charBeforeCursor = this.#textArea.valueUpToCaret;
             let charAfterCursor = this.#textArea.valueAfterCaret;
             if (charBeforeCursor.length > 0 && !charBeforeCursor.endsWith(" ")) {
@@ -381,8 +399,9 @@ class AACBoard extends ShadowElement {
             }
             this.#textArea.insert(s);
             this.dispatchEvent(new AACInsert(e, s));
-
             this.#onStateChange(e, "text", "caretPosition");
+
+            speak(button.utterance);
         },
 
         cursor_left(e) {
@@ -406,6 +425,34 @@ class AACBoard extends ShadowElement {
         cursor_up(e) {
             this.#textArea.moveCaretVertically(-1);
             this.#onStateChange(e, "caretPosition");
+        },
+
+        speak(e) {
+            const utterances = this.#textArea.value.split(" ");
+            loadUtterances(utterances);
+            for (let utterance of utterances) {
+                speak(utterance);
+            }
+        },
+
+        speak_last_word(e) {
+            const {valueUpToCaret, valueAfterCaret} = this.#textArea;
+            if (valueUpToCaret && valueUpToCaret.length > 0) {
+                let word = valueUpToCaret.trim().split(" ").pop()
+
+                // Account for case where caret is in the middle of a word
+                if (
+                    valueAfterCaret 
+                    && valueAfterCaret.length > 0 
+                    && valueAfterCaret[0] !== " "
+                    && valueUpToCaret[valueUpToCaret.length - 1] !== " "
+                ) { word += valueAfterCaret.split(" ")[0]; }
+
+                if (word.length > 0) {
+                    loadUtterances([word]);
+                    speak(word);
+                }
+            }
         }
     }
 

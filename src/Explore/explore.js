@@ -307,7 +307,6 @@ class MyFavouritesList extends SvgPlus {
                         this.createChild(BoardSet, {}, explorer, keys);
                     }
                 })
-                console.log(this.unSubscribe)
             } else {
                 this.createChild("div", {content: "Please log in to see your favourites."});
             }

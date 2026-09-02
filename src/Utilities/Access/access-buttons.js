@@ -1,5 +1,4 @@
 import { SvgPlus, Vector } from "../../SvgPlus/4.js";
-import { loadUtterances, speak } from "./text2speach.js";
 
 async function getPromiseState(promise) {
     const token = {};
@@ -294,26 +293,6 @@ class AccessButtonRoot extends HTMLElement {
         }
     }
     
-    /** @return {string} */
-    get utteranceText() { return $.get(this).utteranceText; }
-
-    /** @param {string} text */
-    set utteranceText(text) {
-        $.get(this).utteranceText = text;
-        loadUtterances([text]);
-    }
-
-
-    /**
-     * Speak the button's utterance text.
-     * @return {Promise<void>}
-     */
-    async speakUtterance() {
-        if (this._speaking) return;
-        this._speaking = true;
-        await speak(this.utteranceText);
-        this._speaking = false;
-    }
 
     /** 
      * @param {?("click"|"dwell"|"switch")} mode

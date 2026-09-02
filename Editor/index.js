@@ -33,21 +33,6 @@ function addBoardIDToURL(boardID) {
  *                          temporarily in local storage.
  */
 
-// let styleSheetsLoader = await OpenBoardEditor.loadStyleSheets()
-const ERROR_SCREEN =  `
-<i-bw lock></i-bw>
-<h1>
-    Permission Denied
-</h1>
-<p>
-    You do not have permision  <br>
-    to edit this board. <br>
-    <br>
-    <a href="/Editor">
-        New Board
-    </a>
-</p>
-`;
 
 const HIDE_STYLE = {
     opacity: 0,
@@ -83,12 +68,7 @@ class EditorSession extends SvgPlus {
             },
             events: {
                 close: () => {
-                    addBoardIDToURL(null);
-                    this.watchBoard(null);
-                    this.editor.board = OBBoardEditable.makeEmptyBoard(4,5);
-                    this.updateSaveStatus();
-                    this.updateTitle();
-                    this.loginPage.styles = HIDE_STYLE;
+                   this.resetToBlankBoard();
                 }
             }
         }, "login-page");
@@ -99,11 +79,17 @@ class EditorSession extends SvgPlus {
                 ...HIDE_STYLE,
                 transition: "0.3s ease-in opacity",
             },
-            content: ERROR_SCREEN
         }, "error-overlay");
         this.errorOverlay.createChild("h1", {content: "Permission Denied"});
         this.errorOverlay.createChild("p", {content: "You do not have permision<br>to edit this board."});
-        this.errorOverlay.createChild("button", {content: "New Board"})
+        this.errorOverlay.createChild("button", {
+            content: "New Board",
+            events: {
+                click: () => {
+                    this.resetToBlankBoard();
+                }
+            }
+        })
 
         this.headTitle = document.head.querySelector("title");
 
@@ -117,6 +103,17 @@ class EditorSession extends SvgPlus {
 
         this.updateTitle();
         this.updateSaveStatus();
+    }
+
+
+    
+    resetToBlankBoard() {
+        addBoardIDToURL(null);
+        this.watchBoard(null);
+        this.editor.board = OBBoardEditable.makeEmptyBoard(4,5);
+        this.updateSaveStatus();
+        this.updateTitle();
+        this.errorOverlay.styles = HIDE_STYLE;
     }
 
 

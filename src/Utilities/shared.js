@@ -102,6 +102,10 @@ class Debugger {
         this.times = {}
     }
 
+    get isLogOn() {
+        return DEBUG && !this.disable;
+    }
+
     tic(log) {
         this.times[log] = performance.now();
     }
@@ -115,7 +119,7 @@ class Debugger {
     }
 
     logStart(mode, info, ...args) {
-        if (DEBUG && !this.disable) {
+        if (this.isLogOn) {
             console.groupCollapsed(`%c${this.name}: ${mode}`, this.style, info);
             if (args.length > 0) {
                 console.log(...args);
@@ -124,17 +128,17 @@ class Debugger {
     }
 
     logBasic(...args) {
-        if (DEBUG && !this.disable) {
+        if (this.isLogOn) {
             console.log(`%c${this.name}:`, this.style, ...args);
         }
     }
 
     logEnd() {
-        if (DEBUG && !this.disable) console.groupEnd();
+        if (this.isLogOn) console.groupEnd();
     }
 
     log(mode, info, ...args) {
-        if (DEBUG && !this.disable) {
+        if (this.isLogOn) {
             this.logStart(mode, info);
             let error = new Error();
             let stack = error.stack.split("\n").slice(2).join("\n");
@@ -147,6 +151,71 @@ class Debugger {
     static fTime(n) {
         return n < 1000 ? Math.round(n) + "ms" : (n/1000).toFixed(2) + "s";
     }
+}
+
+class PromiseChain {
+  constructor(){
+      this.head = null;
+      this.tail = null;
+
+  }
+  /** 
+   * @param {() => Promise} func
+   * @return {Promise}
+   * */
+  async addPromise(func, override = false) {
+      let item = {next: null, prom: null, override: override};
+
+      // Add item to chain
+      if (this.head == null) {
+          this.head = item;
+          this.tail = item;
+      } else {
+        let node = this.head;
+          while (node.next != null) {
+              let nextNode = node.next;
+              if (nextNode.override && nextNode.prom === null) {
+                break;
+              }
+              node = nextNode;
+          }
+          node.next = item;
+          this.tail = item;
+      }
+
+      // wait for previous promises in the chain
+      let node = this.head;
+      while (node !== null && node != item) {
+          await node.prom;
+          node = node.next;
+      }
+
+      let res = null;
+      // If the node is not null, it means that the promise was not overridden
+      if (node !== null) {
+        // call the promise added.
+        item.prom = func();
+        res = await item.prom;
+
+        // remove the item from the chain
+        if (this.tail == item) {
+            this.tail = null;
+            this.head = null;
+        } else {
+            this.head = item.next;
+        }
+      }
+     
+      return res;
+  }
+
+  async wait(){
+    let node = this.head;
+    while (node != null) {
+      await node.prom;
+      node = node.next;
+    }
+  }
 }
 
 
@@ -315,6 +384,7 @@ async function delay(ms) {
 const timerLogger = new Debugger("T", "background: #1a73e8; color: white; padding: 5px; border-radius: 5px;");
 export { 
     Debugger, 
+    PromiseChain,
     getViewerURL, 
     openWindow, openEditor, openViewer, openDraftPreview, openFiles, openNewEditor,
     openProfile,

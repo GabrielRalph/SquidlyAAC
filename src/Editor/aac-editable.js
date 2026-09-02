@@ -92,7 +92,7 @@ class AACEditorGrid extends AACGrid {
         }
 
         this.events = {
-            mousemove(e) {
+            mousemove: (e) => {
                 if (e.buttons === 1) {
                     if (!dragStarted) {
                         dragStarted = {
