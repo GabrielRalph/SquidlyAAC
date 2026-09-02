@@ -355,16 +355,7 @@ class AACBoard extends ShadowElement {
         },
 
         delete_word(e) {
-            let valueUpToCaret = this.#textArea.valueUpToCaret.trimEnd();
-            let valueAfterCaret = this.#textArea.valueAfterCaret.trimStart();
-            let lastSpaceIndex = valueUpToCaret.lastIndexOf(" ");
-            if (lastSpaceIndex === -1) {
-                this.#textArea.value = valueAfterCaret;
-                this.#textArea.caretPosition = 0;
-            } else {
-                this.#textArea.value = valueUpToCaret.slice(0, lastSpaceIndex) + valueAfterCaret;
-                this.#textArea.caretPosition = lastSpaceIndex;
-            }
+            this.#textArea.deleteWord();
             this.#onStateChange(e, "text", "caretPosition");
         },
 

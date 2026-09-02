@@ -193,6 +193,31 @@ class AccessTextarea extends SvgPlus {
     }
 
     /**
+     * Deletes the word immediately before the caret position.
+     */
+    deleteWord(preventEvent = false) {
+        let {valueUpToCaret, value} = this;
+
+        let wordStartIndex = valueUpToCaret.trimEnd().lastIndexOf(" ") + 1;
+        console.log("%c" + value.slice(0, wordStartIndex).replace(/\s/g, "_") + "%c" + value.slice(wordStartIndex).replace(/\s/g, "_"), "color: red;", "color: blue;");
+
+        let wordEndIndex = value.slice(wordStartIndex).indexOf(" ") + 1 + wordStartIndex;
+        if (wordEndIndex <= wordStartIndex) wordEndIndex = value.length;
+
+        console.log(
+            "%c" + value.slice(0, wordStartIndex).replace(/\s/g, "_") 
+            + "%c" + value.slice(wordStartIndex, wordEndIndex).replace(/\s/g, "_") 
+            + "%c" + value.slice(wordEndIndex).replace(/\s/g, "_"),
+            "color: green;", "color: red;", "color: green;"
+        )
+
+        this.textArea.value = value.slice(0, wordStartIndex) + value.slice(wordEndIndex);
+        this.caret = wordStartIndex;
+
+        if (!preventEvent) this.dispatchEvent(new InputEvent("input"));
+    }
+
+    /**
      * Inserts text at the caret position, replacing any selected text.
      * @param {string} text the text to insert
      * @param {boolean} preventEvent if true, prevents an "input" event.
