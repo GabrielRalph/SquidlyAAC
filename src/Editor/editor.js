@@ -673,10 +673,7 @@ class GridTools extends SvgPlus {
         this.selectCategory("content");
     }
 
-    createDropDown(tool, buttonLocations) {
-
-    }
-
+  
     selectCategory(category) {
         for (let catEl of this.selectionOptions.children) {
             catEl.toggleAttribute("selected", catEl.category === category);

@@ -6,13 +6,12 @@
 ## bugs: 
 
 - path for boards not owned by the user in the nav preview apear blank
-
-- after saving a board the saved version is commited to history, even 
+<!-- - after saving a board the saved version is commited to history, even 
     if its technically the same as the current board. This is because the 
     hidden buttons are given new ids. Not super critical but causes the user 
-    to double undo.
+    to double undo. -->
 
-
+##
 - DONE: delete should delete everything otherwise styles/image and more remain
 - DONE: Context menu in files not anchored correctly 
 - DONE: Save causes old saved board to be drafted when two tabs open
@@ -21,13 +20,19 @@
 - DONE: upload image function is broken
 
 ## feature updates: 
+
 - If search then close, keep search results until a label is edited
+
 - r,c input to set grid size
+
 - text 2 speach preview
+
 - advanced hints similar ()
 
+- Load board finder to open explore page such that users can load other public boards.
 
-- DONE: pop ups close when you click else where 
+###
+- DONE: pop ups close when you click else where
 - DONE: tab + arrow keys to select next cell
 - DONE: when editor is opened without board id
 - DONE: save file loader
@@ -39,10 +44,9 @@
 - DONE: copy accross tabs
 - DONE: edit label -> go to content
 
-
-
 # FINDER
 ## fast-fixes:
+
 - DONE: Boards in root do not preload 
 - DONE: information when files is blank
 - DONE: root doesn't need delete,rename
@@ -55,11 +59,16 @@
 
 
 ## feature updates:
+
 - sort columns 
+
 - file search
+
 - copy/paste
+
 - trashcan
 
+###
 - DONE: adding file thumbnails
 - DONE: Favorite root boards automatically
 
@@ -71,7 +80,6 @@
 
 ## feature updates:
 - DONE: text 2 speach in preview
-
 - DONE: text area to scroll into view
 
 
@@ -84,6 +92,7 @@
 ## feature updates:
 - export to pdf + export grid set
 
+###
 - DONE: font size shared between all three
 - DONE: export to png
 
@@ -92,14 +101,15 @@
 
 # EXPLORE
 ## feature-updates:
+- upload obz
+
+- copy public board
+
+###
 - DONE: Three dots to open menu
 - DONE: Hover effect on board card
 - DONE: Recent boards using local storage (if possible)
 - DONE: drop down for user
-
-- upload obz
-- copy public board
-
 
 # AAC SYSTEM
 - DONE: migrate all boards

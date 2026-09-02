@@ -382,6 +382,13 @@ class OBButtonEditable extends OBButton {
         if (prop === "label") {
             this.actionsSimple = this.actionsSimple; // Refresh addText value if it matches the label
         }
+
+        if (prop === "background_color" 
+            || prop === "border_color"
+            || prop === "text_color"
+        ) {
+            this.feature_color = null;
+        }
     }
 
     assign(obj) {
