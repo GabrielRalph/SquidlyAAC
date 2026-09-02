@@ -261,8 +261,6 @@ class ActionsSimple {
     /** @param {OBButtonEditable} button */
     updateFrom(button) {
         let allActions = button.allActions
-        console.log("allActions", allActions);
-        
         for (let action of allActions) {
             let parser = this.ACTION_PARSERS[action.mode];
             if (parser) {
@@ -339,8 +337,6 @@ class ActionsSimple {
  */
 class OBButtonEditable extends OBButton {
 
-    #storedActionsSimple = null;
-
     clear() {
         this.assign(OBButtonEditable.make({
             id: "x",
@@ -348,6 +344,10 @@ class OBButtonEditable extends OBButton {
             actions: ["&", ":return"],
             image_id: null,
             load_board: null,
+            background_color: null,
+            border_color: null,
+            feature_color: null,
+            text_color: null,
         }))
     }
 
@@ -693,4 +693,4 @@ class OBBoardEditable extends OBBoard {
     }
 }
 
-export { OBBoardEditable, ActionsSimple }
+export { OBBoardEditable, OBButtonEditable, ActionsSimple }

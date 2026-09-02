@@ -129,7 +129,6 @@ class AACViewer extends ShadowElement {
         }
         window.addEventListener("popstate", update);
         window.addEventListener("message", async (event) => {
-            console.log("Received message:", event);
             if (event.data.type === "updateBoard") {
                 this.mode = event.data.mode;
                 this.setBoard(event.data.id);

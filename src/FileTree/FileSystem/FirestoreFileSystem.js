@@ -352,7 +352,6 @@ class FirestoreFileSystem extends FileSystemInterface {
             .map(this.statByID.bind(this))
             .filter(Boolean)
 
-        console.log("readdir", path.toString())
         return result;
     }
 

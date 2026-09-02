@@ -310,7 +310,6 @@ class SpeakAction extends Action {
 		[["sentance", null], ["last word", "last_word"]].map(
 			([content, value]) => {
 				let o = this.select.createChild("option", {content, value});
-				console.log(content, value, speak.mode);
 				o.selected = speak.mode === value;
 				return o;
 			}
@@ -323,7 +322,6 @@ class SpeakAction extends Action {
 
 	get value() {
 		const mode = this.select.value == "last_word" ? "last_word" : null;
-		console.log("get value ", mode)
 		return {
 			on: this.on.checked,
 			mode
@@ -481,7 +479,6 @@ class ActionsPanel extends SvgPlus {
 				}
 			}
 
-			console.log(sActions, action)
 			let actions = [
 				this.main.createChild(AddTextAction, {},  action, editor),
 				// TODO CHANGE VOLUME

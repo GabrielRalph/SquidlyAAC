@@ -4,14 +4,16 @@
 - DONE: hidden cells slightly opaque 
 
 ## bugs: 
-- *delete should delete everything otherwise styles/image and more remain
+
 - path for boards not owned by the user in the nav preview apear blank
+
 - after saving a board the saved version is commited to history, even 
     if its technically the same as the current board. This is because the 
     hidden buttons are given new ids. Not super critical but causes the user 
     to double undo.
 
 
+- DONE: delete should delete everything otherwise styles/image and more remain
 - DONE: Context menu in files not anchored correctly 
 - DONE: Save causes old saved board to be drafted when two tabs open
 - DONE: load_board broken
@@ -22,12 +24,11 @@
 - If search then close, keep search results until a label is edited
 - r,c input to set grid size
 - text 2 speach preview
-- tab + arrow keys to select next cell
-
-- pop ups close when you click else where 
-
 - advanced hints similar ()
 
+
+- DONE: pop ups close when you click else where 
+- DONE: tab + arrow keys to select next cell
 - DONE: when editor is opened without board id
 - DONE: save file loader
 - DONE: more info with regards to actions 

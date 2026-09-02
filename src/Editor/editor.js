@@ -2,7 +2,7 @@ import { AACBoard} from "../AACWebComponent/aac.js";
 import { AACEditorGrid, OBBoardEditable } from "./aac-editable.js";
 import { ColorPicker } from "../Utilities/color-picker.js";
 import { FastFindImageList, ImageFinder } from "../IconSearch/image-finder.js";
-import { OBBoard, OBLoadBoard } from "../OpenBoard/openboard.js";
+import { OBBoard, OBButton, OBImage, OBLoadBoard } from "../OpenBoard/openboard.js";
 import { ActionsPanel, NavigationPanel } from "./editor-actions.js";
 import { Icon } from "../Utilities/icons.js";
 import { BoardFinder } from "./editor-finder.js";
@@ -420,6 +420,9 @@ const TOP_TOOLS_STATIC = [
 	}
 ]
 
+/**
+ * @type {Object.<string, function(OpenBoardEditor): void>}
+ */
 const KEY_BINDINGS = {
     /** 
      * @param {OpenBoardEditor} editor
@@ -456,7 +459,13 @@ const KEY_BINDINGS = {
     "Meta+=": (editor) => editor.increaseFontSize(),
     "Meta+-": (editor) => editor.decreaseFontSize(),
 
-    "Tab": (editor) => editor.selectNextCell("right"),
+    "Tab": (editor) => {
+        editor.selectNextCell("right");
+        const { selection } = editor;
+        if (selection.length == 1) {
+            editor.editLabel(selection[0]);
+        }
+    },
     "ArrowRight": (editor) => editor.selectNextCell("right"),
     "ArrowLeft": (editor) => editor.selectNextCell("left"),
     "ArrowUp": (editor) => editor.selectNextCell("up"),
@@ -466,7 +475,6 @@ const KEY_BINDINGS = {
     "Shift+ArrowUp": (editor) => editor.selectNextCell("up"),
     "Shift+ArrowDown": (editor) => editor.selectNextCell("down"),
 }
-
 
 
 class ImageList extends FastFindImageList {
@@ -720,6 +728,7 @@ class OpenBoardEditor extends ShadowElement {
 
     /** @type {?Promise} */
     #dropDownPromise = null;
+
     #dropDownTool = null;
 	
 	#editingLabel = false;
@@ -736,6 +745,7 @@ class OpenBoardEditor extends ShadowElement {
 			class: "panel darker pad b-bottom centered", 
 			styles: {position: "relative"}
 		});
+
 		head.createChild(Icon, {
 			class: "logo"
 		}, "logo-banner")
@@ -758,22 +768,33 @@ class OpenBoardEditor extends ShadowElement {
             styles: {position: "absolute", top: "0.4em", right: "1em"}
 		})
 
+
+        
         let tools = this.createChild(GridTools, {}, this)
         tools.onCategorySelected = (category) => {
             if (this.#dropDown) {
                 this.#dropDown.select(undefined);
             }
         }
+       
 
         let main = this.createChild("div", {class: "editor-main"});
-        let sidep = main.createChild(SidePanel, {}, this);
+        let sidep = main.createChild(SidePanel, {events: {
+            click: (e) => {
+                if (this.#dropDown) {
+                    this.#dropDown.select(undefined);
+                }
+            }
+        }}, this);
         
        
         this.grid = main.createChild(AACEditorGrid, {});
         this.grid.onSelection = (ids) => {
             tools.updateSelection(ids);
 			sidep.updateSelection(ids);
-            this.#updateDropDown();
+            if (this.#dropDown) {
+                this.#dropDown.select(undefined);
+            }
         }  
         this.grid.onDoubleClick = (id) => {
             this.editLabel(id);
@@ -1278,43 +1299,50 @@ class OpenBoardEditor extends ShadowElement {
         return null;
     }
 
+    async #getPayloadFromNavigatorClipboard() {
+        try {
+            const items = await navigator.clipboard.read();
+            const typesInPriorityOrder = ["web application/json", "text/plain"];
+            for (const item of items) {
+                for (const type of typesInPriorityOrder) {
+                    if (!item.types.includes(type)) continue;
+
+                    const blob = await item.getType(type);
+                    const text = await blob.text();
+                    const payload = this.#extractClipboardPayloadFromText(text);
+                    if (payload) {
+                        return payload;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("clipboard.read failed", e);
+        }
+        return null;
+    }
+
     async #readClipboardPayload() {
+        let result = {buttons: [], images: []};
         if (!navigator.clipboard) {
-            return this.#clipboardFallbackJSON;
+            result = this.#clipboardFallbackJSON;
         }
 
         if (typeof navigator.clipboard.read === "function") {
-            try {
-                const items = await navigator.clipboard.read();
-                const typesInPriorityOrder = ["web application/json", "text/plain"];
-                for (const item of items) {
-                    for (const type of typesInPriorityOrder) {
-                        if (!item.types.includes(type)) continue;
-
-                        const blob = await item.getType(type);
-                        const text = await blob.text();
-                        const payload = this.#extractClipboardPayloadFromText(text);
-                        if (payload) {
-                            return payload;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn("clipboard.read failed", e);
-            }
-        }
-
-        if (typeof navigator.clipboard.readText === "function") {
+            let payload = await this.#getPayloadFromNavigatorClipboard();
+            if (payload) result = payload;
+        } else if (typeof navigator.clipboard.readText === "function") {
             try {
                 const text = await navigator.clipboard.readText();
                 const payload = this.#extractClipboardPayloadFromText(text);
-                if (payload) return payload;
+                if (payload) result = payload;
             } catch (e) {
                 console.warn("clipboard.readText failed", e);
             }
-        }
+        } 
 
-        return this.#extractClipboardPayloadFromText(this.#clipboardFallbackJSON);
+        result.buttons = (result.buttons || []).map(b => OBButton.make(b));
+        result.images = (result.images || []).map(i => OBImage.make(i));
+        return result;
     }
 
 

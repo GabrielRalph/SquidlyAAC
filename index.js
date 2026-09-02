@@ -216,7 +216,4 @@ class AACHomePage extends ShadowElement {
     }
 }
 
-
-
-
 SvgPlus.defineHTMLElement(AACHomePage, "aac-home-page");

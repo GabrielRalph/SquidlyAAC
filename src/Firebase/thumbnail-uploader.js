@@ -5,7 +5,7 @@ class ThumbnailUploader {
     maxFileSize = 30 * 1e3; // 30KB
     metadata = {}
     onProgress(data) {
-        console.log("Upload progress:", data);
+        // console.log("Upload progress:", data);
     }
 
     async getFile() {
@@ -33,7 +33,7 @@ class ThumbnailUploader {
                     const height = img.naturalHeight;
                     const scale = this.maxSize / Math.max(width, height);
 
-                    console.log("Original image size:", width, height, "Scale factor:", scale);
+                    // console.log("Original image size:", width, height, "Scale factor:", scale);
 
                     if (scale < 1) {
                         const nWidth = Math.floor(width * scale);
@@ -62,7 +62,7 @@ class ThumbnailUploader {
                             this.imageURL = URL.createObjectURL(this.imageFile);
                             this.metadata = { contentType: exportType };
 
-                            console.log("New compressed file size:", this.imageFile.size, "bytes");
+                            // console.log("New compressed file size:", this.imageFile.size, "bytes");
                             resolve();
                         }, exportType, exportQuality);
                     } else {
@@ -80,7 +80,7 @@ class ThumbnailUploader {
         if (this.imageFile.size > this.maxFileSize) {
             let sizeRatio = this.imageFile.size / this.maxFileSize;
             this.maxSize = Math.floor(this.maxSize / Math.sqrt(sizeRatio));
-            console.log(`File size still exceeds limit. Reducing maxSize to ${this.maxSize} and retrying resize.`);
+            // console.log(`File size still exceeds limit. Reducing maxSize to ${this.maxSize} and retrying resize.`);
             await this.resizeImage();
         }
     }
@@ -118,7 +118,7 @@ class ThumbnailUploader {
         let success = false;
         if (this.imageURL) {
             try {
-                console.log(`Uploading thumbnail\n\tpath: ${path}\n\tfile size: ${this.imageFile.size} bytes\n\tmetadata:`, this.metadata);
+                // console.log(`Uploading thumbnail\n\tpath: ${path}\n\tfile size: ${this.imageFile.size} bytes\n\tmetadata:`, this.metadata);
                 this.imageURL = await uploadFileToCloud(this.imageFile, path, this.metadata, this.onProgress);
                 success = true;
             } catch (e) {

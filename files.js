@@ -7,6 +7,7 @@ import { OBFileSystem } from "./src/FileTree/OBFileSystem.js";
 export class AACFinder extends ShadowElement {
 	/** @type {OBFileSystem} */
     #fs = null;
+	
     #loading = null;
 	constructor(el) {
 		super(el, "board-finder");

@@ -259,19 +259,16 @@ class OBFileSystem extends FirestoreFileSystem {
     }
 
     async removeThumbnail(paths) {
-        console.log("Removing thumbnail for paths:", paths);
         if (!Array.isArray(paths)) paths = [paths];
         const stats = paths.map(p => this.stat(p)).filter(stat => stat && stat.isBoard);
         if (stats.length > 0) {
             let proms = stats.map(({boardID}) => { 
-                console.log(`Deleting thumbnail for boardID: ${boardID}`);
                 let p = deleteFile(`board-thumbnails/${boardID}`);
                 this._updateFileByID(boardID, { thumbnail: false });
                 return p;
             });
             this.fullUpdate();
             await Promise.all(proms);
-            console.log(`Deleted thumbnails for ${proms.length} boards.`);
         }
     }
 
