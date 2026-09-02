@@ -173,7 +173,7 @@ class OBFileSystem extends FirestoreFileSystem {
      /**
      * Returns file stats for the given path. 
      * @param {Path|string} id - The path to get the file stats for.
-     * @returns {Array<T>} The file stats for the given path.
+     * @returns {Array<OBFStats>} The file stats for the given path.
      * @override
      */
     readdir(path, recursive = false, includeSelf = false) { 

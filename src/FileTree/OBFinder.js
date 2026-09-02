@@ -4,7 +4,7 @@ import { Path, PATH_SEPERATOR } from "./FileSystem/Path.js";
 import { FileSystemUI, FSColumn, FSFileIcon } from "./FileSystem/FileSystemUI.js";
 import { getBoard } from "../Firebase/boards.js";
 import { META_KEY, registerKeyBindings } from "../Utilities/keybindings.js";
-import { openDraftPreview, openEditor, openViewer } from "../Utilities/shared.js";
+import { openEditor, openViewer } from "../Utilities/shared.js";
 import { OBFStats } from "./OBFileSystem.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
 import { Icon } from "../Utilities/icons.js";
@@ -297,7 +297,7 @@ class OBFileViewer extends SvgPlus {
 }
 
 export class OBFinder extends FileSystemUI {
-    /** @type {OBFileSystems} */
+    /** @type {OBFileSystem} */
     fs = null;
 
     constructor() {
@@ -383,6 +383,7 @@ export class OBFinder extends FileSystemUI {
         if (!this.fs) return false;
         await this.fs.uploadThumbnail(path);
     }
+
     async removeThumbnail(path) {
         if (!this.fs) return false;
         await this.fs.removeThumbnail(path);
@@ -517,6 +518,18 @@ export class OBFinder extends FileSystemUI {
                 getBoard(file.boardID)
             }
         }
+    }
+
+    /**
+     * setRoot override, 
+     * downloads all boards 
+     * in root directory.
+     */
+    setRoot(fs, rootName) {
+        super.setRoot(fs, rootName);
+        this.fs.readdir("")
+            .filter(f => f.isBoard)
+            .map(f => getBoard(f.boardID))
     }
 
     static get usedStyleSheets() {

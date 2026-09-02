@@ -22,8 +22,8 @@ DEBUG.disable = true;
 
 
 /**
- * @template {FileTemplate} T
- * @extends {FileSystemInterface<T>}
+ * @template {Object} FileTemplate
+ * @extends {FileSystemInterface<FileTemplate>}
  * @class 
  */
 class FirestoreFileSystem extends FileSystemInterface {
@@ -160,7 +160,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     /**
      * Gets a file by its ID.
      * @param {string} id - The ID of the file to get.
-     * @returns {T|null} The file with the given ID, or null if not found.
+     * @returns {FileTemplate|null} The file with the given ID, or null if not found.
      */
     _getFileByID(id) {
         return id && id in this._dataByID ? copy(this._dataByID[id]) || null : null;
@@ -169,7 +169,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     /**
      * Gets a file by its path.
      * @param {Path|string} path - The path of the file to get.
-     * @returns {T|null} The file with the given path, or null if not found.
+     * @returns {FileTemplate|null} The file with the given path, or null if not found.
      */
     _getFileByPath(path) {
         let id = this._dataAsFS.get(path);
@@ -271,7 +271,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     /**
      * Returns file stats for the given path. 
      * @param {string} id - The path to get the file stats for.
-     * @returns {T} The file stats for the given path.
+     * @returns {FileTemplate} The file stats for the given path.
      * @override
      */
     statByID(id) {
@@ -287,7 +287,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     /**
      * Returns file stats for the given path. 
      * @param {Path|string} id - The path to get the file stats for.
-     * @returns {T} The file stats for the given path.
+     * @returns {FileTemplate} The file stats for the given path.
      * @override
      */
     stat(path) {
@@ -332,7 +332,7 @@ class FirestoreFileSystem extends FileSystemInterface {
     /**
      * Returns file stats for the given path. 
      * @param {Path|string} id - The path to get the file stats for.
-     * @returns {Array<T>} The file stats for the given path.
+     * @returns {FileTemplate[]} The file stats for the given path.
      * @override
      */
     readdir(path, recursive = false, includeSelf = false) { 
@@ -359,8 +359,8 @@ class FirestoreFileSystem extends FileSystemInterface {
   
     /**
      * Searches for files in the file system that match the given filter function. 
-     * @param {function(T): boolean} filterFn - A function that takes a file stat and returns true if it matches the search criteria.
-     * @returns {Array<T>} An array of file stats that match the search criteria.
+     * @param {(f: FileTemplate) => boolean} filterFn - A function that takes a file stat and returns true if it matches the search criteria.
+     * @returns {FileTemplate[]} An array of file stats that match the search criteria.
      * @override
      */
     searchFiles(filterFn) { 

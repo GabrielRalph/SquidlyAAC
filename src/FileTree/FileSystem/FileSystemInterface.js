@@ -1,5 +1,5 @@
 /**
- * @template {any} T
+ * @template {Object} T
  */
 class FileSystemInterface {
     #onUpdateCallbacks = new Set();

@@ -1,101 +1,105 @@
-EDITOR 
-    fast-fixes:
-        - DONE: when you press find image the scroll bar to start at the top
-        - DONE: hidden cells slightly opaque 
+# EDITOR 
+## fast-fixes:
+- DONE: when you press find image the scroll bar to start at the top
+- DONE: hidden cells slightly opaque 
 
-    bugs: 
-        - *delete should delete everything otherwise styles/image and more remain
-
-        - path for boards not owned by the user in the nav preview apear blank
-
-        - after saving a board the saved version is commited to history, even 
-          if its technically the same as the current board. This is because the 
-          hidden buttons are given new ids. Not super critical but causes the user 
-          to double undo.
-
-        
-        - DONE: Context menu in files not anchored correctly 
-        - DONE: Save causes old saved board to be drafted when two tabs open
-        - DONE: load_board broken
-        - DONE: odd merge bug 
-        - DONE: upload image function is broken
+## bugs: 
+- *delete should delete everything otherwise styles/image and more remain
+- path for boards not owned by the user in the nav preview apear blank
+- after saving a board the saved version is commited to history, even 
+    if its technically the same as the current board. This is because the 
+    hidden buttons are given new ids. Not super critical but causes the user 
+    to double undo.
 
 
-    feature updates: 
-        - If search then close, keep search results until a label is edited
-        - r,c input to set grid size
-        - text 2 speach preview
-        - tab + arrow keys to select next cell
+- DONE: Context menu in files not anchored correctly 
+- DONE: Save causes old saved board to be drafted when two tabs open
+- DONE: load_board broken
+- DONE: odd merge bug 
+- DONE: upload image function is broken
 
-        - pop ups close when you click else where 
+## feature updates: 
+- If search then close, keep search results until a label is edited
+- r,c input to set grid size
+- text 2 speach preview
+- tab + arrow keys to select next cell
 
-        - advanced hints similar ()
+- pop ups close when you click else where 
 
-        - DONE: when editor is opened without board id
-        - DONE: save file loader
-        - DONE: more info with regards to actions 
-        - DONE: print 
-        - DONE: upload image auto resize 
-        - DONE: write action copy issue
-        - DONE: actions add space
-        - DONE: copy accross tabs
-        - DONE: edit label -> go to content
+- advanced hints similar ()
+
+- DONE: when editor is opened without board id
+- DONE: save file loader
+- DONE: more info with regards to actions 
+- DONE: print 
+- DONE: upload image auto resize 
+- DONE: write action copy issue
+- DONE: actions add space
+- DONE: copy accross tabs
+- DONE: edit label -> go to content
 
 
 
-FINDER
-    fast-fixes:
-        - Boards in root do not preload 
+# FINDER
+## fast-fixes:
+- Boards in root do not preload 
 
-        - DONE: information when files is blank
-        - DONE: root doesn't need delete,rename
-        - DONE: popups only open once 
-        - DONE: double click opens the editor
-        - DONE: button to add new board
+- DONE: information when files is blank
+- DONE: root doesn't need delete,rename
+- DONE: popups only open once 
+- DONE: double click opens the editor
+- DONE: button to add new board
 
-    bugs:
-        - DONE: updates from one tab don't properly propergate to another (try drag folder)
-       
-
-    feature updates:
-        - DONE: adding file thumbnails
-        - DONE: Favorite root boards automatically
+## bugs:
+- DONE: updates from one tab don't properly propergate to another (try drag folder)
 
 
+## feature updates:
+- sort columns 
+- file search
+- copy/paste
+- trashcan
 
- VIEWER 
-    bugs:
-        - DONE: Show message when permision is denied
-
-    feature updates:
-        - text 2 speach in preview
-
-        - DONE: text area to scroll into view
+- DONE: adding file thumbnails
+- DONE: Favorite root boards automatically
 
 
 
-AAC GENERIC
-    bugs:
-        - font size in text area to big 
+# VIEWER 
+## bugs:
+- DONE: Show message when permision is denied
+
+## feature updates:
+- text 2 speach in preview
+
+- DONE: text area to scroll into view
 
 
-    feature updates:
-        - export to pdf + export grid set
 
-        - DONE: font size shared between all three
-        - DONE: export to png
-
-
-AAC SYSTEM
-    - DONE: migrate all boards
+# AAC GENERIC
+## bugs:
+- font size in text area to big 
 
 
-EXPLORE
-    feature-updates:
-        - DONE: Three dots to open menu
-        - DONE: Hover effect on board card
-        - DONE: Recent boards using local storage (if possible)
-        - DONE: drop down for user
+## feature updates:
+- export to pdf + export grid set
 
-        - upload obz
-        - copy public board
+- DONE: font size shared between all three
+- DONE: export to png
+
+
+
+
+# EXPLORE
+## feature-updates:
+- DONE: Three dots to open menu
+- DONE: Hover effect on board card
+- DONE: Recent boards using local storage (if possible)
+- DONE: drop down for user
+
+- upload obz
+- copy public board
+
+
+# AAC SYSTEM
+- DONE: migrate all boards
