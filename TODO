@@ -42,8 +42,7 @@
 
 # FINDER
 ## fast-fixes:
-- Boards in root do not preload 
-
+- DONE: Boards in root do not preload 
 - DONE: information when files is blank
 - DONE: root doesn't need delete,rename
 - DONE: popups only open once 
@@ -70,7 +69,7 @@
 - DONE: Show message when permision is denied
 
 ## feature updates:
-- text 2 speach in preview
+- DONE: text 2 speach in preview
 
 - DONE: text area to scroll into view
 
