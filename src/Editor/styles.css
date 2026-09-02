@@ -615,8 +615,6 @@ board-finder  {
     z-index: 1000;
 
     border-radius: 1em;
-    background: #262625d7;
-    backdrop-filter: blur(15px);
     box-shadow: 0 0 3em #0000002c;
     border: 1px solid var(--border-color);
     

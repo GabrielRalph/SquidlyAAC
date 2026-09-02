@@ -3,6 +3,17 @@ board-finder {
     grid-template-rows: 1fr auto;
 }
 
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #262625d7;
+    backdrop-filter: blur(15px);
+    z-index: -1;
+}
+
 board-finder:not([save-mode]) .finder-options input {
     
     opacity: 0;

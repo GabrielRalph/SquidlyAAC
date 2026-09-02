@@ -4,6 +4,7 @@ import { OBFinder } from "../FileTree/OBFinder.js";
 import { OBLoadBoard } from "../OpenBoard/openboard.js";
 import { Icon } from "../Utilities/icons.js";
 import { ShadowElement } from "../SvgPlus/shadow-element.js";
+import { SvgPlus } from "../SvgPlus/4.js";
 
 export class BoardFinder extends ShadowElement {
     /** @type {OBFileSystem} */
@@ -13,6 +14,9 @@ export class BoardFinder extends ShadowElement {
 	constructor() {
 		super("board-finder");
 
+        const bg = new SvgPlus("div");
+        bg.class = "background"
+        this.shadowRoot.appendChild(bg)
 
 		this.fsUI = this.createChild(OBFinder, {events: {
             "selection-change": e => {

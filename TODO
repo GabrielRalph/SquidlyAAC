@@ -5,14 +5,16 @@ EDITOR
 
     bugs: 
         - *delete should delete everything otherwise styles/image and more remain
+
         - path for boards not owned by the user in the nav preview apear blank
+
         - after saving a board the saved version is commited to history, even 
           if its technically the same as the current board. This is because the 
           hidden buttons are given new ids. Not super critical but causes the user 
           to double undo.
-        - Context menu in files not anchored correctly 
+
         
-        
+        - DONE: Context menu in files not anchored correctly 
         - DONE: Save causes old saved board to be drafted when two tabs open
         - DONE: load_board broken
         - DONE: odd merge bug 
@@ -43,6 +45,8 @@ EDITOR
 
 FINDER
     fast-fixes:
+        - Boards in root do not preload 
+
         - DONE: information when files is blank
         - DONE: root doesn't need delete,rename
         - DONE: popups only open once 
