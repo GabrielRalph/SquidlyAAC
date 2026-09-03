@@ -45,28 +45,10 @@ access-textarea textarea {
     width: 100%;
 }
 
-.grid-icon[bold] .content .display-value span{
-    font-weight: bold;
-}
-.grid-icon[italic] .content .display-value span{
-    font-style: italic;
-}
-
-.grid-icon[font-size="giant"] .content .display-value span{
-    font-size: 4em;
-}
-.grid-icon[font-size="huge"] .content .display-value span{
-    font-size: 2.5em;
-}
-.grid-icon[font-size="large"] .content .display-value span{
-    font-size: 1.5em;
-}
-.grid-icon[font-size="medium"] .content .display-value span{
-    font-size: 1em;
-}
-.grid-icon[font-size="small"] .content .display-value span{
-    font-size: 0.85em;
-}
-.grid-icon[font-size="tiny"] .content .display-value span{
-    font-size: 0.7em;
-}
+.grid-icon[bold] .content .display-value { font-weight: bold; }
+.grid-icon[italic] .content .display-value { font-style: italic; }
+.grid-icon[font-size="giant"] .content .display-value{ font-size: 4.8em; }
+.grid-icon[font-size="huge"] .content .display-value{ font-size: 3em; }
+.grid-icon[font-size="large"] .content .display-value{ font-size: 1.8em; }
+.grid-icon[font-size="small"] .content .display-value{ font-size: 1.02em; }
+.grid-icon[font-size="tiny"] .content .display-value{ font-size: 0.84em; }

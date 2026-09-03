@@ -669,6 +669,8 @@ function parseCellPosition(rowStart, colStart, rowEnd = rowStart, colEnd = colSt
  * @extends SvgPlus
 */
 class GridLayout extends SvgPlus {
+    #resizeForced = false;
+
     /**
      * @param {number} rows - Number of rows in the grid.
      * @param {number} cols - Number of columns in the grid.
@@ -702,6 +704,17 @@ class GridLayout extends SvgPlus {
     }
 
 
+    #forceResize() {
+        if (!this.#resizeForced) {
+            this.#resizeForced = true;
+            window.requestAnimationFrame(() => {
+                this.onresize();
+                this.#resizeForced = false;
+            });
+        }
+    }
+
+
     /**
      * @template {ItemType extends SvgPlus} ItemType
      * 
@@ -714,7 +727,7 @@ class GridLayout extends SvgPlus {
     add(item, ...posArgs) {
         let [row, col, rowEnd, colEnd] = parseCellPosition(...posArgs);
 
-        this.onresize();
+        this.#forceResize();
         if (SvgPlus.is(item, GridIcon)) {
             item.getCardBorderRadius = () => this.gridIconBorderRadius;
             item.getCardBorderWidth = () => this.gridIconBorderWidth;

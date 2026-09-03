@@ -1,4 +1,7 @@
-import { OBAction, OBBoard, OBButton, OBImage } from "./openboard.js";
+import {  OBBoard, OBButton, OBImage } from "./openboard.js";
+
+const MAX_ROWS = 16;
+const MAX_COLUMNS = 20;
 
 class ActionsSimple {
     
@@ -552,6 +555,44 @@ class OBBoardEditable extends OBBoard {
     }
 
     /**
+     * @returns {boolean} true if a row can be inserted, false otherwise
+     */
+    canInsertRow() {
+        return this.#canInsert(true);
+    }
+    
+    /**
+     * @returns {boolean} true if a column can be inserted, false otherwise
+     */
+    canInsertColumn() {
+        return this.#canInsert(false);
+    }
+
+    setRows(rows) {
+        rows = Math.max(1, Math.min(MAX_ROWS, rows));
+       const rowsNow = this.grid.rows;
+        for (let i = 0; i < rowsNow - rows; i++) {
+            this.deleteRow(this.grid.rows - 1);
+        }
+        
+        for (let i = 0; i < rows - rowsNow; i++) {
+            this.insertRow(this.grid.rows - 1, false);
+        }
+    }
+
+    setColumns(columns) {
+        columns = Math.max(1, Math.min(MAX_COLUMNS, columns));
+        const columnsNow = this.grid.columns;
+        for (let i = 0; i < columnsNow - columns; i++) {
+            this.deleteColumn(this.grid.columns - 1);
+        }
+        
+        for (let i = 0; i < columns - columnsNow; i++) {
+            this.insertColumn(this.grid.columns - 1, false);
+        }
+    }
+
+    /**
      * @param {Array<string>} selection array of button IDs to get the property from
      * @param {string} property the property to get from the buttons
      * @returns {any} the value of the property if all buttons have the same value, else null
@@ -648,42 +689,52 @@ class OBBoardEditable extends OBBoard {
         this.removeUnusedButtons();
     }
 
+
+    #canInsert(isRow = true) {
+        if (isRow && this.grid.rows >= MAX_ROWS) return false;
+        if (!isRow && this.grid.columns >= MAX_COLUMNS) return false;
+        return true;
+    }
+
     #insert(index, before = true, isRow = true) {
-        let rangeKeyA = isRow ? "rowRange" : "colRange";
-        let rangeKeyB = isRow ? "colRange" : "rowRange";
-        let dirKey = isRow ? "columns" : "rows";
+        if (this.#canInsert(isRow)) {
+            let rangeKeyA = isRow ? "rowRange" : "colRange";
+            let rangeKeyB = isRow ? "colRange" : "rowRange";
+            let dirKey = isRow ? "columns" : "rows";
 
-        let start = before ? index -1 : index;
-        let end = before ? index : index + 1;
-        const locations = this.getButtonLocations();
-        const spanningLocations = locations.filter(l => l[rangeKeyA][0] <= start && l[rangeKeyA][1] >= end);
-        const spanIDs = {};
-        for (let {[rangeKeyB]: [cs, ce], buttonID} of spanningLocations) {
-            for (let c = cs; c <= ce; c++) {
-                spanIDs[c] = buttonID;
+            let start = before ? index -1 : index;
+            let end = before ? index : index + 1;
+            const locations = this.getButtonLocations();
+            const spanningLocations = locations.filter(l => l[rangeKeyA][0] <= start && l[rangeKeyA][1] >= end);
+            const spanIDs = {};
+            for (let {[rangeKeyB]: [cs, ce], buttonID} of spanningLocations) {
+                for (let c = cs; c <= ce; c++) {
+                    spanIDs[c] = buttonID;
+                }
             }
-        }
-        
-        let newRow = [];
-        for (let i = 0; i < this.grid[dirKey]; i++) {
-            if (spanIDs[i]) {
-                newRow.push(spanIDs[i]);
+            
+            let newRow = [];
+            for (let i = 0; i < this.grid[dirKey]; i++) {
+                if (spanIDs[i]) {
+                    newRow.push(spanIDs[i]);
+                } else {
+                    let newButton = OBButtonEditable.makeEmptyButton();
+                    this.buttons.push(newButton);
+                    newRow.push(newButton.id);
+                }
+            }
+    
+            if (isRow) {
+                this.grid.order.splice(before ? index : index + 1, 0, newRow);
+                this.grid.rows += 1;
             } else {
-                let newButton = OBButtonEditable.makeEmptyButton();
-                this.buttons.push(newButton);
-                newRow.push(newButton.id);
+                for (let r = 0; r < this.grid.rows; r++) {
+                    this.grid.order[r].splice(before ? index : index + 1, 0, newRow[r]);
+                }
+                this.grid.columns += 1;
             }
         }
 
-        if (isRow) {
-            this.grid.order.splice(before ? index : index + 1, 0, newRow);
-            this.grid.rows += 1;
-        } else {
-            for (let r = 0; r < this.grid.rows; r++) {
-                this.grid.order[r].splice(before ? index : index + 1, 0, newRow[r]);
-            }
-            this.grid.columns += 1;
-        }
     }
 
     validate() {
@@ -698,6 +749,19 @@ class OBBoardEditable extends OBBoard {
         }))
         this.removeUnusedButtons();
     }
+
+
+    static get maxRows() {
+        return MAX_ROWS;
+    }
+
+    static get maxColumns() {
+        return MAX_COLUMNS;
+    }
 }
 
-export { OBBoardEditable, OBButtonEditable, ActionsSimple }
+export { 
+    OBBoardEditable, 
+    OBButtonEditable, 
+    ActionsSimple 
+}

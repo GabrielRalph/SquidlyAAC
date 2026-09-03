@@ -8,11 +8,378 @@ import { Icon } from "../Utilities/icons.js";
 import { BoardFinder } from "./editor-finder.js";
 import { META_KEY, registerKeyBindings, setActiveKeyBindingSet } from "../Utilities/keybindings.js";
 import { AACGridCanvas } from "../AACWebComponent/aac-canvas.js";
-import { openFiles, openNewEditor } from "../Utilities/shared.js";
+import { openFiles, openNewEditor, openViewer } from "../Utilities/shared.js";
 import { SvgPlus } from "../SvgPlus/4.js";
 import { ShadowElement } from "../SvgPlus/shadow-element.js";
 
-// Editor -----------
+
+/*****************************************************************************
+ *                              DROP DOWN MENUS
+ *****************************************************************************/
+
+// #region DROP DOWN MENUS
+class FontSizeList extends SvgPlus {
+    constructor(onSelect) {
+        super("div");
+        this.class = "selection-list";
+        Object.keys(this.value2idx).map((k, i) => {
+            let kCap = k[0].toUpperCase() + k.slice(1);
+            this.createChild("div", {
+                class: "b-bottom pad",
+                events: {click: () => this.select(k)},
+            }).createChild("span", {
+                content: kCap, 
+                styles: {"font-size": this.value2size[k]}
+            })
+        })
+        this.onSelect = onSelect;
+    }
+
+    get value2idx() {
+        return {
+            "giant": 0,
+            "huge": 1,
+            "large": 2,
+            "medium": 3,
+            "small": 4,
+            "tiny": 5
+        }
+    }
+    get value2size() {
+        return {
+            "giant": "3em",
+            "huge": "2.5em",
+            "large": "2em",
+            "medium": "1.5em",
+            "small": "1em",
+            "tiny": "0.75em"
+        }
+    }
+
+    set value(value) {
+        if (value !== undefined) {
+            value = (value || "medium").toLowerCase();
+            [...this.children].forEach((child, idx) => {
+                child.toggleAttribute("selected", idx === this.value2idx[value]);
+            });
+        }
+    }
+
+    select(value) {
+        this.onSelect(value);
+    }
+}
+// #endregion DROP DOWN MENUS
+
+
+
+/*****************************************************************************
+ *                                TOOLBAR TOOLS
+ *****************************************************************************/
+
+// #region TOOLBAR TOOLS
+function toLabel(name, joiner = "\n") {
+    name = typeof name === "string" ? name : "";
+    return name.split(/(?=[A-Z])/).map(s => s[0].toUpperCase() + s.slice(1)).join(joiner);
+}
+
+class ToolInterface extends SvgPlus {
+    #openBoardEditor = null;
+
+    /** 
+     * Constructs a new ToolInterface instance.
+     * @param {OpenBoardEditor} editor 
+     */
+    constructor(openBoardEditor) {
+        super("div");
+        this.#openBoardEditor = openBoardEditor;
+    }
+
+    /**
+     * @returns {OpenBoardEditor} The associated OpenBoardEditor instance.
+     */
+    get editor() {
+        return this.#openBoardEditor;
+    }
+
+    /**
+     * Called when the selection changes in the editor.
+     * @param {OpenBoardEditor} editor The associated OpenBoardEditor instance.
+     */
+    onSelection(editor) { }
+
+    updateSelection() {
+        this.onSelection( this.editor);
+    }
+}
+
+class BasicTool extends ToolInterface {
+    constructor(openBoardEditor, tool) {
+        super(openBoardEditor);
+        this.class = "tool-icon";
+
+        this.props = {
+            title: toLabel(tool.name, " ") + (tool.binding ? ` [${tool.binding}]` : "")
+        }
+
+        this.icon = this.createChild(Icon, {}, tool.icon);
+        if (tool.iconTransform) {
+            this.icon.styles = {transform: tool.iconTransform};
+        }
+
+        let labelText = toLabel(tool.name);
+        let lines = labelText.split("\n").length;
+        let label = this.createChild("div", {
+            class: "label", 
+            content: labelText
+        });
+        if (tool.dropDown) {
+            label.innerHTML += lines > 1 ? "" : "\n";
+            label.createChild(Icon, {}, "down")
+        }
+
+        if (tool.onClick instanceof Function) {
+            this.addEventListener("click", async e => {
+                let func = tool.onClick.bind(this)
+                func(openBoardEditor, e);
+            });
+        }
+
+        if (tool.onSelection instanceof Function) {
+            this.onSelection = tool.onSelection.bind(this);
+        }
+
+        if (tool.build instanceof Function) {
+            tool.build(this, openBoardEditor);
+        }
+    }
+}
+
+class ImageList extends ToolInterface {
+    constructor(e) {
+        super(e);
+
+        this.class = "image-list";
+        this.imageList = this.createChild(FastFindImageList);
+        this.imageList.onImageSelected = (image) => {
+            this.editor.setButtonImages(image);
+        };
+        this.editor.addImageList(this.imageList);
+    }
+
+    /**
+     * @param {OpenBoardEditor} editor
+     */
+    async onSelection(editor) {
+        if (editor.selection.length == 1) {
+            const label = editor.getSelectionProperty("label");
+            this.imageList.search(label);
+        }
+    }
+}
+
+class NumberInput extends ToolInterface {
+    constructor(e, tool) {
+        super(e);
+        this.class = "number-input";
+
+        this.props = {
+            title: toLabel(tool.name, " ") + (tool.binding ? ` [${tool.binding}]` : "")
+        }
+
+        const iw = this.createChild("div", {
+            class: "input-wrapper"
+        });
+
+        this.input = iw.createChild("input", {
+            type: "number",
+            min: tool.min,
+            max: tool.max,
+            events: {
+                input: (e) => {
+                    this.value = this.input.value;
+                },
+                change: (e) => {
+                    let value = parseFloat(e.target.value);
+                    value = Number.isNaN(value) ? this.min : value;
+                    this.value = value;
+                    this.#runChange();
+                }
+            }
+        });
+        this.min = tool.min;
+        this.max = tool.max;
+
+        const s = iw.createChild("div", {
+            class: "spinner"
+        });
+
+        let step = tool.step || 1
+        let up = s.createChild("div", {
+            events: {
+                click: () => {
+                    this.step(step);
+                }
+            }
+        })
+        up.createChild(Icon, {}, "up")
+        this.upSpinner = up;
+
+        let down = s.createChild("div", {
+            events: {
+                click: () => {
+                    this.step(-step);
+                }
+            }
+        })
+        down.createChild(Icon, {}, "down")
+        this.downSpinner = down;
+
+
+        this.createChild("div", {
+            class: "label",
+            content: toLabel(tool.name)
+        });
+
+        if (tool.onSelection instanceof Function) {
+            this.onSelection = tool.onSelection.bind(this);
+        }
+
+        if (tool.onChange instanceof Function) {
+            this.onChange = tool.onChange.bind(this);
+        }
+    }
+
+    #runChange() {
+        if (this.onChange instanceof Function) {
+            this.onChange(this.editor, this.value);
+        }
+    }
+
+    step(step) {
+        let oldValue = this.value;
+        oldValue = Number.isNaN(oldValue) ? this.min : oldValue;
+        this.value = oldValue + step;
+        this.#runChange();
+    }
+
+    get value() {
+        return parseFloat(this.input.value);
+    }
+
+    set value(val) {
+        val = parseFloat(val);
+        if (!Number.isNaN(val)) {
+            if (val < this.min) val = this.min;
+            if (val > this.max) val = this.max;
+            this.downSpinner.toggleAttribute("disabled", val == this.min);
+            this.upSpinner.toggleAttribute("disabled", val == this.max);
+            this.input.value = val;
+        } else {
+            this.downSpinner.toggleAttribute("disabled", true);
+            this.upSpinner.toggleAttribute("disabled", false);
+        }
+    }
+}
+
+class Separator extends SvgPlus {
+    constructor() { super("div"); this.class = "tool-separator"; } 
+}
+
+const Tools = {
+    separator: Separator,
+    types: {
+        separator: Separator,
+        imageList: ImageList,
+        basicTool: BasicTool,
+        number: NumberInput,
+    },
+
+    make(value, openBoardEditor) {
+        if (typeof value === "string" && this.types[value]) {
+            return new this.types[value](openBoardEditor);
+        } else if (value && typeof value === "object") {
+            if (value.type && this.types[value.type]) {
+                return new this.types[value.type](openBoardEditor, value);
+            } else {
+                return new this.types.basicTool(openBoardEditor, value);
+            }
+        }
+    }
+}
+// #endregion TOOLBAR TOOLS
+
+
+
+/*****************************************************************************
+ *                                KEY BINDINGS
+ *****************************************************************************/
+
+// #region KEY BINDINGS
+/**
+ * @type {Object.<string, (e: OpenBoardEditor) => void>}
+ */
+const KEY_BINDINGS = {
+    /** 
+     * @param {OpenBoardEditor} editor
+     * */
+    c(editor) {
+        editor.selectCategory("content");
+    },
+    s(editor) {
+        editor.selectCategory("styles");
+    },
+    l(editor) {
+        editor.selectCategory("layout")
+    },
+    "Meta+c": (editor) => editor.copy(),
+    "Meta+v": (editor) => editor.paste(),
+    "Shift+Meta+v": (editor) => editor.paste(true),
+
+    "Meta+b": (editor) => editor.toggleProperty("bold"),
+    "Meta+i": (editor) => editor.toggleProperty("italic"),
+
+
+    "Meta+ArrowLeft": (editor) => editor.insertLeft(),
+    "Meta+ArrowRight": (editor) => editor.insertRight(),
+    "Meta+ArrowUp": (editor) => editor.insertAbove(),
+    "Meta+ArrowDown": (editor) => editor.insertBelow(),
+
+    "Meta+z": (editor) => editor.undo(),
+    "Shift+Meta+z": (editor) => editor.redo(),
+
+    "Meta+m": (editor) => editor.toggleMerge(),
+    "Shift+Meta+m": (editor) => editor.unMergeSelected(),
+    "Meta+s": (editor) => editor.save(),
+
+    "Meta+=": (editor) => editor.increaseFontSize(),
+    "Meta+-": (editor) => editor.decreaseFontSize(),
+
+    "Tab": (editor) => {
+        editor.selectNextCell("right");
+        const { selection } = editor;
+        if (selection.length == 1) {
+            editor.editLabel(selection[0]);
+        }
+    },
+    "ArrowRight": (editor) => editor.selectNextCell("right"),
+    "ArrowLeft": (editor) => editor.selectNextCell("left"),
+    "ArrowUp": (editor) => editor.selectNextCell("up"),
+    "ArrowDown": (editor) => editor.selectNextCell("down"),
+    "Shift+ArrowRight": (editor) => editor.selectNextCell("right"),
+    "Shift+ArrowLeft": (editor) => editor.selectNextCell("left"),
+    "Shift+ArrowUp": (editor) => editor.selectNextCell("up"),
+    "Shift+ArrowDown": (editor) => editor.selectNextCell("down"),
+}
+// #endregion KEY BINDINGS
+
+
+
+/*****************************************************************************
+ *                                TOOLS
+ *****************************************************************************/
+
+// #region TOOLS
 function hideIfNoSelection({selection}) {
     this.toggleAttribute("disabled", selection.length === 0);
 }
@@ -49,9 +416,6 @@ function onColorClickFunction(key) {
        editor.pickColor(this, key);
     }
 }
-function toLabel(name, joiner = "\n") {
-    return name.split(/(?=[A-Z])/).map(s => s[0].toUpperCase() + s.slice(1)).join(joiner);
-}
 
 const TOP_TOOLS = [
     {
@@ -68,21 +432,21 @@ const TOP_TOOLS = [
                     await AACGridCanvas.exportBoard(board, name);
                     this.toggleAttribute("loading", false);
                 },
-                build(element, editor) {
+                build(element) {
                     element.createChild("loader", {class: "loader"})
                 }
             },
             {
                 name: "files",
                 icon: "folder-bw",
-                onClick(editor) {
+                onClick() {
                     openFiles();
                 }
             },
             {
                 name: "new",
                 icon: "new-grid",
-                onClick(editor) {
+                onClick() {
                     openNewEditor();
                 }
             }
@@ -222,7 +586,6 @@ const TOP_TOOLS = [
                 onClick(editor) {
                     this.toggleAttribute("selected", editor.toggleProperty("bold"));
                 }
-
             },
             {
                 name: "italic",
@@ -269,7 +632,10 @@ const TOP_TOOLS = [
                 name: "insertLeft",
                 icon: "e-insert-below",
                 binding: META_KEY + "←",
-                onSelection: hideIfNoSelection,
+                onSelection(e) {
+                    let disabled = e.selection.length == 0 || !e.canInsertColumn;
+                    this.toggleAttribute("disabled", disabled);
+                },
                 iconTransform: "rotate(90deg)",
                 
 
@@ -282,7 +648,10 @@ const TOP_TOOLS = [
                 icon: "e-insert-below",
                 binding: META_KEY + "→",
                 iconTransform: "rotate(-90deg)",
-                onSelection: hideIfNoSelection,
+                onSelection(e) {
+                    let disabled = e.selection.length == 0 || !e.canInsertColumn;
+                    this.toggleAttribute("disabled", disabled);
+                },
 
                 /** @param {OpenBoardEditor} editor */
                 onClick(editor) {editor.insertRight()}
@@ -292,7 +661,10 @@ const TOP_TOOLS = [
                 icon: "e-insert-below",
                 binding: META_KEY + "↑",
                 iconTransform: "rotate(180deg)",
-                onSelection: hideIfNoSelection,
+                onSelection(e) {
+                    let disabled = e.selection.length == 0 || !e.canInsertRow
+                    this.toggleAttribute("disabled", disabled);
+                },
 
                 /** @param {OpenBoardEditor} editor */
                 onClick(editor) {editor.insertAbove()}
@@ -301,10 +673,41 @@ const TOP_TOOLS = [
                 name: "insertBelow",
                 binding: META_KEY + "↓",
                 icon: "e-insert-below",
-                onSelection: hideIfNoSelection,
+                onSelection(e) {
+                    let disabled = e.selection.length == 0 || !e.canInsertRow
+                    this.toggleAttribute("disabled", disabled);
+                },
 
                 /** @param {OpenBoardEditor} editor */
                 onClick(editor) {editor.insertBelow()}
+            },
+
+            "separator",
+
+            {
+                type: "number",
+                name: "Rows",
+                min: 1,
+                max: OBBoardEditable.maxRows,
+                onSelection(editor) {
+                    this.value = editor.rows;
+                },
+                onChange(editor, value) {
+                    editor.setRows(value);
+                }
+            },
+
+            {
+                type: "number",
+                name: "Columns",
+                min: 1,
+                max: OBBoardEditable.maxColumns,
+                onSelection(editor) {
+                    this.value = editor.columns;
+                },
+                onChange(editor, value) {
+                    editor.setColumns(value);
+                }
             },
 
             "separator",
@@ -371,12 +774,10 @@ const TOP_TOOLS_STATIC = [
 			this.toggleAttribute("disabled", !editor.isSaveable);
             this.toggleAttribute("loading", editor.isSaving);
 		},
-
 		onClick(editor) {
 			editor.save();
 		},
-
-        build(element, editor) {
+        build(element) {
             element.createChild("loader", {class: "loader"})
         }
     },
@@ -419,215 +820,15 @@ const TOP_TOOLS_STATIC = [
 		}
 	}
 ]
-
-/**
- * @type {Object.<string, function(OpenBoardEditor): void>}
- */
-const KEY_BINDINGS = {
-    /** 
-     * @param {OpenBoardEditor} editor
-     * */
-    c(editor) {
-        editor.selectCategory("content");
-    },
-    s(editor) {
-        editor.selectCategory("styles");
-    },
-    l(editor) {
-        editor.selectCategory("layout")
-    },
-    "Meta+c": (editor) => editor.copy(),
-    "Meta+v": (editor) => editor.paste(),
-    "Shift+Meta+v": (editor) => editor.paste(true),
-
-    "Meta+b": (editor) => editor.toggleProperty("bold"),
-    "Meta+i": (editor) => editor.toggleProperty("italic"),
+// #endregion TOOLS
 
 
-    "Meta+ArrowLeft": (editor) => editor.insertLeft(),
-    "Meta+ArrowRight": (editor) => editor.insertRight(),
-    "Meta+ArrowUp": (editor) => editor.insertAbove(),
-    "Meta+ArrowDown": (editor) => editor.insertBelow(),
 
-    "Meta+z": (editor) => editor.undo(),
-    "Shift+Meta+z": (editor) => editor.redo(),
+/*****************************************************************************
+ *                    TOOLBAR AND SIDE PANEL LAYOUTS
+ *****************************************************************************/
 
-    "Meta+m": (editor) => editor.toggleMerge(),
-    "Shift+Meta+m": (editor) => editor.unMergeSelected(),
-    "Meta+s": (editor) => editor.save(),
-
-    "Meta+=": (editor) => editor.increaseFontSize(),
-    "Meta+-": (editor) => editor.decreaseFontSize(),
-
-    "Tab": (editor) => {
-        editor.selectNextCell("right");
-        const { selection } = editor;
-        if (selection.length == 1) {
-            editor.editLabel(selection[0]);
-        }
-    },
-    "ArrowRight": (editor) => editor.selectNextCell("right"),
-    "ArrowLeft": (editor) => editor.selectNextCell("left"),
-    "ArrowUp": (editor) => editor.selectNextCell("up"),
-    "ArrowDown": (editor) => editor.selectNextCell("down"),
-    "Shift+ArrowRight": (editor) => editor.selectNextCell("right"),
-    "Shift+ArrowLeft": (editor) => editor.selectNextCell("left"),
-    "Shift+ArrowUp": (editor) => editor.selectNextCell("up"),
-    "Shift+ArrowDown": (editor) => editor.selectNextCell("down"),
-}
-
-
-class ImageList extends FastFindImageList {
-    /** @type {OpenBoardEditor} */
-    editor = null;
-
-
-    /**
-     * @param {OpenBoardEditor} openBoardEditor
-     */
-    constructor(editor) {
-        super();
-        this.styles = {display: "contents"};
-        this.editor = editor;
-        editor.addImageList(this);
-    }
-
-    onImageSelected(image) {
-        this.editor.setButtonImages(image);
-    }
-
-    /**
-     * @param {OpenBoardEditor} editor
-     */
-    async onSelection(editor) {
-        if (editor.selection.length == 1) {
-            const label = editor.getSelectionProperty("label");
-            this.search(label);
-        }
-    }
-}
-
-class FontSizeList extends SvgPlus {
-    constructor(onSelect) {
-        super("div");
-        this.class = "selection-list";
-        Object.keys(this.value2idx).map((k, i) => {
-            let kCap = k[0].toUpperCase() + k.slice(1);
-            this.createChild("div", {
-                class: "b-bottom pad",
-                events: {click: () => this.select(k)},
-            }).createChild("span", {
-                content: kCap, 
-                styles: {"font-size": this.value2size[k]}
-            })
-        })
-        this.onSelect = onSelect;
-    }
-
-    get value2idx() {
-        return {
-            "giant": 0,
-            "huge": 1,
-            "large": 2,
-            "medium": 3,
-            "small": 4,
-            "tiny": 5
-        }
-    }
-    get value2size() {
-        return {
-            "giant": "3em",
-            "huge": "2.5em",
-            "large": "2em",
-            "medium": "1.5em",
-            "small": "1em",
-            "tiny": "0.75em"
-        }
-    }
-
-    set value(value) {
-        if (value !== undefined) {
-            value = (value || "medium").toLowerCase();
-            [...this.children].forEach((child, idx) => {
-                child.toggleAttribute("selected", idx === this.value2idx[value]);
-            });
-        }
-    }
-
-    select(value) {
-        this.onSelect(value);
-    }
-}
-
-
-/**
- * Editor Input Tools
- */
-class ToolIcon extends SvgPlus {
-    #tool = null;
-    #openBoardEditor = null;
-    #onSelection = null;
-
-    constructor(tool, openBoardEditor) {
-        super("div");
-        if (typeof tool === "string") {
-            switch (tool) {
-                case "separator":
-                    this.class = "tool-separator";
-                    break;
-                case "imageList":
-                    this.class = "image-list"
-                    this.#tool = this.createChild(ImageList, {}, openBoardEditor);
-                    this.#onSelection = (...args) => this.#tool.onSelection(...args)
-                    // TODO:
-                    break;
-                case "styleList":
-                    // TODO:
-                    break;
-            }
-        } else {
-            this.class = "tool-icon";
-            this.props = {
-                title: toLabel(tool.name, " ") + (tool.binding ? ` [${tool.binding}]` : "")
-            }
-            this.icon = this.createChild(Icon, {}, tool.icon);
-            if (tool.iconTransform) {
-                this.icon.styles = {transform: tool.iconTransform};
-            }
-            let labelText = toLabel(tool.name);
-            let lines = labelText.split("\n").length;
-            let label = this.createChild("div", {class: "label", content: labelText});
-            if (tool.dropDown) {
-                label.innerHTML += lines > 1 ? "" : "\n";
-                label.createChild(Icon, {}, "down")
-            }
-            if (tool.onClick instanceof Function) {
-                this.addEventListener("click", async e => {
-                    let func = tool.onClick.bind(this)
-                    let res = func(openBoardEditor, e);
-                });
-            }
-            if (tool.onSelection instanceof Function) {
-                this.#onSelection = tool.onSelection.bind(this);
-            }
-            if (tool.build instanceof Function) {
-                tool.build(this, openBoardEditor);
-            }
-            this.#tool = tool;
-        }
-        this.#openBoardEditor = openBoardEditor;
-    }
-
-    get isSelectionUpdateable() {
-        return this.#onSelection instanceof Function;
-    }
-
-    updateSelection(selection) {
-        if (this.isSelectionUpdateable) {
-            this.#onSelection(this.#openBoardEditor);
-        }
-    }
-}
+// #region TOOLBAR AND SIDE PANEL LAYOUTS
 class GridTools extends SvgPlus {
     #selectionUpdaters = []
     constructor(openBoardEditor) {
@@ -636,16 +837,21 @@ class GridTools extends SvgPlus {
         let topPanel = this.createChild("div", {class: "panel dark b-bottom"});
         this.selectionOptions = topPanel.createChild("div", {class: "selection-options"});
 
-
         let mainPanel = this.createChild("div", {class: "panel light tools b-bottom"});
         let staticTools = mainPanel.createChild("div", {class: "contents"});
-        for (let tool of TOP_TOOLS_STATIC) {
-            const toolEl = staticTools.createChild(ToolIcon, {}, tool, openBoardEditor);
-            if (toolEl.isSelectionUpdateable) {
-                this.#selectionUpdaters.push(toolEl);
+
+        let createToolList = (tools, container) => {
+            for (let tool of tools) {
+                const toolEl = Tools.make(tool, openBoardEditor);
+                container.appendChild(toolEl);
+                if (SvgPlus.is(toolEl, ToolInterface)) {
+                    this.#selectionUpdaters.push(toolEl);
+                }
             }
-        }
-        staticTools.createChild(ToolIcon, {}, "separator");
+        };
+
+        createToolList(TOP_TOOLS_STATIC, staticTools);
+        staticTools.createChild(Tools.separator);
 
         let dynamicTools = mainPanel.createChild("div", {class: "contents"});
         for (let cat of TOP_TOOLS) {
@@ -655,16 +861,9 @@ class GridTools extends SvgPlus {
                 title: toLabel(cat.category, " ") + (cat.binding ? ` [${cat.binding}]` : ""),
                 events: {click: () => this.selectCategory(cat.category)}
             });
-           
             catEl.category = cat.category;
-
             let catTools = dynamicTools.createChild("div", {class: "contents"});
-            for (let tool of cat.tools) {
-                const toolEl = catTools.createChild(ToolIcon, {}, tool, openBoardEditor);
-                if (toolEl.isSelectionUpdateable) {
-                    this.#selectionUpdaters.push(toolEl);
-                }
-            }
+            createToolList(cat.tools, catTools);  
             catTools.toggleAttribute("hidden", true);
             catTools.category = cat.category;
         }
@@ -694,7 +893,6 @@ class GridTools extends SvgPlus {
 
 }
 
-
 class SidePanel extends SvgPlus {
     constructor(root) {
         super("div");
@@ -707,12 +905,20 @@ class SidePanel extends SvgPlus {
 		
     }
 	updateSelection() {
-		const actionsSimple = this.editor.getSelectionProperty("actionsSimple");
+		this.editor.getSelectionProperty("actionsSimple");
 		this.actions?.updateSelection(this.editor)
 		this.linkedBoard?.updateSelection(this.editor)
 	}
 }
+// #endregion TOOLBAR AND SIDE PANEL LAYOUTS
 
+
+
+/*****************************************************************************
+ *                          OPEN BOARD EDITOR
+ *****************************************************************************/
+
+// #region OPEN BOARD EDITOR
 
 class OpenBoardEditor extends ShadowElement {
 
@@ -727,8 +933,8 @@ class OpenBoardEditor extends ShadowElement {
     #dropDownPromise = null;
 
     #dropDownTool = null;
-	
-	#editingLabel = false;
+    
+    #editingLabel = false;
 
     #history = [];
     #historyIndex = 0;
@@ -739,31 +945,31 @@ class OpenBoardEditor extends ShadowElement {
         super(el, new SvgPlus("editor-root"));
 
         let head = this.createChild("div", {
-			class: "panel darker pad b-bottom centered", 
-			styles: {position: "relative"}
-		});
+            class: "panel darker pad b-bottom centered", 
+            styles: {position: "relative"}
+        });
 
-		head.createChild(Icon, {
-			class: "logo"
-		}, "logo-banner")
+        head.createChild(Icon, {
+            class: "logo"
+        }, "logo-banner")
 
-		this.titleNameSpan = head.createChild("span", {
-			class: "title-name",
-			content: "Squidly Board Editor"
-		})
-		this.titleSpan = head.createChild("span", {
-			class: "title",
-			content: ""
-		})
-		this.titleNote = head.createChild("span", {
-			class: "title-note",
-			content: ""
-		})
+        this.titleNameSpan = head.createChild("span", {
+            class: "title-name",
+            content: "Squidly Board Editor"
+        })
+        this.titleSpan = head.createChild("span", {
+            class: "title",
+            content: ""
+        })
+        this.titleNote = head.createChild("span", {
+            class: "title-note",
+            content: ""
+        })
 
         this.userSpan = head.createChild("span", {
-			class: "user",
+            class: "user",
             styles: {position: "absolute", top: "0.4em", right: "1em"}
-		})
+        })
 
 
         
@@ -773,7 +979,7 @@ class OpenBoardEditor extends ShadowElement {
                 this.#dropDown.select(undefined);
             }
         }
-       
+    
 
         let main = this.createChild("div", {class: "editor-main"});
         let sidep = main.createChild(SidePanel, {events: {
@@ -784,11 +990,11 @@ class OpenBoardEditor extends ShadowElement {
             }
         }}, this);
         
-       
+    
         this.grid = main.createChild(AACEditorGrid, {});
         this.grid.onSelection = (ids) => {
             tools.updateSelection(ids);
-			sidep.updateSelection(ids);
+            sidep.updateSelection(ids);
             if (this.#dropDown) {
                 this.#dropDown.select(undefined);
             }
@@ -812,16 +1018,16 @@ class OpenBoardEditor extends ShadowElement {
             this.imageFinder.hide();
         }   
 
-		this.finder = this.createChild(BoardFinder, {styles: {
-			opacity: 0,
-			"transition": "opacity 0.3s ease-in-out",
-			"pointer-events": "none"
-		}})
+        this.finder = this.createChild(BoardFinder, {styles: {
+            opacity: 0,
+            "transition": "opacity 0.3s ease-in-out",
+            "pointer-events": "none"
+        }})
 
-		this.#board = OBBoardEditable.makeEmptyBoard(4,5)
+        this.#board = OBBoardEditable.makeEmptyBoard(4,5)
         tools.updateSelection(this.selection);
-		registerKeyBindings("ob-editor", KEY_BINDINGS, (e) => [this]);
-		setActiveKeyBindingSet("ob-editor");
+        registerKeyBindings("ob-editor", KEY_BINDINGS, (e) => [this]);
+        setActiveKeyBindingSet("ob-editor");
         this.sidePanel = sidep;
         this.tools = tools;
         this.#updateBoard(true);
@@ -831,13 +1037,16 @@ class OpenBoardEditor extends ShadowElement {
 
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ UDPATE METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-       
+    
     #updateBoard(commitToHistory = true) {
+        console.log("Updating board");
         if (this.onBeforeUpdate instanceof Function) {
             this.onBeforeUpdate();
         }
-        
+        let t0 = performance.now();
         this.grid.board = this.#board;
+        let t1 = performance.now();
+        console.log(`Board updated in ${t1 - t0} ms`);
 
         if (commitToHistory) {
             const lastState = this.#history[this.#historyIndex];
@@ -850,17 +1059,19 @@ class OpenBoardEditor extends ShadowElement {
         }
 
         this.tools.updateSelection(this.selection);
-		this.sidePanel.updateSelection();
-		if (this.onUpdate instanceof Function) {
-			this.onUpdate();
-		}
+        this.sidePanel.updateSelection();
+        if (this.onUpdate instanceof Function) {
+            this.onUpdate();
+        }
+
+        
     }
 
-	forceUpdate() {
+    forceUpdate() {
         this.grid.board = this.#board;
-		this.tools.updateSelection(this.selection);
-		this.sidePanel.updateSelection();
-	}
+        this.tools.updateSelection(this.selection);
+        this.sidePanel.updateSelection();
+    }
 
     forceToolUpdate() {
         this.tools.updateSelection(this.selection);
@@ -905,8 +1116,13 @@ class OpenBoardEditor extends ShadowElement {
     setSelectionProperty(prop, value) {
         const {selection} = this;
         if (selection.length > 0) {
+            let t0 = performance.now();
+
             const buttons = this.#board.getButtonsByID(selection);
             buttons.forEach(b => { b.setProperty(prop, value) });
+
+            let t1 = performance.now();
+            console.log(`Selection property updated in ${t1 - t0} ms`);
             this.#updateBoard();
         }
     }
@@ -947,17 +1163,17 @@ class OpenBoardEditor extends ShadowElement {
     }
 
 
-	async getBoardPath(boardID) {
-		let fstat = await this.finder.getBoardInfo(boardID);
-		return fstat?.path
-	}
+    async getBoardPath(boardID) {
+        let fstat = await this.finder.getBoardInfo(boardID);
+        return fstat?.path
+    }
 
 
-	save() {
-		if (this.onSave instanceof Function) {
-			this.onSave(this.#board);
-		}
-	}
+    save() {
+        if (this.onSave instanceof Function) {
+            this.onSave(this.#board);
+        }
+    }
 
     selectNextCell(direction) {
         this.grid.selectNextCell(direction);
@@ -995,7 +1211,7 @@ class OpenBoardEditor extends ShadowElement {
         }, 500);
     }
 
-  
+
     /**
      * Sets the image for all selected buttons to the specified image URL.
      * @param {string} image - The URL of the image to set for the selected buttons.
@@ -1022,34 +1238,34 @@ class OpenBoardEditor extends ShadowElement {
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Finder Methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-	getLinkedBoard() {
-		setActiveKeyBindingSet("ob-finder");
+    getLinkedBoard() {
+        setActiveKeyBindingSet("ob-finder");
         this.finder.mode = "load";
-		this.finder.styles = {opacity: 1, "pointer-events": "all"};
-		this.finder.onSelect = (board) => {
-			this.finder.styles = {opacity: 0, "pointer-events": "none"};
-			setActiveKeyBindingSet("ob-editor");
-			if (board instanceof OBLoadBoard) {
-				this.updateSelectionActionsSimple({
+        this.finder.styles = {opacity: 1, "pointer-events": "all"};
+        this.finder.onSelect = (board) => {
+            this.finder.styles = {opacity: 0, "pointer-events": "none"};
+            setActiveKeyBindingSet("ob-editor");
+            if (board instanceof OBLoadBoard) {
+                this.updateSelectionActionsSimple({
                     navigation: {
                         mode: "load_board",
                         value: board
                     }
                 })
-			} else {
-				this.updateSelectionActionsSimple({
+            } else {
+                this.updateSelectionActionsSimple({
                     navigation: {
                         mode: "return",
                         value: null
                     }
                 })
-			}
-		}
-	}
+            }
+        }
+    }
 
     async getNewBoard() {
         setActiveKeyBindingSet("ob-finder");
-		this.finder.styles = {opacity: 1, "pointer-events": "all"};
+        this.finder.styles = {opacity: 1, "pointer-events": "all"};
         this.finder.mode = "save";
 
         const boardID = await new Promise((resolve) => {
@@ -1106,7 +1322,7 @@ class OpenBoardEditor extends ShadowElement {
             dropDown.classList.add("drop-down");
             this.#dropDown = dropDown;
 
-             // Get the initial value from the selected buttons and set it to the dropdown
+            // Get the initial value from the selected buttons and set it to the dropdown
             const initialValue = this.#board.getSelectionProperty(this.selection, key);
             dropDown.value = initialValue;
             dropDown.key = key;
@@ -1352,7 +1568,7 @@ class OpenBoardEditor extends ShadowElement {
         this.#updateBoard()
     }
     insertBelow() {
-       let maxRow = this.#board.getSelectionRange(this.selection).rowRange[1];
+    let maxRow = this.#board.getSelectionRange(this.selection).rowRange[1];
         this.#board.insertRow(maxRow, false);
         this.#updateBoard()
     }
@@ -1368,32 +1584,24 @@ class OpenBoardEditor extends ShadowElement {
     }
 
 
-    get canDeleteRows() {
-        let res = false;
-        const {selection} = this;
-        if (selection.length > 0) {
-            const {rowRange: [s,e]} = this.#board.getSelectionRange(this.selection);
-            res = e-s + 1 < this.#board.grid.rows;
-        }
-        return res;
+    setRows(rows) {
+        this.#board.setRows(rows);
+        this.#updateBoard();
     }
-    
+
+
+    setColumns(columns) {
+        this.#board.setColumns(columns);
+        this.#updateBoard();
+    }
+
+
     deleteRows() {
         const {rowRange: [s,e]} = this.#board.getSelectionRange(this.selection);
         for (let r = e; r >= s; r--) {
             this.#board.deleteRow(r);
         }
         this.#updateBoard()
-    }
-
-    get canDeleteColumns() {
-        let res = false;
-        const {selection} = this;
-        if (selection.length > 0) {
-            const {colRange: [s,e]} = this.#board.getSelectionRange(this.selection);
-            res = e-s + 1 < this.#board.grid.columns;
-        }
-        return res;
     }
 
     deleteColumns() {
@@ -1404,15 +1612,7 @@ class OpenBoardEditor extends ShadowElement {
         this.#updateBoard()
     }
 
-    get canMerge() {
-        let ids = this.orderedSelection;
-        if (ids.length > 1) {
-            return !this.getButtonProperty(ids[0], "hidden") && this.#board.canMerge(ids);
-        } else {
-            return false;
-        }
-    }
-
+    
     toggleMerge() {
         let ids = this.orderedSelection;
         if (ids.length > 1) {
@@ -1432,14 +1632,54 @@ class OpenBoardEditor extends ShadowElement {
         this.#updateBoard();
     }
 
-
-
     unMergeSelected() {
         for (let id of this.selection) {
             this.#board.unMerge(id);
         }
         this.#updateBoard();
     }
+
+
+    get canInsertRow() {
+        return this.#board.canInsertRow();
+    }
+
+    get canInsertColumn() {
+        return this.#board.canInsertColumn();
+    }
+
+    get canDeleteRows() {
+        let res = false;
+        const {selection} = this;
+        if (selection.length > 0) {
+            const {rowRange: [s,e]} = this.#board.getSelectionRange(this.selection);
+            res = e-s + 1 < this.#board.grid.rows;
+        }
+        return res;
+    }
+    
+
+    get canDeleteColumns() {
+        let res = false;
+        const {selection} = this;
+        if (selection.length > 0) {
+            const {colRange: [s,e]} = this.#board.getSelectionRange(this.selection);
+            res = e-s + 1 < this.#board.grid.columns;
+        }
+        return res;
+    }
+
+    get canMerge() {
+        let ids = this.orderedSelection;
+        if (ids.length > 1) {
+            return !this.getButtonProperty(ids[0], "hidden") && this.#board.canMerge(ids);
+        } else {
+            return false;
+        }
+    }
+
+
+    
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ UNDO/REDO METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -1474,7 +1714,7 @@ class OpenBoardEditor extends ShadowElement {
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT LABEL METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
     async editLabel(id) {
-		this.#editingLabel = true;
+        this.#editingLabel = true;
         this.selectCategory("content");
         let newValue = await this.grid.editLabel(id, (value) => {
             this.#triggerImageSearchUpdate(value);
@@ -1486,16 +1726,16 @@ class OpenBoardEditor extends ShadowElement {
         }
     }
 
-	updateBoard(board) {
+    updateBoard(board) {
         this.#board = OBBoardEditable.make(board);
         this.#updateBoard();
-	}
+    }
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~ UNIMPLEMENTED METHODS ~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-	clearChanges() { }
+    clearChanges() { }
 
-	save() { }
+    save() { }
 
     getIsSaveable() { return true; }
 
@@ -1503,24 +1743,32 @@ class OpenBoardEditor extends ShadowElement {
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~ GETTERS AND SETTERS ~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-	get editingLabel() {
-		return this.#editingLabel;
-	}
+    get rows() {
+        return this.#board.grid.rows;
+    }
+
+    get columns() {
+        return this.#board.grid.columns;
+    }
+
+    get editingLabel() {
+        return this.#editingLabel;
+    }
 
 
     get isSaving() {
         if (this.getIsSaving instanceof Function) {
-			return this.getIsSaving();
-		}
-		return false;
+            return this.getIsSaving();
+        }
+        return false;
     }
 
-	get isSaveable() {
-		if (this.getIsSaveable instanceof Function) {
-			return this.getIsSaveable();
-		}
-		return true;
-	}
+    get isSaveable() {
+        if (this.getIsSaveable instanceof Function) {
+            return this.getIsSaveable();
+        }
+        return true;
+    }
 
     get boardRows() {
         return this.#board.grid.rows;
@@ -1530,16 +1778,16 @@ class OpenBoardEditor extends ShadowElement {
         return this.#board.grid.columns;
     }
 
-	set board(board) {
-		this.#board = OBBoardEditable.make(board);
-		this.#history = [];
-		this.#historyIndex = 0;
-		this.#updateBoard();
-	}
+    set board(board) {
+        this.#board = OBBoardEditable.make(board);
+        this.#history = [];
+        this.#historyIndex = 0;
+        this.#updateBoard();
+    }
 
-	get board() {
-		return OBBoard.make(this.#board.toJSON());
-	}
+    get board() {
+        return OBBoard.make(this.#board.toJSON());
+    }
 
     /**
      * @returns {string[]}
@@ -1549,13 +1797,13 @@ class OpenBoardEditor extends ShadowElement {
     }
 
     get orderedSelection() {
-		let ordered = []
+        let ordered = []
         let selection = new Set(this.selection);
-		if (selection.size > 0) {
-			let order = this.#board.grid.order.flat();
-			ordered = order.filter(id => selection.has(id));
-		}
-		return ordered;
+        if (selection.size > 0) {
+            let order = this.#board.grid.order.flat();
+            ordered = order.filter(id => selection.has(id));
+        }
+        return ordered;
     }
 
 
@@ -1569,5 +1817,6 @@ class OpenBoardEditor extends ShadowElement {
     }
 }
 
+// #endregion OPEN BOARD EDITOR
 
 export { OpenBoardEditor }

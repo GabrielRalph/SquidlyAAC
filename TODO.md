@@ -4,14 +4,13 @@
 - DONE: hidden cells slightly opaque 
 
 ## bugs: 
-
 - path for boards not owned by the user in the nav preview apear blank
-<!-- - after saving a board the saved version is commited to history, even 
-    if its technically the same as the current board. This is because the 
-    hidden buttons are given new ids. Not super critical but causes the user 
-    to double undo. -->
 
-##
+- If search then close, keep search results until a label is edited
+
+
+###
+- DONE: When u starting editing a button that has a different font size it defaults to medium until after the label has been set
 - DONE: delete should delete everything otherwise styles/image and more remain
 - DONE: Context menu in files not anchored correctly 
 - DONE: Save causes old saved board to be drafted when two tabs open
@@ -21,17 +20,18 @@
 
 ## feature updates: 
 
-- If search then close, keep search results until a label is edited
-
-- r,c input to set grid size
-
-- text 2 speach preview
-
-- advanced hints similar ()
+- button to goto viewer
 
 - Load board finder to open explore page such that users can load other public boards.
 
+- drag obf 
+
+- advanced hints similar ()
+
+- improve copy paste to keep merged cells and layout
+
 ###
+- DONE: r,c input to set grid size
 - DONE: pop ups close when you click else where
 - DONE: tab + arrow keys to select next cell
 - DONE: when editor is opened without board id
@@ -77,17 +77,17 @@
 # VIEWER 
 ## bugs:
 - DONE: Show message when permision is denied
+- font size in text area to big 
 
 ## feature updates:
 - DONE: text 2 speach in preview
 - DONE: text area to scroll into view
 
+- indication for when a board is loading
+
 
 
 # AAC GENERIC
-## bugs:
-- font size in text area to big 
-
 
 ## feature updates:
 - export to pdf + export grid set
@@ -101,9 +101,10 @@
 
 # EXPLORE
 ## feature-updates:
+- copy public board
+
 - upload obz
 
-- copy public board
 
 ###
 - DONE: Three dots to open menu
@@ -113,3 +114,4 @@
 
 # AAC SYSTEM
 - DONE: migrate all boards
+- Empty trash, delete past drafts

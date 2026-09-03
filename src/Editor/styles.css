@@ -351,6 +351,7 @@ input:focus {
     border-right: var(--panel-border);
 }
 
+.number-input,
 .tool-icon {
     display: flex;
     flex-direction: column;
@@ -363,6 +364,7 @@ input:focus {
     height: 5.6em;
     position: relative;
 }
+
 .tool-icon:hover {
         background-color: #0004;
 }
@@ -372,6 +374,8 @@ input:focus {
 .tool-icon > i-bw {
     font-size: 2.4em;
 }
+
+.number-input .label,
 .tool-icon .label {
     white-space: pre;
     text-align: center;
@@ -423,6 +427,61 @@ input:focus {
 }
 @keyframes l3 {to{transform: rotate(1turn)}}
 
+
+/* Chrome, Safari, Edge, Opera */
+.number-input input[type=number]::-webkit-inner-spin-button,
+.number-input input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.number-input input[type=number] {
+  -moz-appearance: textfield;
+}
+    
+.number-input .input-wrapper {
+    position: relative;
+    display: flex;
+    border: var(--input-border);
+    border-radius: 0.4em;
+    background: var(--c-dark);
+    overflow: hidden;
+}
+
+.number-input .input-wrapper .spinner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.number-input .input-wrapper .spinner div {
+    height: 100%;
+    padding: 0.1em 0.3em;
+    cursor: pointer;
+}
+
+.number-input .input-wrapper .spinner div:first-child {
+    border-bottom: var(--input-border);
+}
+
+.number-input .input-wrapper .spinner div[disabled] {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.number-input .input-wrapper .spinner div:hover {
+    background: var(--c-lighter);
+}
+
+.number-input .input-wrapper input {
+    height: 2.5em;
+    background: transparent;
+    border: none;
+    border-right: var(--input-border);
+    border-radius: 0;
+    text-align: center;
+}
 /* ~~~~~~~~~~~~~~ Image List (in Tool Bar) ~~~~~~~~~~~~~~ */
 
 .image-list {
