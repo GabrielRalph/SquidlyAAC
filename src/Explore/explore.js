@@ -14,54 +14,9 @@ import { SvgPlus, Vector } from "../SvgPlus/4.js";
 import { Icon } from "../Utilities/icons.js";
 import { Radio } from "../Utilities/radio.js";
 import "../Utilities/bg-img.js";
-
-const FEATURED_BOARDS = [
-    {
-        boards: [
-            "JLYix9KezJaosLusUhkl",
-            "bO8yY3GEkU8o3g0rkcTv",
-        ]
-    },
-    {   
-        title: "Proloquo",
-        boards: [
-            "s9xO1YfGtLdwM1YOgG1S",
-            "InZgWP9sywxFUwOJO0TQ"
-        ]
-    },
-    {
-        title: "PRC Saltillo",
-        boards: [
-            "tVO399IgcEuTW6FLTDZP",
-            "rTezEUKTUzcOGAdleZkh",
-            "zmnKiAkXdSTdjCtB6WmV",
-            "HWRGaqWL8AjrRfAFW4ik"
-        ]
-    },
-    {   
-        title: "Quick Core",
-        boards: [
-            "JdfvRskx5EcpPpUudK5o",
-            "A3PbgIuX4w4hahQWn7o0",
-            "7Sss73pXR7Vj9ZImTrev",
-            "U03vkiTufZO9gYzuTiZX",
-            "O8jfO4mJK9IosDXzrDCf",
-        ]
-    },
-     {
-        title: "Vocal Flair",
-        boards: [
-            "mlvuf8KAWlEVxusyFIt1",
-            "gZ5sGqKdTmBMLnPeaIMJ",
-            "tmQ85C2zDckDIbcxV5XE",
-            "H3SqbnGwX1bjHI2Xv0iB",
-            "5sBqMpBRVEQp5aFYTuo4",
-        ]
-    }
-]
+import FEATURED_BOARDS from "./FEATURED.js";
 
 const ALL_FEATURED_BOARDS = new Set(FEATURED_BOARDS.flatMap(set => set.boards));
-
 
 class BoardCard extends SvgPlus {
     #timerPromise = null;
