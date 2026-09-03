@@ -60,7 +60,8 @@ class EditorSession extends SvgPlus {
     constructor(el) {
         super(el);
 
-        this.editor = this.createChild(OpenBoardEditor, {}, "open-board-editor")
+        this.editor = this.createChild(OpenBoardEditor, {}, "open-board-editor");
+
         this.loginPage = this.createChild(LoginPage, {
             styles: {
                 ...HIDE_STYLE,
@@ -215,6 +216,7 @@ class EditorSession extends SvgPlus {
     }
 
     async watchBoard(boardID, started = false) {
+        this.editor.boardID = boardID || null;
         const pendingSave = this.#pendingSave
         this.#pendingSave = false;
 

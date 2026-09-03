@@ -417,6 +417,7 @@ function onColorClickFunction(key) {
     }
 }
 
+
 const TOP_TOOLS = [
     {
         category: "file",
@@ -448,6 +449,16 @@ const TOP_TOOLS = [
                 icon: "new-grid",
                 onClick() {
                     openNewEditor();
+                }
+            },
+            {
+                name: "viewer",
+                icon: "view",
+                onSelection(editor) {
+                    this.toggleAttribute("disabled", !editor.boardID);
+                },
+                onClick(editor) {
+                    openViewer(editor.boardID);
                 }
             }
         ]
