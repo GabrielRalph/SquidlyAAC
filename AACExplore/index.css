@@ -1,0 +1,99 @@
+:host {
+    --grid-layout-gap: 4px;
+}
+
+aac-explore-root {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(240, 238, 238, 0.26);
+    backdrop-filter: blur(10px);
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+main {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 3fr 20fr;
+    position: relative;
+}
+
+main > svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.9;
+}
+
+
+grid-layout {
+    padding: 4px;
+}
+
+.grid-icon[color-theme="featured"] {
+    --main:         #f9a373;
+    --main-hover:   rgb(255, 144, 84);
+    --main-active:  #ff8340;
+
+    --tab:          #fe8e51;
+    --tab-hover:    #ff813d;
+    --tab-active:   #ff6c1d;
+
+    --text: black;
+
+    --outline:      transparent;
+    --icon-color:   #ffc6a8;
+    --icon-color-hover: white;  
+}
+
+.grid-icon[color-theme="public"] {
+    --main:         #d6ff7b;
+    --main-hover:   #cfff6a;
+    --main-active:  #baff5a;
+
+    --tab:          #d4ff5a;
+    --tab-hover:    #caff4a;
+    --tab-active:   #b4ff39;
+
+    --text: black;
+
+    --outline:      transparent;
+    --icon-color:   #f4ffd6;
+    --icon-color-hover: white;      
+}
+
+.grid-icon[color-theme="favourites"] {
+    --main:        #71deff;
+    --main-hover:   #4dd2ff;
+    --main-active:  #26c7ff;
+
+    --tab:          #4dd2ff;
+    --tab-hover:    #26c7ff;
+    --tab-active:   #00bbff;
+
+    --text: black;
+
+    --outline:      transparent;
+    --icon-color:   #b3f0ff;
+    --icon-color-hover: white;  
+}
+
+.grid-icon.board-grid-icon .content {
+    padding: 1.5em;
+    gap: 1em;
+}
+
+
+.featured > .grid-icon {
+    --_content-padding: 1em;
+}
+.featured > .grid-icon .content {
+    gap: 1em;
+}

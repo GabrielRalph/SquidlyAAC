@@ -6,6 +6,7 @@ const FEATURED_BOARDS = [
             "JLYix9KezJaosLusUhkl",
             "GPomuZcnGmpn7hNuX2S6",
             "bO8yY3GEkU8o3g0rkcTv",
+            "InZgWP9sywxFUwOJO0TQ"
         ]
     },
     {
@@ -47,11 +48,11 @@ const FEATURED_BOARDS = [
     {   
         title: "Quick Core",
         boards: [
-            "JdfvRskx5EcpPpUudK5o",
             "A3PbgIuX4w4hahQWn7o0",
             "7Sss73pXR7Vj9ZImTrev",
             "U03vkiTufZO9gYzuTiZX",
             "O8jfO4mJK9IosDXzrDCf",
+            "JdfvRskx5EcpPpUudK5o",
         ]
     },
      {

@@ -8,7 +8,6 @@
 
 - If search then close, keep search results until a label is edited
 
-
 ###
 - DONE: When u starting editing a button that has a different font size it defaults to medium until after the label has been set
 - DONE: delete should delete everything otherwise styles/image and more remain
@@ -20,8 +19,6 @@
 
 ## feature updates: 
 
-- button to goto viewer
-
 - Load board finder to open explore page such that users can load other public boards.
 
 - drag obf 
@@ -31,6 +28,7 @@
 - improve copy paste to keep merged cells and layout
 
 ###
+- DONE: button to goto viewer
 - DONE: r,c input to set grid size
 - DONE: pop ups close when you click else where
 - DONE: tab + arrow keys to select next cell
@@ -86,7 +84,6 @@
 - indication for when a board is loading
 
 
-
 # AAC GENERIC
 
 ## feature updates:
@@ -115,3 +112,8 @@
 # AAC SYSTEM
 - DONE: migrate all boards
 - Empty trash, delete past drafts
+
+
+
+
+this icon is fried, N5363{ 

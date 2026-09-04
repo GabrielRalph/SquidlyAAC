@@ -307,7 +307,7 @@ class GridIconSymbol extends SvgPlus{
      * @param {IconSymbol} symbol
      * @param {boolean} [useBackgroundImg=false] - If true, use a background image instead of an img element.
      * */
-    constructor(symbol, useBackgroundImg = false){
+    constructor(symbol) {
         super("div");
         this.class = "symbol";
        
