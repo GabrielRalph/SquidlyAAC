@@ -69,7 +69,8 @@ class EditorSession extends SvgPlus {
             },
             events: {
                 close: () => {
-                   this.resetToBlankBoard();
+                    // this.resetToBlankBoard();
+                    this.hideLoginPage();
                 }
             }
         }, "login-page");
@@ -119,13 +120,11 @@ class EditorSession extends SvgPlus {
 
 
     showLoginPage() {
-        this.loginPage.style.opacity = 1;
-        this.loginPage.style["pointer-events"] = "all";
+        this.loginPage.styles = SHOW_STYLE;
     }
 
     hideLoginPage() {
-        this.loginPage.style.opacity = 0;
-        this.loginPage.style["pointer-events"] = "none";
+        this.loginPage.styles = HIDE_STYLE;
     }
 
 
@@ -175,7 +174,6 @@ class EditorSession extends SvgPlus {
         this.editor.forceToolUpdate();
 
         const res = await BoardWatcher.forceSave(this.editor.board, boardID);
-        console.log(res);
 
         this.#isSaving = false;
         this.editor.forceToolUpdate();

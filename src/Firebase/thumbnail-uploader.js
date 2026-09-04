@@ -1,4 +1,4 @@
-import { getDownloadURL, storageRef, uploadFileToCloud } from "./firebase.js";
+import { uploadFileToCloud } from "./firebase.js";
 
 class ThumbnailUploader {
     maxSize = 200;
