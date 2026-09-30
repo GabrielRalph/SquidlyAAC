@@ -54,6 +54,10 @@ main {
     overflow-y: scroll;
 }
 
+main > h1 {
+    margin: 1em 0.5em;
+}
+
 
 header {
     display: flex;

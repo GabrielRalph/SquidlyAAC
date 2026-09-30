@@ -33,7 +33,7 @@ class AttributionPage extends ShadowElement {
         super(el, "main");
         
         const h = this.createChild("header");
-        h.createChild("bg-img", {src: import.meta.resolve("../Assets/aac-banner.svg") })
+        h.createChild("img", {src: import.meta.resolve("../Assets/aac-banner.svg"), class: "logo"})
         h.createChild("h1", {content: "Third-Party Symbols,<br> Vocabularies & Attributions"})
         h.createChild("p", {content: "Squidly AAC includes symbols, pictograms, vocabularies and AAC board structures created by third parties. Those materials remain subject to the licences, permissions and attribution requirements identified below. Squidly does not claim ownership of third-party materials unless expressly stated."});
         h.createChild("div", {class: "note", content: "Last reviewed: 30 Sep 2026"});
