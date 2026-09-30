@@ -54,6 +54,12 @@ const SIDE_BAR_RADIO = [
     }
 ]
 
+const PAGE_TO_IDX = {
+    "explore": 0,
+    "finder": 1,
+    "attribution": 3
+}
+
 const HIDE_STYLE = {
     opacity: 0,
     "pointer-events": "none",
@@ -113,7 +119,7 @@ class AACHomePage extends ShadowElement {
                 [i, SideBarIcon, icon.onClick ? {events: {click: () => icon.onClick(this)}} : {}, icon]
             )
         );
-        this.radio.select(mode === "explore" ? 0 : mode === "finder" ? 1 : 2, false);
+        this.radio.select(PAGE_TO_IDX[mode] ?? 0, false);
 
         const main = this.createChild("main");
         this.explore = main.createChild(ExplorePage, {events: {
@@ -125,22 +131,19 @@ class AACHomePage extends ShadowElement {
         // let finderContainer = main.createChild("div", {class: "finder-container"})
         this.finder = main.createChild(AACFinder, {}, "file-system");
 
-        this.attributionPage = main.createChild(AttributionPage, {}, "attribution-page");
+        this.attributionPage = main.createChild(AttributionPage, {
+            styles: HIDE_STYLE
+
+        }, "attribution-page");
 
         this.loginPageContainer = this.createChild("div", {
             class: "login-page-container",
-            styles: {
-                opacity: 0,
-                "pointer-events": "none",
-            }
+            styles: HIDE_STYLE
         });
 
         const loginPage = this.loginPageContainer.createChild(LoginPage, {}, "login-page");
         loginPage.onClose = () => {
-            this.loginPageContainer.styles = {
-                opacity: 0,
-                "pointer-events": "none",
-            }
+            this.loginPageContainer.styles = HIDE_STYLE
         }
       
         this._waitingForAuth = new Promise(resolve => {
@@ -190,7 +193,10 @@ class AACHomePage extends ShadowElement {
     }
 
     set viewMode(mode) {
-        this.radio.select(mode === "explore" ? 0 : 1, false);
+        if (!(mode in PAGE_TO_IDX)) {
+            mode = "explore";
+        }
+        this.radio.select(PAGE_TO_IDX[mode] ?? 0, false);
         window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${mode}`);
         this.explore.styles = mode === "explore" ? SHOW_STYLE : HIDE_STYLE;
         this.finder.styles = mode === "finder" ? SHOW_STYLE : HIDE_STYLE;
