@@ -50,7 +50,7 @@ class AttributionPage extends ShadowElement {
                 </div>
                 <h4> ACKNOWLEDGEMENT</h4>
                 <span>
-                    Squidly AAC acknowledges the use of Global Symbols in discoverying symbol sets.
+                    Squidly AAC acknowledges the use of <a href="https://www.globalsymbols.com/">Global Symbols</a> in discoverying symbol sets.
                 </span>
             </licence-item>`
         });
