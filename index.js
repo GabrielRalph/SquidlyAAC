@@ -41,7 +41,10 @@ const SIDE_BAR_RADIO = [
     {
         title: "Create",
         icon: "new-grid",
-        onClick: () => {
+        onClick: (page) => {
+            setTimeout(() => {
+                page.viewMode = page.viewMode;
+            }, 10)
             openEditor()
         }
     },
@@ -196,14 +199,18 @@ class AACHomePage extends ShadowElement {
         if (!(mode in PAGE_TO_IDX)) {
             mode = "explore";
         }
+        console.log("Setting view mode to:", mode);
         this.radio.select(PAGE_TO_IDX[mode] ?? 0, false);
         window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${mode}`);
         this.explore.styles = mode === "explore" ? SHOW_STYLE : HIDE_STYLE;
         this.finder.styles = mode === "finder" ? SHOW_STYLE : HIDE_STYLE;
         this.attributionPage.styles = mode === "attribution" ? SHOW_STYLE : HIDE_STYLE;
         setActiveKeyBindingSet(mode === "explore" ? "ob-explore" : "ob-finder");
+        this._mode = mode;
     }
-
+    get viewMode() {
+        return this._mode;
+    }
 
     async openFileSystem(boardID) {
         this.finder.toggleAttribute("loaded", false);
