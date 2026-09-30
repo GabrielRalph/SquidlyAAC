@@ -390,6 +390,11 @@ class ExplorePage extends SvgPlus {
             <h2>Share</h2>`
         })
 
+        gh.createChild("div", {
+            content: `Symbols from ARASAAC, Mulberry, OpenMoji + more. <br> New symbol libraries and templates coming soon.`,
+            styles: {"text-align": "center", "opacity": "0.6"}
+        })
+
 
         this.radio = gh.createChild(Radio, {events: {
             change: () => {
