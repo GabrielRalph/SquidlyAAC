@@ -1,5 +1,6 @@
 import { SvgPlus } from "../src/SvgPlus/4.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
+import { Icon } from "../src/Utilities/icons.js";
 
 class CCIcons extends SvgPlus {
     constructor(type) {
@@ -7,9 +8,7 @@ class CCIcons extends SvgPlus {
         this.class = "cc-icons"
         let terms = type.replace("CC", "logo").split(/[\s-]+/);
         terms.forEach(term => {
-            this.createChild("span", {class: "cc-icon"})
-                .createChild("svg", {viewBox: "0 0 30 30"})
-                .createChild("use", {href: import.meta.resolve(`./cc.svg#cc-${term.toLowerCase()}`)});
+            this.createChild(Icon, {}, "cc-"+term.toLowerCase())
         });
     }
 }
@@ -72,7 +71,8 @@ class AttributionPage extends ShadowElement {
   
     static get usedStyleSheets() {
         return [
-            import.meta.resolve("./style.css")
+            import.meta.resolve("./style.css"),
+            import.meta.resolve("../Assets/CCIcons/icons.css")
         ]
     }
 }

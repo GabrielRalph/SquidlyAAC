@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const NAME_ALIASES = {
   "folder-icon": "folder",
   "folder-icon-grid": "f-grid",
+
 };
 
 
@@ -137,7 +138,8 @@ i-c {
 Promise.all([
   main("../Assets/Icons"),
   main("../Assets/AACIcons"),
-  main("../Assets/LoginIcons")
+  main("../Assets/LoginIcons"),
+  main("../Assets/CCIcons"),
 ]).catch((error) => {
   console.error(error);
   process.exitCode = 1;

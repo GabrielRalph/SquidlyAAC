@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 200 200">
+  <!-- Generator: Adobe Illustrator 30.7.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 114)  -->
+  <defs>
+    <radialGradient id="radial-gradient" cx="100" cy="0" fx="100" fy="0" r="100" gradientTransform="translate(0 100)" gradientUnits="userSpaceOnUse">
+      <stop offset=".005" stop-color="#f566ff"/>
+      <stop offset="1" stop-color="#fdcffa"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient1" cx="58.792" cy="50.849" fx="58.792" fy="50.849" r="28.917" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f70000"/>
+      <stop offset="1" stop-color="#cc1900"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="48.627" ry="48.627" style="fill: url(#radial-gradient);"/>
+  <path d="M126.611,104.552c22.787-2.996,14.418,18.145,37.848,21.889s31.24,21.845,6.008,29.023c-25.232,7.178-38.449,11.859-57.674,26.526-19.225,14.667-40.252,7.178-53.469-11.859s-7.209-20.097-32.442-23-12.015-45.032,25.833-37.543c37.848,7.49,19.225-15.916,39.05-13.731s13.818,11.458,34.845,8.694Z" style="fill: #ffeb97; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.24px;"/>
+  <path d="M100.988,117.393c-13.103-8.119-21.489,14.885-9.085,20.298s-2.932,23.681,13.306,21.876,33.153-10.6,22.102-18.268,9.519-17.159-2.255-22.102c-11.021-4.627-10.965,6.315-24.068-1.804Z" style="fill: #53cc1b; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.24px;"/>
+  <circle cx="58.792" cy="50.849" r="28.917" style="fill: url(#radial-gradient1); stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.24px;"/>
+  <path d="M154.392,135.314c4.856,4.296,0,14.092-7.473,11.957s-14.91-13.445-9.145-16.014,11.067-.854,16.618,4.057Z" style="fill: #508aff; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.734px;"/>
+  <polygon points="82.523 148.375 74.524 142.018 84.09 136.825 76.091 130.467 66.525 135.66 58.527 129.302 48.961 134.495 56.96 140.853 47.394 146.045 55.393 152.403 64.959 147.21 72.958 153.568 82.523 148.375" style="fill: #dd1919; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.174px;"/>
+  <path d="M64.298,136.851l-8.607-59.475c-.165-1.143.721-2.168,1.877-2.168h8.607c1.047,0,1.896.849,1.896,1.896v59.475c0,2.353-3.436,2.6-3.773.272Z" style="fill: #d1d1d1; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.24px;"/>
+  <text/>
+  <text/>
+</svg>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 200 200">
+  <!-- Generator: Adobe Illustrator 30.7.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 114)  -->
+  <defs>
+    <radialGradient id="radial-gradient" cx="100" cy=".11" fx="100" fy=".11" r="100" gradientTransform="translate(0 99.89)" gradientUnits="userSpaceOnUse">
+      <stop offset=".002" stop-color="#76ff64"/>
+      <stop offset="1" stop-color="#c7ebb7"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="48.627" ry="48.627" style="fill: url(#radial-gradient);"/>
+  <g>
+    <g>
+      <rect x="136.775" y="38.166" width="13.86" height="5.612" style="fill: #eae4e4; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <path d="M150.494,42.65s24.993,5.071,24.993,46.727.362,80.957-10.867,80.957c-7.788,0-5.882-6.909-10.953-6.909-5.071,0-4.435,8.358-9.962,8.358-5.527,0-4.891-8.358-9.962-8.358s-3.165,6.909-10.953,6.909c-11.229,0-10.867-39.301-10.867-80.957s24.993-46.727,24.993-46.727c4.526,1.117,9.051,1.117,13.577,0Z" style="fill: #ffe471; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <path d="M152.985,30.383v8.172c0,1.196-4.155,2.165-9.28,2.165s-9.28-.969-9.28-2.165v-8.172h18.559Z" style="fill: #dd1f26; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <ellipse cx="143.705" cy="30.383" rx="9.28" ry="2.165" style="fill: #dd1f26; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <path d="M111.922,86.908c0,4.061,14.377,7.093,31.783,7.093s31.783-2.306,31.783-6.367l-.268,32.86c0,4.061-14.11,7.354-31.515,7.354s-31.515-3.292-31.515-7.354l-.267-33.585Z" style="fill: #dd1f26; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="132.275" cy="64.195" r="3.657" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="139.307" cy="73.723" r="2.359" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="143.705" cy="56.14" r="4.399" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="155.136" cy="147.137" r="3.657" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="162.168" cy="156.666" r="2.359" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+      <circle cx="166.567" cy="139.082" r="4.399" style="fill: #fff8d9; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.629px;"/>
+    </g>
+    <g>
+      <path d="M58.438,169.919c-17.109,0-21.899-5.771-22.352-9.185s-11.935-58.83-11.566-67.696c.39-9.402,18.681-11.29,35.349-11.29s31.468,1.936,32.488,11.29c1.02,9.354-10.48,65.601-11.566,67.696s-5.243,9.185-22.352,9.185h-.003Z" style="fill: none; stroke: #0b1a24; stroke-miterlimit: 10; stroke-width: 2.53px;"/>
+      <path d="M87.849,95.038c-1.199,5.435-21.375,6.67-32.784,6.67s-25.57-.63-26.38-4.107,15.366-8.243,32.88-8.246c14.86,0,26.767,3.492,26.284,5.683Z" style="fill: #c5e0db;"/>
+      <path d="M88.413,93.704c-2.039-2.535-13.557-5.359-26.833-5.359h-.015c-14.617,0-30.173,3.446-33.29,7.37-.635.8-.678,1.508-.59,1.999h-.005c.648,5.65,2.323,15.386,4.716,27.412,2.429,12.208,5.698,31.362,6.148,34.446.564,3.861,7.578,7.77,19.892,7.77,13.261,0,18.832-5.002,19.928-7.646,1.063-2.558,9.916-53.979,10.495-64.604h0c.046-.362-.013-.853-.445-1.392l-.003.003ZM29.862,96.974c2.138-2.692,15.551-6.604,31.703-6.606h.015c14.065,0,24.237,3.122,25.249,4.58-1.055,3.337-14.313,5.746-31.764,5.746-23.432,0-25.264-2.771-25.393-3.325-.013-.056.03-.195.19-.397v.003Z" style="fill: #1c96e8;"/>
+      <path d="M29.244,91.814c-.018.268.825.531,1.192.655,8.972,1.708,18.263.972,27.402,1.166,9.033-.316,18.448.273,27.205-2.08.45-.223,1.078-.44.85-.878l1.376-.678c.663,2.381-6.525,4.499-9.164,4.797-15.105,1.877-30.507,2.06-45.579-.288-1.536-.415-5.293-.926-4.375-3.251l1.098.557h-.005Z" style="fill: #fff;"/>
+      <path d="M37.839,86.506c-2.796,1.217-6.533,2.009-8.595,4.236-.018.268.825.531,1.192.655,8.972,1.708,18.263.972,27.402,1.166,9.033-.316,18.448.273,27.205-2.08.45-.223,1.078-.44.85-.878-.764-1.04-2.5-1.817-3.957-2.48-1.536-.655-3.107-1.258-4.688-1.847,2.495.496,4.974,1.106,7.343,2.085,7.72,3.676-3.107,5.974-6.487,6.358-15.105,1.877-30.514,2.115-45.579-.288-1.637-.261-5.812-1.295-4.375-3.251s6.343-2.766,9.693-3.679h0l-.003.003Z" style="fill: #0b1a24;"/>
+      <path d="M79.942,115.644c-1.685,6.551-2.96,13.028-3.378,19.677-1.827,8.565-3.013,17.251-2.563,26.016,2.128-8.835,4.031-17.701,4.726-26.719,1.536-6.207,2.098-12.638,1.217-18.977l-.003.003Z" style="fill: #eef8f8;"/>
+      <path d="M81.999,102.036c-1.974,3.117-2.943,6.515-1.26,9.807,1.751-2.983,2.776-6.52,1.26-9.807Z" style="fill: #eef8f8;"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 200 200">
+  <!-- Generator: Adobe Illustrator 30.7.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 114)  -->
+  <defs>
+    <radialGradient id="radial-gradient" cx="100" cy="199.89" fx="100" fy="199.89" r="100" gradientTransform="translate(0 299.89) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffff4a"/>
+      <stop offset="1" stop-color="#fff8bd"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" rx="48.627" ry="48.627" style="fill: url(#radial-gradient);"/>
+  <circle cx="104.278" cy="66.118" r="7.351" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <circle cx="167.211" cy="66.118" r="6.687" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <ellipse cx="135.442" cy="66.617" rx="34.486" ry="41.277" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <circle cx="120.11" cy="64.84" r="3.737"/>
+  <circle cx="150.041" cy="63.615" r="3.737"/>
+  <path d="M131.221,77.23s2.344,1.77,4.22,1.77,5.318-1.949,5.318-1.949" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+  <circle cx="33.995" cy="134.977" r="7.351" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <circle cx="96.927" cy="134.977" r="6.687" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <ellipse cx="65.158" cy="135.476" rx="34.486" ry="41.277" style="fill: #f7e7e0; stroke: #000; stroke-miterlimit: 10; stroke-width: 2px;"/>
+  <path d="M60.938,146.089s2.344,1.77,4.22,1.77,5.64-2.11,5.64-2.11" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+  <path d="M120.11,87.161s3.737,7.277,15.881,7.277,16.274-7.965,16.274-7.965" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+  <path d="M82.885,163.969s-3.737-7.277-15.881-7.277-16.274,7.965-16.274,7.965" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+  <g>
+    <circle cx="49.123" cy="131.82" r="3.656"/>
+    <circle cx="81.381" cy="130.219" r="3.862"/>
+    <path d="M73.656,127.11c.016-.1,9.72-4.722,13.942,6.971" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+    <path d="M55.811,128.164c-6.739-1.824-11.46.09-13.094,7.706" style="fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2px;"/>
+  </g>
+</svg>
