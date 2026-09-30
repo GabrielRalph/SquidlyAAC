@@ -10,6 +10,7 @@ import { setActiveKeyBindingSet } from "./src/Utilities/keybindings.js";
 import { Radio } from "./src/Utilities/radio.js";
 import "./src/Utilities/bg-img.js";
 import { getUserInfo } from "./src/Firebase/boards.js";
+import { AttributionPage } from "./Attribution/index.js";
 
 initialise();
 
@@ -44,6 +45,13 @@ const SIDE_BAR_RADIO = [
             openEditor()
         }
     },
+    {
+        title: "Terms",
+        icon: "cc-heart",
+        onClick: (page) => {
+            page.viewMode = "attribution";
+        }
+    }
 ]
 
 const HIDE_STYLE = {
@@ -97,8 +105,7 @@ class AACHomePage extends ShadowElement {
         this.dropDown = dropDown;
 
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get("tab");
+        const mode = window.location.hash.slice(1) || null;
         this.radio = this.createChild(
             Radio, 
             { class: "side-bar" }, 
@@ -106,7 +113,7 @@ class AACHomePage extends ShadowElement {
                 [i, SideBarIcon, icon.onClick ? {events: {click: () => icon.onClick(this)}} : {}, icon]
             )
         );
-        this.radio.select(mode === "explore" ? 0 : 1, false);
+        this.radio.select(mode === "explore" ? 0 : mode === "finder" ? 1 : 2, false);
 
         const main = this.createChild("main");
         this.explore = main.createChild(ExplorePage, {events: {
@@ -117,6 +124,8 @@ class AACHomePage extends ShadowElement {
 
         // let finderContainer = main.createChild("div", {class: "finder-container"})
         this.finder = main.createChild(AACFinder, {}, "file-system");
+
+        this.attributionPage = main.createChild(AttributionPage, {}, "attribution-page");
 
         this.loginPageContainer = this.createChild("div", {
             class: "login-page-container",
@@ -155,7 +164,7 @@ class AACHomePage extends ShadowElement {
         if (mode === "finder") {
             this.openFileSystem();
         } else {
-            this.viewMode = "explore";
+            this.viewMode = mode || "explore";
         }
     }
 
@@ -182,11 +191,10 @@ class AACHomePage extends ShadowElement {
 
     set viewMode(mode) {
         this.radio.select(mode === "explore" ? 0 : 1, false);
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set("tab", mode);
-        window.history.replaceState({}, "", `${window.location.pathname}?${urlParams.toString()}`);
+        window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${mode}`);
         this.explore.styles = mode === "explore" ? SHOW_STYLE : HIDE_STYLE;
-        this.finder.styles = mode === "explore" ? HIDE_STYLE : SHOW_STYLE;
+        this.finder.styles = mode === "finder" ? SHOW_STYLE : HIDE_STYLE;
+        this.attributionPage.styles = mode === "attribution" ? SHOW_STYLE : HIDE_STYLE;
         setActiveKeyBindingSet(mode === "explore" ? "ob-explore" : "ob-finder");
     }
 

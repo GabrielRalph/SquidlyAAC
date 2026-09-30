@@ -1,0 +1,104 @@
+{
+    "symbol-licences": {
+
+        "K8IXzwGHIkWWoAnWlOYF": {
+            "version": "4.0",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+            "type": "CC BY-NC-SA",
+            "source_url": "https://www.arasaac.org/",
+            "logo": "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/symbols%2Flicences%2Flogo_ARASAAC.png?alt=media&token=538b6270-155f-491b-af82-fb83bf78a979",
+            "symbol_set": "ARASAAC",
+            "author_name": "Sergio Palao",
+            "owner": "Government of Aragon (Spain)",
+            "attribution": "The pictographic symbols used are the property of the ${owner} and have been created by ${author_name} for ${symbol_set} <a href=\"${source_url}\">(${source_url})</a>, that distributes them under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        "2GcQ7yrwYeXR4UhTtacY": {
+            "version": "4.0",
+            "symbol_set": "OPENMOJI",
+            "title": "OpenMoji",
+            "type": "CC BY-SA",
+            "source_url": "https://openmoji.org/",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "author_name": "OpenMoji",
+            "owner": "OpenMoji",
+            "logo": "https://openmoji.org/assets/logo-openmoji-1F64B.2c7bf38f.svg",
+            "attribution": "All emojis designed by <a href=\"${source_url}\">OpenMoji</a> – the open-source emoji and icon project. License: <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        "4u33Bp5D5Zi8H4NgUUVZ": {
+            "version": "4.0",
+            "symbol_set": "TAWASOL",
+            "type": "CC BY-NC",
+            "author": "Mada Center",
+            "title": "Tawasol",
+            "source_url": "https://tawasol.mada.org.qa",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+            "logo": "https://cdn.tawasol.mada.org.qa/data/wp-content/uploads/2021/09/MADA-WEBSITE-LEVEL-2-10.png",
+            "attribution": "<a href=\"${source_url}\">Tawasol Symbols</a> by Mada, HMC and University of Southampton is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        "5JoMmI86UUNNNVKle5cl": {
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "symbol_set": "MULBERRY",
+            "title": "Mulberry Symbols",
+            "type": "CC BY-SA",
+            "source_url": "https://mulberrysymbols.org/",
+            "version": "4.0",
+            "author_name": "Steve Lee",
+            "owner": "Mulberry Symbols",
+            "logo": "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/symbols%2Fsets%2FMULBERRY%2F1654?alt=media&token=3aae2764-7b70-4318-886b-53216797c92c",
+            "attribution": "<a href=\"${source_url}\">${owner}</a> by ${author_name} are licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        "8WxYssIGnDcDGWBcihmr": {
+            "author": "Sensory App House Ltd",
+            "symbol_set": "PICOM",
+            "type": "CC BY-NC",
+            "source_url": "https://www.sensoryapphouse.com/",
+            "copyright_notice_url": "http://creativecommons.org/licenses/by-nc/4.0/",
+            "owner": "Sensory App House Ltd",
+            "version": "4.0",
+            "title": "PiCom",
+            "logo": "https://www.sensoryapphouse.com/wp-content/uploads/cropped-favicon-1-180x180.png",
+            "attribution": "<a href=\"${source_url}\">PiCom</a> by ${owner} is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        
+        "lMrdSiXwc4SuYDXYuYnu": {
+            "version": "4.0",
+            "symbol_set": "JELLOW",
+            "type": "CC BY-NC-SA",
+            "author_name": "IDC School of Design ",
+            "logo": "https://jellow.org/img/logo2.png",
+            "source_url": "https://jellow.org/",
+            "copyright_notice_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+            "attribution": "<a href=\"${source_url}\">Jellow</a> by ${author_name} is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        },
+        "tlpEd6R2xeAnXekpPx4a": {
+            "symbol_set": "AACIL",
+            "type": "CC BY-NC",
+            "version": "4.0",
+            "logo": "https://aacil.neocities.org/AAC/aacil.png",
+            "title": "AAC Image Library",
+            "source_url": "https://aacil.neocities.org/",
+            "copyright_notice_url": "http://creativecommons.org/licenses/by-nc/4.0/",
+            "attribution": "<a href=\"${source_url}\">AAC Image Library (AACIL)</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+        }
+    },
+    "board-licences": {
+         "0": {
+            "title": "Quick Core",
+            "logo": "https://www.openaac.org/images/2024/quick-core-star.png",
+            "type": "CC BY-NC-SA",
+            "version": "3.0",
+            "source_url": "https://www.openaac.org/vocabularies/qc",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+            "attribution": "<a href=\"${source_url}\">Quick Core</a> by <a href=\"https://www.openaac.org/\">OpenAAC</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>"
+        },
+        "1": {
+            "title": "Vocal Flair",
+            "logo": "https://www.openaac.org/images/2024/vocal-flair-star.png",
+            "type": "CC BY-NC-SA",
+            "version": "3.0",
+            "source_url": "https://www.openaac.org/vocabularies/vf",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+            "attribution": "<a href=\"${source_url}\">Vocal Flair</a> by <a href=\"https://www.openaac.org/\">OpenAAC</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>"
+        }
+    }
+}

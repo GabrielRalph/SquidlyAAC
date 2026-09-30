@@ -69,8 +69,12 @@ page-root > radio-selection.side-bar {
     grid-row: 2;
     width: 3em;
     gap: 1em;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
+}
+
+page-root > radio-selection.side-bar > *:last-child {
+    grid-row: 5;
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Main ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -103,7 +107,13 @@ page-root main {
     page-root > radio-selection.side-bar {
         grid-column: 1;
         grid-row: 3;
-        flex-direction: row;
+        grid-template-columns: auto auto auto 1fr auto;
+        grid-template-rows: 1fr;
+        width: 100%;
+    }
+    page-root > radio-selection.side-bar > *:last-child {
+        grid-column: 5;
+        grid-row: 1;
     }
 }
 
@@ -778,7 +788,6 @@ bg-img::after {
 bg-img:not([loaded])::after {
     opacity: 1;
 }
-
 
 @keyframes shimmer {
   to {
