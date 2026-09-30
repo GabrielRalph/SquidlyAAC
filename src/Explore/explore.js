@@ -382,9 +382,9 @@ class ExplorePage extends SvgPlus {
 
         gh.createChild("div", {
             class: "grid",
-            content: `<bg-img explore src = "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/icons%2Ficon-sets%2FSCSH%2FEXPLORE.png?alt=media&token=9305f467-02b9-4bba-880c-4524964c0ba8"></bg-img>
-            <bg-img create src = "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/icons%2Ficon-sets%2FPCS%2FARTSAND!.png?alt=media&token=d5419163-8cef-4b3d-ae76-2bc0375bf76d"></bg-img>
-            <bg-img share src = "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/icons%2Ficon-sets%2FSYBX%2FSHARE%5E.png?alt=media&token=f450d482-c6c3-43c9-9593-0628d7684092"></bg-img>
+            content: `<bg-img explore src = "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/symbols%2Fsets%2FOPENMOJI%2FE04A?alt=media&token=f0856136-b1c5-4fdd-9aff-ccd08bebb8ed"></bg-img>
+            <bg-img create src = "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/symbols%2Fsets%2FMULBERRY%2F852?alt=media&token=9453dd0e-e5e0-4be5-85c2-af452598003b"></bg-img>
+            <bg-img share src = "https://api.arasaac.org/v1/pictograms/16623?skin=mulatto"></bg-img>
             <h2>Explore</h2>
             <h2>Create</h2>
             <h2>Share</h2>`

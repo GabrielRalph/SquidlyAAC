@@ -64,11 +64,11 @@
             "version": "4.0",
             "symbol_set": "JELLOW",
             "type": "CC BY-NC-SA",
-            "author_name": "IDC School of Design ",
+            "author_name": "IDC School of Design, Indian Institute of Technology Bombay (IIT-B)",
             "logo": "https://jellow.org/img/logo2.png",
             "source_url": "https://jellow.org/",
             "copyright_notice_url": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-            "attribution": "<a href=\"${source_url}\">Jellow</a> by ${author_name} is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+            "attribution": "<a href=\"${source_url}\">Jellow</a> developed by ${author_name}. Jellow symbols are licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
         },
         "tlpEd6R2xeAnXekpPx4a": {
             "symbol_set": "AACIL",
@@ -78,7 +78,7 @@
             "title": "AAC Image Library",
             "source_url": "https://aacil.neocities.org/",
             "copyright_notice_url": "http://creativecommons.org/licenses/by-nc/4.0/",
-            "attribution": "<a href=\"${source_url}\">AAC Image Library (AACIL)</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
+            "attribution": "<a href=\"${source_url}\">AAC Image Library (AACIL)</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>. More details <a href=\"https://aacil.neocities.org/copyright\">here</a>."
         }
     },
     "board-licences": {

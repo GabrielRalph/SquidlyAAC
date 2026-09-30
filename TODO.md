@@ -17,7 +17,10 @@
 - DONE: odd merge bug 
 - DONE: upload image function is broken
 
+
 ## feature updates: 
+
+- upload mp3 audio file
 
 - Load board finder to open explore page such that users can load other public boards.
 
@@ -66,6 +69,8 @@
 
 - trashcan
 
+- change favourite to listed
+
 ###
 - DONE: adding file thumbnails
 - DONE: Favorite root boards automatically
@@ -98,8 +103,7 @@
 
 # EXPLORE
 ## feature-updates:
-- copy public board
-
+- copy public board ()
 - upload obz
 
 
@@ -113,7 +117,3 @@
 - DONE: migrate all boards
 - Empty trash, delete past drafts
 
-
-
-
-this icon is fried, N5363{ 
