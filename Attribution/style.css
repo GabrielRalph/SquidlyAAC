@@ -36,6 +36,7 @@
     text-align: left;
     width: 100%;
 }
+
 .row {
     display: flex;
     align-items: center;
@@ -43,7 +44,9 @@
 }
 
 h2,h3,h4 { margin: 0; }
-
+a {
+    color: currentColor;
+}
 
 main {
     width: 100%;
@@ -57,7 +60,10 @@ main {
 main > h1 {
     margin: 1em 0.5em;
 }
-
+main > p {
+    margin: 0em 1em;
+    margin-bottom: 1em
+}
 
 header {
     display: flex;
