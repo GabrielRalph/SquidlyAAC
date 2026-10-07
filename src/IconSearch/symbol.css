@@ -164,6 +164,7 @@ search-window[loading] .search-bar-area .circle-loader {
     flex-direction: column; 
     gap: 1.5em;
     padding: 0.5em;
+    overflow-y: scroll;
 }
 
 .filters-area .symbol-set-filter,
