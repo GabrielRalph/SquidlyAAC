@@ -374,7 +374,7 @@ class SSymbol extends DataClass {
 
 
     get symbolSetFilterValue() {
-        return this.symbol_set ? this.symbol_set : (this.isOwner ? "PRIVATE" : "PUBLIC");
+        return this.symbol_set ? this.symbol_set : (this.public ? "PUBLIC" : "PUBLIC");
     }
 
 
@@ -482,13 +482,18 @@ class SSymbol extends DataClass {
 /** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Symbol Filters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /** ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+
 let FILTER_CHANGE_LISTENERS = new Set();
 let FILTERS;
 try {
-    FILTERS = JSON.parse(localStorage.getItem("filters") || "{}");
+    FILTERS = JSON.parse(localStorage.getItem("filters"));
     FILTERS.symbolSets = new Set(FILTERS.symbolSets || []);
+    // console.log("Parsed filters from localStorage:", FILTERS);
 } catch(e) {
-    FILTERS = {};
+    FILTERS = {
+        symbolSets: new Set(Object.keys(SET_BY_VALUE)),
+        variantKeyValues: {},
+    };
 }
 
 function updateVariantKeyValues(variantKeyValues) {
