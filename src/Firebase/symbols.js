@@ -240,34 +240,9 @@ const VARIANT_KEY_OPTIONS = {
  */
 
 /**
- * @typedef {keyof typeof VARIANT_CATEGORIES} VariantKey
+ * @typedef {keyof typeof VARIANT_KEY_OPTIONS} VariantKey
  */
 
-
-// /** 
-//  * @typedef {Object} SSymbolObject
-//  * @property {string}   owner         The owner of the symbol.
-//  * @property {boolean}  commercial    Whether the symbol can be used commercially.
-//  * @property {boolean}  public        Whether the symbol is publicly accessible.
-//  * @property {?string}  symbol_set    The symbol set to which the symbol belongs.
-//  * 
-//  * @property {string} search_phrase   The search phrase associated with the symbol.
-//  * @property {string} [title]         The title of the symbol (if different from 
-//  *                                    the search phrase).
-//  * 
-//  * @property {?string|Object} licence The licence information for the symbol.
-//  * 
-//  * @property {string} format         The format of the symbol image.
-//  * @property {number} width          The width of the symbol image.
-//  * @property {number} height         The height of the symbol image.
-//  * 
-//  * @property {VariantKey[]} variant_keys    The list of variant keys associated with the symbol.
-//  * @property {Object<string, URL>} variants The mapping of variant keys to their corresponding URLs.
-//  * @property {URL} url                      The URL of the default variant symbol image.  
-//  * 
-//  * @property {?string|number} [source_id]                             The source identifier for the symbol.
-//  * @property {Object<string, (string|number)>} [variant_source_ids]   The mapping of variant keys to their
-//  */
 
 FB.initialise();
 const T = new Debugger("Symbols(Text)", `color: orange;`)
@@ -375,6 +350,19 @@ class SSymbol extends DataClass {
 
     get symbolSetFilterValue() {
         return this.symbol_set ? this.symbol_set : (this.public ? "PUBLIC" : "PUBLIC");
+    }
+
+
+    isInSet(symbolSet) {
+        if (symbolSet instanceof Set) {
+            return symbolSet.has(this.symbol_set) 
+                || (symbolSet.has("PUBLIC") && this.public && this.symbol_set === null) 
+                || (symbolSet.has("PRIVATE") && this.isOwner && this.symbol_set === null);
+        } else {
+            return (this.symbol_set === symbolSet) 
+                || (symbolSet === "PUBLIC" && this.public && this.symbol_set === null) 
+                || (symbolSet === "PRIVATE" && this.isOwner && this.symbol_set === null);
+        }
     }
 
 
@@ -488,7 +476,6 @@ let FILTERS;
 try {
     FILTERS = JSON.parse(localStorage.getItem("filters"));
     FILTERS.symbolSets = new Set(FILTERS.symbolSets || []);
-    // console.log("Parsed filters from localStorage:", FILTERS);
 } catch(e) {
     FILTERS = {
         symbolSets: new Set(Object.keys(SET_BY_VALUE)),

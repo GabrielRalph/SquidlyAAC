@@ -328,7 +328,7 @@
 }
 
 .grid-icon[color-theme="textarea"] {
-    --outline: rgb(87 153 255);
+    --outline:#de1b1b;
     --main: rgb(219 233 255);
     --tab: rgb(179, 209, 255);
     --main-hover: rgb(211, 228, 255);

@@ -199,7 +199,7 @@ class SearchWindow extends SvgPlus {
         const symbolSets = getSymbolSets();
         this.resultsGrid.innerHTML = "";
         for (const result of this.#currentResults) {
-            if (symbolSets.has(result.symbolSetFilterValue)) {
+            if (result.isInSet(symbolSets)) {
                 this.resultsGrid.createChild(
                     SymbolDisplay, {}, result, this.#selectImage.bind(this)
                 );
@@ -335,9 +335,8 @@ class FastFindSymbolList extends SvgPlus {
     #renderResults() {
         this.innerHTML = "";
         const symSet = getSymbolSets()
-        console.log(symSet);
         this.#results
-            .filter(sym => symSet.has(sym.symbolSetFilterValue))
+            .filter(sym => sym.isInSet(symSet))
             .slice(0, this.#numberOfSymbols).forEach(symbol => {
                 this.createChild(SymbolDisplay, {}, symbol, (s) => this.#selectSymbol(s));
             });

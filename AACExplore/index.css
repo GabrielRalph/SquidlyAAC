@@ -15,6 +15,52 @@ aac-explore-root {
     box-sizing: border-box;
 }
 
+rounded-tabs[key="featured"] {
+    --fill-color: #5c88b6eb;
+}
+rounded-tabs[key="public"] {
+    --fill-color: #4e8f31e3
+}
+rounded-tabs[key="search"] {
+    --fill-color: #8471afe3;
+}
+rounded-tabs[key="favourite"] {
+    --fill-color: #e3c454eb;
+}
+
+
+rounded-tabs .tabs-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+}
+
+rounded-tabs .tabs-container > .tab {
+    height: 13vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+
+}
+
+
+rounded-tabs .main-content grid-layout {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 3px;
+}
+
+.grid-icon[color-theme="textarea"] .content { 
+    padding: calc(var(--_content-padding) + 0.5em) calc(var(--_content-padding) + 1em);
+}
+
+.grid-icon access-textarea { 
+    width: 100%;
+    height: 100%;
+    --caret-color: var(--outline);
+}
+/* 
 main {
     display: grid;
     width: 100%;
@@ -131,4 +177,4 @@ grid-layout {
 }
 .checkbox[undefined] .box::after {
     content: "?";
-}
+} */

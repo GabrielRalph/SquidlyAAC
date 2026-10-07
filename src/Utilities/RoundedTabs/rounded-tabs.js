@@ -5,7 +5,11 @@ class Tab extends SvgPlus {
     constructor(tab) {
         super("div");
         this.class = "tab";
-        this.innerHTML = tab.title;
+        if (tab.title instanceof Element) {
+            this.appendChild(tab.title);
+        } else {
+            this.innerHTML = tab.title;
+        }
     }
 }
 
@@ -20,11 +24,13 @@ class RoundedTabs extends SvgPlus {
 
         let contentElements = {};
         this.key2index = {}
+        this.items = items;
         this.tabs = Object.entries(items).map(([key, item], i) => {
             contentElements[i] = item.content;
             this.key2index[key] = i;
             return tabs.createChild(Tab, {events: {
                 click: () => {
+                    if (item.noSelect) return;
                     this.select(i)
                 }
             }}, item)
@@ -44,6 +50,13 @@ class RoundedTabs extends SvgPlus {
             index = this.key2index[index];
         }
         index = Math.max(0, Math.min(index, this.tabs.length - 1));
+
+        const item = this.items[index];
+        if (item?.key) {
+            this.setAttribute("key", item.key);
+        } else {
+            this.removeAttribute("key");
+        }
         this.#selected = index;
         this.contentEl.innerHTML = "";
         const nextElement = this.contentElements[this.#selected];
@@ -52,12 +65,17 @@ class RoundedTabs extends SvgPlus {
         this.render();
     }
 
+
+    getBorderRadius(fullSize, tabSize) {
+        return Math.min(tabSize.x, tabSize.y) / 2;
+    }
+
     render() {
         let selected = this.#selected;
 
         let [P, S] = this.bbox;
         let [TP, TS] = this.tabs[selected].bbox;
-        let radius = TS.y / 2;
+        let radius = this.getBorderRadius(S, TS);
 
         let TL = TP.sub(P);
         let BL = TL.add(0, TS.y);

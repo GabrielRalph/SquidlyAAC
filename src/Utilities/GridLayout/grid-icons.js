@@ -453,6 +453,7 @@ class GridCard extends SvgPlus {
     getCardBorderRadius(w, h) {
       return h/20;
     }
+    
     getCardBorderWidth() {
       return window.innerWidth < 450 ? 2 : 4;
     }

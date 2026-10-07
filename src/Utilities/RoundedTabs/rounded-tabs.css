@@ -9,6 +9,7 @@ rounded-tabs {
 
     --fill-color: red;
 }
+
 rounded-tabs .tab-display {
     position: absolute;
     top: 0;

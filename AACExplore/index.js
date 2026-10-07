@@ -1,9 +1,13 @@
 import { getBoardMetadata } from "../src/Firebase/boards.js";
 import { initialise } from "../src/Firebase/firebase.js";
+import { SvgPlus } from "../src/SvgPlus/4.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
 import { Vector } from "../src/SvgPlus/vector.js";
-import { GridIcon, GridLayout } from "../src/Utilities/GridLayout/grid-icons.js";
-import { roundedPolygon } from "./rpoly.js";
+import { GridCard, GridIcon, GridLayout } from "../src/Utilities/GridLayout/grid-icons.js";
+import { RoundedTabs } from "../src/Utilities/RoundedTabs/rounded-tabs.js";
+import { roundedPolygon } from "../src/Utilities/shared.js";
+import { AccessTextarea } from "../src/Utilities/Textarea/textarea.js";
+
 initialise();
 
 function toRows(array, cols) {
@@ -20,22 +24,34 @@ const FEATURED_BOARDS = [
         title: "Squidly",
         img: import.meta.resolve("../Assets/logo.svg"),
         boards: [
+            "PkNtxxwUyntPbXalmdJB",
+            "gfxpGyVxp54ZUAmwr2Lg",
+            "U5uKJRS5H0mnp0hPzP6E",
+            "LcXf0yWUT5n3syU2n4WO",
+            "5MtHTgn0ukUt7u4Fs3yU",
+
+            "8oKZZp4cw9uDmiRfiijM",
+            "4SsWDV7IqU0tiNg3Vtp0",
+            "S98Y4J5gnR3hQSy80tEF",
+            "JkXZ2Cm3OzXTw8u2yKSl",
+            "kDClJEcGEkPaOZq831HD",
+
             "JLYix9KezJaosLusUhkl",
             "GPomuZcnGmpn7hNuX2S6",
             "bO8yY3GEkU8o3g0rkcTv",
             "InZgWP9sywxFUwOJO0TQ"
         ]
     },
-    {
-        title: "PRC Saltillo",
-        img: import.meta.resolve("./prc.svg"),
-        boards: [
-            "tVO399IgcEuTW6FLTDZP",
-            "rTezEUKTUzcOGAdleZkh",
-            "zmnKiAkXdSTdjCtB6WmV",
-            "HWRGaqWL8AjrRfAFW4ik"
-        ]
-    },
+    // {
+    //     title: "PRC Saltillo",
+    //     img: import.meta.resolve("./prc.svg"),
+    //     boards: [
+    //         "tVO399IgcEuTW6FLTDZP",
+    //         "rTezEUKTUzcOGAdleZkh",
+    //         "zmnKiAkXdSTdjCtB6WmV",
+    //         "HWRGaqWL8AjrRfAFW4ik"
+    //     ]
+    // },
     {   
         title: "Quick Core",
         img: import.meta.resolve("./quick-core.svg"),
@@ -58,34 +74,34 @@ const FEATURED_BOARDS = [
             "mlvuf8KAWlEVxusyFIt1",
         ]
     },
-    {
-        title: "Everyday Life",
+    // {
+    //     title: "Everyday Life",
 
-        boards: [
-            "8oKZZp4cw9uDmiRfiijM",
-            "4SsWDV7IqU0tiNg3Vtp0",
-            "S98Y4J5gnR3hQSy80tEF",
-            "JkXZ2Cm3OzXTw8u2yKSl",
-            "kDClJEcGEkPaOZq831HD"
-        ]
-    },
-    {
-        title: "People, Play & Interests",
-        boards: [
-            "PkNtxxwUyntPbXalmdJB",
-            "gfxpGyVxp54ZUAmwr2Lg",
-            "U5uKJRS5H0mnp0hPzP6E",
-            "LcXf0yWUT5n3syU2n4WO",
-            "5MtHTgn0ukUt7u4Fs3yU"
-        ]
-    },
-    {   
-        title: "Proloquo",
-        boards: [
-            "s9xO1YfGtLdwM1YOgG1S",
-            "InZgWP9sywxFUwOJO0TQ"
-        ]
-    },
+    //     boards: [
+    //         "8oKZZp4cw9uDmiRfiijM",
+    //         "4SsWDV7IqU0tiNg3Vtp0",
+    //         "S98Y4J5gnR3hQSy80tEF",
+    //         "JkXZ2Cm3OzXTw8u2yKSl",
+    //         "kDClJEcGEkPaOZq831HD"
+    //     ]
+    // },
+    // {
+    //     title: "People, Play & Interests",
+    //     boards: [
+    //         "PkNtxxwUyntPbXalmdJB",
+    //         "gfxpGyVxp54ZUAmwr2Lg",
+    //         "U5uKJRS5H0mnp0hPzP6E",
+    //         "LcXf0yWUT5n3syU2n4WO",
+    //         "5MtHTgn0ukUt7u4Fs3yU"
+    //     ]
+    // },
+    // {   
+    //     title: "Proloquo",
+    //     boards: [
+    //         "s9xO1YfGtLdwM1YOgG1S",
+    //         "InZgWP9sywxFUwOJO0TQ"
+    //     ]
+    // },
      
 ]
 
@@ -110,16 +126,18 @@ class BoardGridIcon extends GridIcon {
 }
 
 class FixedGridLayout extends GridLayout {
+
+    fixedBR = 15;
     onresize(){
         console.log("tabs resized");
-        this.gridIconBorderRadius = 15;
+        this.gridIconBorderRadius = this.fixedBR;
         this.gridIconBorderWidth = Math.min(Math.max(2, Math.ceil(this.clientWidth / 225)), 4);
     }
 }
 
 const DROWS = 4;
 const DCOLS = 5;
-const FROWS = 2;
+const FROWS = 1;
 const GAP = 4;
 
 class Featured extends FixedGridLayout {
@@ -145,6 +163,7 @@ class Featured extends FixedGridLayout {
         ));
 
         this.boardList = this.add(new FixedGridLayout(DROWS - FROWS, DCOLS), [FROWS, DROWS-1], [0, DCOLS-1]);
+        
     }
 
     selectCategory(ri, ci) {
@@ -166,10 +185,7 @@ class Featured extends FixedGridLayout {
         }
         
     }
-
-
 }
-
 
 
 const colors = [
@@ -185,7 +201,17 @@ class SearchableList extends FixedGridLayout {
     constructor() {
         super(DROWS, DCOLS);
 
+        this.add(new GridCard('access-button', "plain", "textarea"), [0,0], [1,3])
+            .content.createChild(AccessTextarea)
 
+        this.addGridIcon({
+            displayValue: "Search",
+            colorTheme: "action",
+        }, 0,0)
+        this.addGridIcon({
+            displayValue: "Search",
+            colorTheme: "action"
+        }, 0,4)
     }
     async getList() {
         return [];
@@ -197,107 +223,152 @@ class SearchableList extends FixedGridLayout {
         // for 
     }
 }
+
 class AACExplore extends ShadowElement {
 
     constructor(el) {
         super(el, "aac-explore-root");
-        const root =this.createChild("main");
-        this.svg = root.createChild("svg");
 
-        let resizeObserver = new ResizeObserver(this.onresize.bind(this)); 
-        resizeObserver.observe(root);
+        const SP = 3;
+        const BR = 20;
+        this.root.styles = {"--space": `${SP}px`}
 
-        const tabs = root.createChild(FixedGridLayout, {
-            styles: {"padding-bottom": `${GAP/2}px`}
-        }, 1, 5);
-        tabs.addGridIcons([
-            [
-                {
-                    displayValue: "Exit",
-                    colorTheme: "action"
-                },
-                {
-                    displayValue: "Featured",
-                    colorTheme: "featured"
-                },
-                {
-                    displayValue: "Public",
-                    colorTheme: "public"
-                },
-                {
-                    displayValue: "Favourites",
-                    colorTheme: "favourites"
-                },
-                {
-                    displayValue: "Search",
-                    colorTheme: "noun"
-                }
-            ].map((v, i) => {
-                v.events = {
-                    "access-click": (e) => {
-                        this.selectedTab = i;
-                        console.log(`Selected tab: ${i.displayValue}`);
-                        this.onresize(
-                            [{contentRect: root.getBoundingClientRect()}]
-                        );
-                    }
-                }
-                return v
-            })
-        ])
-        const main = root.createChild(Featured);
-        this.selectedTab = 4;
-        tabs[0]
+        // const root =this.createChild("main");
+        // this.svg = root.createChild("svg");
 
-    }
+        // let resizeObserver = new ResizeObserver(this.onresize.bind(this)); 
+        // resizeObserver.observe(root);
 
-
-    onresize(e) {
-        let rect = e[0].contentRect;
-        console.log(rect);
-        const {width, height} = rect;
-        if (width ==0 || height == 0) return;   
-
-        let si = this.selectedTab;
-        let topY = 0;
-        let ySplit = height * 6 / 46;
-        let tabW = width / DCOLS - GAP; // width = (tabW) * DCOLS
-        let x1 = si == 0 ? 0 : (tabW + GAP) * si;
-        let x2 = si == DCOLS - 1 ? width : (tabW + GAP) * (si + 1);
-
-        this.svg.props = {
-            "viewBox": `0 0 ${width} ${height}`
-        }
-
-        let points = [
-            [0, ySplit],
-            [x1, ySplit],
-            [x1, topY],
-            [x2, topY],
-            [x2, ySplit],
-            [width, ySplit],
-            [width, height],
-            [0, height],
-        ].map(p => new Vector(p));
-
-        // If two consecutive points are the same, remove them both
-        for (let i = 0; i < points.length - 1; i++) {
-            if (points[i].sub(points[i + 1]).isZero) {
-                points.splice(i, 2);
-                i -= 2; // Step back to check the new consecutive points
+        // const tabs = root.createChild(FixedGridLayout, {
+        //     styles: {"padding-bottom": `${GAP/2}px`}
+        // }, 1, 5);
+        // tabs.addGridIcons([
+        //     [
+        //         {
+        //             displayValue: "Exit",
+        //             colorTheme: "action"
+        //         },
+        //         {
+        //             displayValue: "Featured",
+        //             colorTheme: "featured"
+        //         },
+        //         {
+        //             displayValue: "Public",
+        //             colorTheme: "public"
+        //         },
+        //         {
+        //             displayValue: "Favourites",
+        //             colorTheme: "favourites"
+        //         },
+        //         {
+        //             displayValue: "Search",
+        //             colorTheme: "noun"
+        //         }
+        //     ].map((v, i) => {
+        //         v.events = {
+        //             "access-click": (e) => {
+        //                 this.selectedTab = i;
+        //                 console.log(`Selected tab: ${i.displayValue}`);
+        //                 this.onresize(
+        //                     [{contentRect: root.getBoundingClientRect()}]
+        //                 );
+        //             }
+        //         }
+        //         return v
+        //     })
+        // ])
+        // const main = root.createChild(Featured);
+        // this.selectedTab = 4;
+        // tabs[0]
+        class GI extends GridIcon {
+            getCardBorderRadius() {
+                return BR - this.getCardBorderWidth() * 0.5 - SP;
             }
         }
 
-        this.svg.innerHTML = `
-        <path d="${roundedPolygon( points, 19)}" fill="${colors[si]}"/>
+        this.tabs = this.createChild(RoundedTabs, {}, [
+            {
+                title: new GI({displayValue: "Close", colorTheme: "action"})  ,
+                noSelect: true,
+                content: new SvgPlus("div"),
+            },
+            {
+                title: new GI({displayValue: "Featured", colorTheme: "normal"}) ,
+                content: new Featured(),
+                key: "featured",
+            },
+            {
+                title: new GI({displayValue: "Public", colorTheme: "starter"}) ,
+                content: new SearchableList("div"),
+                key: "public",
+            },
+            {
+                title: new GI({displayValue: "Favourite", colorTheme: "adjective"}) ,
+                content: new SearchableList("div"),
+                key: "favourite",
+            },
+            {
+                content: new SearchableList("div"),
+                title: new GI({displayValue: "Search", colorTheme: "noun"}) ,
+                key: "search",
 
-        `;
+            }
+        ]);
+        this.tabs.select(1)
+        this.tabs.getBorderRadius = (fs, ts) => {
+            return BR;
+        }
     }
+
+
+    // onresize(e) {
+    //     let rect = e[0].contentRect;
+    //     console.log(rect);
+    //     const {width, height} = rect;
+    //     if (width ==0 || height == 0) return;   
+
+    //     let si = this.selectedTab;
+    //     let topY = 0;
+    //     let ySplit = height * 6 / 46;
+    //     let tabW = width / DCOLS - GAP; // width = (tabW) * DCOLS
+    //     let x1 = si == 0 ? 0 : (tabW + GAP) * si;
+    //     let x2 = si == DCOLS - 1 ? width : (tabW + GAP) * (si + 1);
+
+    //     this.svg.props = {
+    //         "viewBox": `0 0 ${width} ${height}`
+    //     }
+
+    //     let points = [
+    //         [0, ySplit],
+    //         [x1, ySplit],
+    //         [x1, topY],
+    //         [x2, topY],
+    //         [x2, ySplit],
+    //         [width, ySplit],
+    //         [width, height],
+    //         [0, height],
+    //     ].map(p => new Vector(p));
+
+    //     // If two consecutive points are the same, remove them both
+    //     for (let i = 0; i < points.length - 1; i++) {
+    //         if (points[i].sub(points[i + 1]).isZero) {
+    //             points.splice(i, 2);
+    //             i -= 2; // Step back to check the new consecutive points
+    //         }
+    //     }
+
+    //     this.svg.innerHTML = `
+    //     <path d="${roundedPolygon( points, 19)}" fill="${colors[si]}"/>
+
+    //     `;
+    // }
 
     static get usedStyleSheets() {
         return [
+            ...AccessTextarea.usedStyleSheets,
+            ...RoundedTabs.usedStyleSheets,
+            ...GridIcon.usedStyleSheets,
             import.meta.resolve("./index.css"),
-            ...GridIcon.usedStyleSheets
         ]
     }
 }
