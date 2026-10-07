@@ -34,7 +34,7 @@ main > svg {
 
 
 grid-layout {
-    padding: 4px;
+    padding: 2px;
 }
 
 .grid-icon[color-theme="featured"] {
@@ -96,4 +96,39 @@ grid-layout {
 }
 .featured > .grid-icon .content {
     gap: 1em;
+}
+
+
+
+
+
+
+
+.checkbox {
+    cursor: pointer;
+    padding-left: 1em;
+}
+.checkbox .box {
+    width: 1.2em;
+    height: 1.2em;
+    border-radius: 0.3em;
+    border: 1px solid;
+    background-color: var(--c-dark);
+    position: relative;
+    text-align: center;
+}
+
+.checkbox[undefined] .box,
+.checkbox[checked] .box {
+    background-color: var(--c-text);
+}
+
+.checkbox[undefined] .box::after,
+.checkbox[checked] .box::after {
+    color: var(--c-darker);
+    font-weight: bold;
+    content: "✓";
+}
+.checkbox[undefined] .box::after {
+    content: "?";
 }

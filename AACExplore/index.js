@@ -6,6 +6,14 @@ import { GridIcon, GridLayout } from "../src/Utilities/GridLayout/grid-icons.js"
 import { roundedPolygon } from "./rpoly.js";
 initialise();
 
+function toRows(array, cols) {
+    const rows = [];
+    for (let i = 0; i < array.length; i += cols) {
+        rows.push(array.slice(i, i + cols));
+    }
+    return rows;
+}
+
 
 const FEATURED_BOARDS = [
     {
@@ -78,10 +86,9 @@ const FEATURED_BOARDS = [
             "InZgWP9sywxFUwOJO0TQ"
         ]
     },
-    
-    
      
 ]
+
 
 class BoardGridIcon extends GridIcon {
     constructor(id) {
@@ -113,18 +120,17 @@ class FixedGridLayout extends GridLayout {
 const DROWS = 4;
 const DCOLS = 5;
 const FROWS = 2;
+const GAP = 4;
 
 class Featured extends FixedGridLayout {
-
     constructor() {
         super(DROWS,DCOLS)
         this.class = "featured"
-        const rows = [
-            FEATURED_BOARDS.slice(0, DCOLS),
-            FEATURED_BOARDS.slice(DCOLS, DCOLS * 2)
-        ];
+
+        const rows = toRows(FEATURED_BOARDS, DCOLS);
+        
         /** @type {GridIcon[][]} */
-        this.buttons = this.addGridIcons(rows.map((row, r) => 
+        this.buttons = this.addGridIcons(rows.slice(0, FROWS).map((row, r) => 
             row.map((i, c) => ({
                 displayValue: i.title, 
                 colorTheme: "topic", 
@@ -154,9 +160,9 @@ class Featured extends FixedGridLayout {
         if (index !== this.lastIndex) {
             this.lastIndex = index;
             const boards = FEATURED_BOARDS[index].boards;
-            console.log(boards)
+            const bRows = toRows(boards, DCOLS).slice(0, DROWS - FROWS);
             this.boardList.innerHTML = "";
-            this.boardList.addItemInstances(BoardGridIcon, [boards], 0, 0)
+            this.boardList.addItemInstances(BoardGridIcon, bRows, 0, 0)
         }
         
     }
@@ -164,7 +170,8 @@ class Featured extends FixedGridLayout {
 
 }
 
-const GAP = 4;
+
+
 const colors = [
     "",
     "#675041",
@@ -172,6 +179,24 @@ const colors = [
     "#416367",
     "#534167",
 ]
+
+
+class SearchableList extends FixedGridLayout {
+    constructor() {
+        super(DROWS, DCOLS);
+
+
+    }
+    async getList() {
+        return [];
+    }
+
+    async load() {
+        this.list = await this.getList();
+        this.innerHTML = "";
+        // for 
+    }
+}
 class AACExplore extends ShadowElement {
 
     constructor(el) {
@@ -228,18 +253,17 @@ class AACExplore extends ShadowElement {
 
 
     onresize(e) {
-        
         let rect = e[0].contentRect;
         console.log(rect);
         const {width, height} = rect;
         if (width ==0 || height == 0) return;   
 
         let si = this.selectedTab;
-        let topY = GAP/2;
+        let topY = 0;
         let ySplit = height * 6 / 46;
-        let tabW = width/DCOLS - GAP * (1 + 1 / DCOLS);
-        let x1 = si == 0 ? 0 : GAP * 0.5 + (tabW + GAP) * si;
-        let x2 = si == DCOLS - 1 ? width : GAP * 0.5 + (tabW + GAP) * (si + 1);
+        let tabW = width / DCOLS - GAP; // width = (tabW) * DCOLS
+        let x1 = si == 0 ? 0 : (tabW + GAP) * si;
+        let x2 = si == DCOLS - 1 ? width : (tabW + GAP) * (si + 1);
 
         this.svg.props = {
             "viewBox": `0 0 ${width} ${height}`

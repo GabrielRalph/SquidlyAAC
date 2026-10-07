@@ -1,7 +1,7 @@
 import { AACBoard} from "../AACWebComponent/aac.js";
 import { AACEditorGrid, OBBoardEditable } from "./aac-editable.js";
 import { ColorPicker } from "../Utilities/color-picker.js";
-import { FastFindImageList, ImageFinder } from "../IconSearch/image-finder.js";
+import { FastFindSymbolList, SymbolFinder } from "../IconSearch/symbol-finder.js";
 import { OBBoard, OBButton, OBImage, OBLoadBoard } from "../OpenBoard/openboard.js";
 import { ActionsPanel, NavigationPanel } from "./editor-actions.js";
 import { Icon } from "../Utilities/icons.js";
@@ -160,7 +160,7 @@ class ImageList extends ToolInterface {
         super(e);
 
         this.class = "image-list";
-        this.imageList = this.createChild(FastFindImageList);
+        this.imageList = this.createChild(FastFindSymbolList);
         this.imageList.onImageSelected = (image) => {
             this.editor.setButtonImages(image);
         };
@@ -1023,7 +1023,7 @@ class OpenBoardEditor extends ShadowElement {
         });
         this.gridResizeObserver.observe(this.grid);
 
-        this.imageFinder = this.createChild(ImageFinder)
+        this.imageFinder = this.createChild(SymbolFinder)
         this.imageFinder.onImageSelected = (image) => {
             this.setButtonImages(image);
             this.imageFinder.hide();
@@ -1823,6 +1823,8 @@ class OpenBoardEditor extends ShadowElement {
             ...AACBoard.usedStyleSheets,
             import.meta.resolve("./styles.css"),
             import.meta.resolve("../IconSearch/image-search.css"),
+            import.meta.resolve("../IconSearch/symbol.css"),
+            import.meta.resolve("../Utilities/bg-img.css"),
             import.meta.resolve("../../Assets/Icons/icons.css")
         ];
     }

@@ -66,7 +66,7 @@ class DataClass {
      * Creates an instance of the class and populates its properties based on the provided arguments object.
     * @template {DataClass} T
     * @this {new() => T}
-    * @param {Object} argsObject
+    * @param {Partial<T>} argsObject
     * @returns {T}
     */
     static make(argsObject) {
