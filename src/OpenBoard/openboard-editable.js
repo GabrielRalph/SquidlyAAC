@@ -188,6 +188,17 @@ class ActionsSimple {
         }
     }
     ACTION_APPLIERS = {
+        clearText: (actions, button) => {
+            if (this.clearText.on) {
+                if (this.clearText.mode === "word") {
+                    actions.push({mode: "delete_word"});
+                } else if (this.clearText.mode === "backspace") {
+                    actions.push({mode: "backspace"});
+                } else {
+                    actions.push({mode: "clear"});
+                }
+            }
+        },
 
         addText: (actions, button) => {
             if (this.addText.on) {
@@ -217,17 +228,7 @@ class ActionsSimple {
         space: (actions, button) => this.space.on && actions.push({mode: "space"}),
 
 
-        clearText: (actions, button) => {
-            if (this.clearText.on) {
-                if (this.clearText.mode === "word") {
-                    actions.push({mode: "delete_word"});
-                } else if (this.clearText.mode === "backspace") {
-                    actions.push({mode: "backspace"});
-                } else {
-                    actions.push({mode: "clear"});
-                }
-            }
-        },
+       
 
 
         moveCursor: (actions, button) => {

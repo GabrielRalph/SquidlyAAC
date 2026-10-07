@@ -480,11 +480,12 @@ class ActionsPanel extends SvgPlus {
 			}
 
 			let actions = [
+				this.main.createChild(ClearTextAction, {},  action, editor),
+				
 				this.main.createChild(AddTextAction, {},  action, editor),
 				// TODO CHANGE VOLUME
 				// TODO INFLECT
 				this.main.createChild(SimpleAction, {},  action, editor, "Space", "space", "Adds a space to the text box."),
-				this.main.createChild(ClearTextAction, {},  action, editor),
 				this.main.createChild(MoveCursorAction, {},  action, editor),
 				this.main.createChild(SpeakAction, {},  action, editor),
 				// this.main.createChild(SimpleAction, {},  action, editor, "Open Word Finder", "openWordFinder", "If enabled, will open the word finder when pressed."),
