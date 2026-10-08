@@ -10,6 +10,13 @@ const FEATURED_BOARDS = [
         ]
     },
     {
+        title: "CommuniKate",
+
+        boards: [
+            "ibuZiHSoIDhRWMamwfNx"
+        ]
+    },
+    {
         title: "Everyday Life",
         boards: [
             "8oKZZp4cw9uDmiRfiijM",

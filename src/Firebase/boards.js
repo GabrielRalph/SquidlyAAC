@@ -764,7 +764,7 @@ class BoardSetWatcher {
  * Watches the favourite boards of a specific user and
  * triggers a callback whenever there are changes.
  * @param {string} uid - The user ID whose favourite boards are being watched.
- * @param {function} callback - The callback function to be triggered on changes.
+ * @param {(boards: Object<string, BoardMetadata>) => void} callback - The callback function to be triggered on changes.
  * @returns {function} - A function to unsubscribe from the watcher.
  */
 function watchMyFavouriteBoards(uid, callback) {
@@ -798,7 +798,7 @@ function watchMyFavouriteBoards(uid, callback) {
 
 /**
  * Watches the public favourite boards and triggers a callback whenever there are changes.
- * @param {function} callback - The callback function to be triggered on changes.
+ * @param {(boards: Object<string, BoardMetadata>) => void} callback - The callback function to be triggered on changes.
  * @returns {function} - A function to unsubscribe from the watcher.
  */
 async function watchPublicBoards(callback) {

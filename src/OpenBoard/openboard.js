@@ -21,7 +21,9 @@ class OpenBoardObject extends DataClass {
  * which is used as part of the "load_board" 
  * property on the OB button object.
  */
-class OBLoadBoard extends OpenBoardObject {
+class OBLoadBoard extends DataClass {
+    /** @type {?string} */
+    id = null;
 
     /** @type {?string} */
     name = null;        
