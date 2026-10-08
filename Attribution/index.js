@@ -41,7 +41,6 @@ class CCIcons extends SvgPlus {
 class LicenceItem extends SvgPlus {
     constructor(l) {
         super("licence-item");
-        console.log(l)
         let r = this.createChild("div", {class: "row"});
         let rr = r.createChild("div", {class: "row"});
         rr.createChild("img", {class: "logo", src: l.logo});
@@ -89,7 +88,6 @@ class AttributionPage extends ShadowElement {
 
     async loadData() {
         let data = await (await fetch(import.meta.resolve("./licences.json"))).json();
-        console.log(data);
         Object.values(data["symbol-licences"])
             .map(l => this.licenceListA.createChild(LicenceItem, {}, l))
 
