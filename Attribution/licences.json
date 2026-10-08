@@ -99,6 +99,15 @@
             "source_url": "https://www.openaac.org/vocabularies/vf",
             "copyright_notice_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
             "attribution": "<a href=\"${source_url}\">Vocal Flair</a> by <a href=\"https://www.openaac.org/\">OpenAAC</a> is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>"
+        },
+        "2": {
+            "title": "CommuniKate",
+            "logo": "https://firebasestorage.googleapis.com/v0/b/eyesee-d0a42.appspot.com/o/board-thumbnails%2FibuZiHSoIDhRWMamwfNx?alt=media&token=ecaf615d-684a-4819-9b96-119d0c9f4e8b",
+            "type": "CC BY-NC",
+            "version": "4.0",
+            "source_url": "https://equalitytime.github.io/CommuniKate/index.html",
+            "copyright_notice_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+            "attribution": "<a href=\"${source_url}\">CommuniKate</a>, designed by Kate McCallum with contributions from Joe Reddington and <a href=\"https://equalitytime.co.uk/\">eQuality Time</a>, is licensed under <a href=\"${copyright_notice_url}\">${type} ${version}</a>."
         }
     }
 }
