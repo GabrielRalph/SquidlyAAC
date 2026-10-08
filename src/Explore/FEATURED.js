@@ -10,13 +10,6 @@ const FEATURED_BOARDS = [
         ]
     },
     {
-        title: "CommuniKate",
-
-        boards: [
-            "ibuZiHSoIDhRWMamwfNx"
-        ]
-    },
-    {
         title: "Everyday Life",
         boards: [
             "8oKZZp4cw9uDmiRfiijM",
@@ -71,7 +64,14 @@ const FEATURED_BOARDS = [
             "H3SqbnGwX1bjHI2Xv0iB",
             "5sBqMpBRVEQp5aFYTuo4",
         ]
-    }
+    },
+    {
+        title: "CommuniKate",
+
+        boards: [
+            "ibuZiHSoIDhRWMamwfNx"
+        ]
+    },
 ]
 
 export default FEATURED_BOARDS;
