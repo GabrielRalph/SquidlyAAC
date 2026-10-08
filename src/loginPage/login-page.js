@@ -8,6 +8,8 @@ import {
     OAuthProvider,
     signInWithCustomToken,
     signInWithPopup,
+    logEvent,
+    getAdditionalUserInfo,
 } from "../Firebase/firebase.js";
 import { InputPlus } from "./input-plus.js";
 import { SvgPlus} from "../SvgPlus/4.js";
@@ -109,6 +111,7 @@ async function verifyOTP(email, otp) {
                 }
             }
 
+        
         // Catch any errors that occur during sign in or linking and return them
         } catch (e) {
             error = "sign in with token + link: " + e.message;
@@ -288,12 +291,19 @@ class OTPVerifyContainer extends SvgPlus {
 
 class LoginPage extends ShadowElement {
     #mode = null;
+    #otpPurpose = null;
 
     constructor(el) {
         super(el, "div");
         this.root.class = "login-page";
         this.#build();
         this.mode = "signIn"
+    }
+
+    #logEvent(method = "email_otp", mode = this.#otpPurpose || "login") {
+        logEvent(mode, {
+            method: method.toLowerCase()
+        });
     }
 
     #build() {
@@ -379,7 +389,7 @@ class LoginPage extends ShadowElement {
             // Get the OTP value from the input and call the verifyOTP function
             let otp = this.vOTP.otpInput.value;
             let error = await verifyOTP(this.email, otp);
-
+            
             let hide = true;
             if (error) {
                 // If there was an error verifying the OTP, show it on the overlay
@@ -390,6 +400,8 @@ class LoginPage extends ShadowElement {
                     hide = false;
                 }
             } else {
+                // Successful authentication
+                this.#logEvent();
                 // If the users email is not verified, force a refresh of 
                 // the auth state to update the emailVerified property
                 if (getUser().emailVerified === false) { 
@@ -418,6 +430,7 @@ class LoginPage extends ShadowElement {
             let [isNewUser, error] = await requestOTP(email);
             DEBUG.logBasic(`Is new user: ${isNewUser}, error: ${error}`)
             if (isNewUser) {
+                this.#otpPurpose = "sign_up";
                 this.mode = "signUp";
                 this.loading = false;
             } else if (error) {
@@ -432,6 +445,7 @@ class LoginPage extends ShadowElement {
                         break;
                 }
             } else {
+                this.#otpPurpose = "login";
                 this.resetOTPCountDown();
                 this.mode = "vOTP";
                 this.loading = false;
@@ -484,6 +498,7 @@ class LoginPage extends ShadowElement {
         this.loading = true;
 
         let providerError = null;
+        let requestedOTP = false;
         let res;
         let userEmail;
         try {
@@ -510,6 +525,7 @@ class LoginPage extends ShadowElement {
                 // Otherwise, request OTP for the email so they can link their provider account to their existing account.
                 } else {
                     this.email = userEmail;
+                    requestedOTP = true;
                     await this.requestOTP(userEmail);
                 }
             } else if (error.code === "auth/cancelled-popup-request" || error.code === "auth/popup-closed-by-user") {
@@ -534,7 +550,12 @@ class LoginPage extends ShadowElement {
             // If the users email is not verified and is from a domain that we force to sign in with Microsoft.
             savePendingCred(p.constructor.credentialFromResult(res));
             this.loading = !res.user.emailVerified;
+            let info = getAdditionalUserInfo(res);
+            if (!requestedOTP) {
+                this.#logEvent(info?.isNewUser ? "sign_up" : "login", pname)
+            }
         }
+
     }
 
     async onEmailNeedsVerification({email}) {

@@ -1,6 +1,6 @@
 import { ExplorePage } from "./src/Explore/explore.js";
 import { AACFinder } from "./files.js";
-import { addAuthChangeListener, getUser, initialise, signOut } from "./src/Firebase/firebase.js";
+import { addAuthChangeListener, getUser, initialise, signOut, logEvent } from "./src/Firebase/firebase.js";
 import { LoginPage } from "./src/loginPage/login-page.js";
 import { openEditor, openProfile } from "./src/Utilities/shared.js";
 import { SvgPlus } from "./src/SvgPlus/4.js";
@@ -28,6 +28,7 @@ const SIDE_BAR_RADIO = [
         title: "Explore",
         icon: "search",
         onClick: (page) => {
+            logEvent("view_tab", {name: "explore"});
             page.viewMode = "explore";
         }
     },
@@ -35,6 +36,7 @@ const SIDE_BAR_RADIO = [
         title: "My Files",
         icon: "new-folder",
         onClick: (page) => {
+            logEvent("view_tab", {name: "finder"});
             page.openFileSystem();
         }
     },
@@ -43,6 +45,7 @@ const SIDE_BAR_RADIO = [
         icon: "new-grid",
         onClick: (page) => {
             setTimeout(() => {
+                logEvent("view_tab", {name: "create"});
                 page.viewMode = page.viewMode;
             }, 10)
             openEditor()
@@ -52,6 +55,7 @@ const SIDE_BAR_RADIO = [
         title: "Terms",
         icon: "cc-heart",
         onClick: (page) => {
+            logEvent("view_tab", {name: "terms"});
             page.viewMode = "attribution";
         }
     }
@@ -167,6 +171,8 @@ class AACHomePage extends ShadowElement {
             })
         })
         
+
+        logEvent("view_tab", {name: mode});
         if (mode === "finder") {
             this.openFileSystem();
         } else {

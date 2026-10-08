@@ -196,6 +196,7 @@ class AACViewer extends ShadowElement {
             let name = meta.path.name;
             document.head.querySelector("title").innerHTML = `${name} | Board Viewer | Squidly`;
             this.accBoard.manager = manager;
+            FB.logEvent("view_board", {board_id: rootID});
         }
 
         await this.loadStyles();

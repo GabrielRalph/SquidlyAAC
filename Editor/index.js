@@ -180,6 +180,7 @@ class EditorSession extends SvgPlus {
         
         // Now start watching the board for changes
         this.watchBoard(boardID, true);
+        FB.logEvent("save_board", {method: "save_as", board_id: boardID});
     }
 
     async save() {
@@ -196,6 +197,7 @@ class EditorSession extends SvgPlus {
 
                 // Force the tools to reflect the updated saving state after the save operation
                 this.editor.forceToolUpdate(); 
+                FB.logEvent("save_board", {method: "save", board_id: this.boardWatcher?.boardID});
             }
         } else {
             const user = FB.getUser();
@@ -251,6 +253,8 @@ class EditorSession extends SvgPlus {
                 console.log("Board not found, redirecting to no board state");
             } else if (metadata.error?.code == 403 || this.boardWatcher.editable === false) {
                 this.errorOverlay.styles = SHOW_STYLE;
+            } else {
+                FB.logEvent("edit_board", {board_id: boardID});
             }
         } else if (pendingSave) {
             this.save();
