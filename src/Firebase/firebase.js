@@ -24,6 +24,7 @@ import {
         EmailAuthProvider,
         signInWithCustomToken as signInWithToken,
         onAuthStateChanged, 
+        getAdditionalUserInfo,
         sendEmailVerification as _sendEmailVerification} from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js'
 
 import {
@@ -61,6 +62,11 @@ import { getStorage,
          getBlob, 
          getMetadata } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js'
 
+import {
+    getAnalytics,
+    logEvent as _logEvent
+} from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js'
+
 import * as FS from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js'
 
 const firebaseConfig = {
@@ -70,7 +76,8 @@ const firebaseConfig = {
     projectId: "eyesee-d0a42",
     storageBucket: "eyesee-d0a42.appspot.com",
     messagingSenderId: "56834287411",
-    appId: "1:56834287411:web:999340ed2fd5165fa68046"
+    appId: "1:56834287411:web:999340ed2fd5165fa68046",
+    measurementId: "G-HR5XCLC797"
 };
 
 const storageURL = "gs://eyesee-d0a42.appspot.com"
@@ -90,6 +97,7 @@ let User;
 let Firestore = null;
 let StateListeners = [];
 let waitForUserProm = null;
+let Analytics = null;
 
 // Generates a random key to use as the device's unique identifier DUID.
 function makeRandomKey(){
@@ -141,6 +149,7 @@ export async function initialise(config = firebaseConfig) {
     Database = getDatabase(App);
     Auth = getAuth();
     Firestore = FS.getFirestore(App);
+    Analytics = getAnalytics(App);
   
     Storage = getStorage(App, storageURL);
     for (let key in Functions) Functions[key] = getFunctions(App, key);
@@ -253,6 +262,7 @@ export async function signInAnonymously(){
 
 export async function signOut(){
     sOut(Auth);
+    logEvent("logout");
 }
 
 export async function signInWithPopup(provider) {
@@ -347,6 +357,15 @@ FStore.writeBatch = (...args) => {
     return writeBatch(Firestore, ...args);
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Analytics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+export function logEvent(eventName, eventParams, options) {
+    if (Analytics) {
+        _logEvent(Analytics, eventName, eventParams, options);
+    } else {
+        console.warn(`Analytics not initialized. Event "${eventName}" not logged.`);
+    }
+}
 export {
         reauthenticateWithCredential, 
         updatePassword, 
@@ -356,6 +375,7 @@ export {
         getMetadata,
         linkWithCredential,
         getDownloadURL,
+        getAdditionalUserInfo,
 
         update,
         child,
