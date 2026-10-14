@@ -1,5 +1,6 @@
-import { getBoardMetadata } from "../src/Firebase/boards.js";
-import { initialise } from "../src/Firebase/firebase.js";
+import { Path } from "../src/FileTree/FileSystem/Path.js";
+import { BoardMetadata, getBoardMetadata, watchMyFavouriteBoards, watchPublicBoards } from "../src/Firebase/boards.js";
+import { addAuthChangeListener, initialise } from "../src/Firebase/firebase.js";
 import { SvgPlus } from "../src/SvgPlus/4.js";
 import { ShadowElement } from "../src/SvgPlus/shadow-element.js";
 import { Vector } from "../src/SvgPlus/vector.js";
@@ -19,39 +20,46 @@ function toRows(array, cols) {
 }
 
 
+const DROWS = 4;
+const DCOLS = 5;
+const FROWS = 2;
+const GAP = 4;
+const SP = 3;
+const BR = 20;
+
 const FEATURED_BOARDS = [
     {
-        title: "Squidly",
+        title: "Keyboards",
         img: import.meta.resolve("../Assets/logo.svg"),
         boards: [
-            "PkNtxxwUyntPbXalmdJB",
-            "gfxpGyVxp54ZUAmwr2Lg",
-            "U5uKJRS5H0mnp0hPzP6E",
-            "LcXf0yWUT5n3syU2n4WO",
-            "5MtHTgn0ukUt7u4Fs3yU",
+            // "PkNtxxwUyntPbXalmdJB",
+            // "gfxpGyVxp54ZUAmwr2Lg",
+            // "U5uKJRS5H0mnp0hPzP6E",
+            // "LcXf0yWUT5n3syU2n4WO",
+            // "5MtHTgn0ukUt7u4Fs3yU",
 
-            "8oKZZp4cw9uDmiRfiijM",
-            "4SsWDV7IqU0tiNg3Vtp0",
-            "S98Y4J5gnR3hQSy80tEF",
-            "JkXZ2Cm3OzXTw8u2yKSl",
-            "kDClJEcGEkPaOZq831HD",
+            // "8oKZZp4cw9uDmiRfiijM",
+            // "4SsWDV7IqU0tiNg3Vtp0",
+            // "S98Y4J5gnR3hQSy80tEF",
+            // "JkXZ2Cm3OzXTw8u2yKSl",
+            // "kDClJEcGEkPaOZq831HD",
 
-            "JLYix9KezJaosLusUhkl",
-            "GPomuZcnGmpn7hNuX2S6",
+            // "JLYix9KezJaosLusUhkl",
+            // "GPomuZcnGmpn7hNuX2S6",
             "bO8yY3GEkU8o3g0rkcTv",
             "InZgWP9sywxFUwOJO0TQ"
         ]
     },
-    // {
-    //     title: "PRC Saltillo",
-    //     img: import.meta.resolve("./prc.svg"),
-    //     boards: [
-    //         "tVO399IgcEuTW6FLTDZP",
-    //         "rTezEUKTUzcOGAdleZkh",
-    //         "zmnKiAkXdSTdjCtB6WmV",
-    //         "HWRGaqWL8AjrRfAFW4ik"
-    //     ]
-    // },
+    {
+        title: "PRC Saltillo",
+        img: import.meta.resolve("./prc.svg"),
+        boards: [
+            "tVO399IgcEuTW6FLTDZP",
+            "rTezEUKTUzcOGAdleZkh",
+            "zmnKiAkXdSTdjCtB6WmV",
+            "HWRGaqWL8AjrRfAFW4ik"
+        ]
+    },
     {   
         title: "Quick Core",
         img: import.meta.resolve("./quick-core.svg"),
@@ -74,37 +82,38 @@ const FEATURED_BOARDS = [
             "mlvuf8KAWlEVxusyFIt1",
         ]
     },
-    // {
-    //     title: "Everyday Life",
+    {
+        title: "Everyday Life",
 
-    //     boards: [
-    //         "8oKZZp4cw9uDmiRfiijM",
-    //         "4SsWDV7IqU0tiNg3Vtp0",
-    //         "S98Y4J5gnR3hQSy80tEF",
-    //         "JkXZ2Cm3OzXTw8u2yKSl",
-    //         "kDClJEcGEkPaOZq831HD"
-    //     ]
-    // },
-    // {
-    //     title: "People, Play & Interests",
-    //     boards: [
-    //         "PkNtxxwUyntPbXalmdJB",
-    //         "gfxpGyVxp54ZUAmwr2Lg",
-    //         "U5uKJRS5H0mnp0hPzP6E",
-    //         "LcXf0yWUT5n3syU2n4WO",
-    //         "5MtHTgn0ukUt7u4Fs3yU"
-    //     ]
-    // },
-    // {   
-    //     title: "Proloquo",
-    //     boards: [
-    //         "s9xO1YfGtLdwM1YOgG1S",
-    //         "InZgWP9sywxFUwOJO0TQ"
-    //     ]
-    // },
+        boards: [
+            "8oKZZp4cw9uDmiRfiijM",
+            "4SsWDV7IqU0tiNg3Vtp0",
+            "S98Y4J5gnR3hQSy80tEF",
+            "JkXZ2Cm3OzXTw8u2yKSl",
+            "kDClJEcGEkPaOZq831HD"
+        ]
+    },
+    {
+        title: "People, Play & Interests",
+        boards: [
+            "PkNtxxwUyntPbXalmdJB",
+            "gfxpGyVxp54ZUAmwr2Lg",
+            "U5uKJRS5H0mnp0hPzP6E",
+            "LcXf0yWUT5n3syU2n4WO",
+            "5MtHTgn0ukUt7u4Fs3yU"
+        ]
+    },
+    {   
+        title: "Proloquo",
+        boards: [
+            "s9xO1YfGtLdwM1YOgG1S",
+            "InZgWP9sywxFUwOJO0TQ"
+        ]
+    },
      
 ]
 
+const FEATURED_BOARD_SET = new Set(FEATURED_BOARDS.flatMap(b => b.boards));
 
 class BoardGridIcon extends GridIcon {
     constructor(id) {
@@ -119,7 +128,6 @@ class BoardGridIcon extends GridIcon {
 
     async load(id) {
         const metadata = await getBoardMetadata(id);
-        console.log(metadata, id);
         this.displayValue = metadata.path.name;
         this.symbol = metadata.thumbnail || import.meta.resolve("../Assets/Icons/grid.svg");
     }
@@ -129,16 +137,13 @@ class FixedGridLayout extends GridLayout {
 
     fixedBR = 15;
     onresize(){
-        console.log("tabs resized");
         this.gridIconBorderRadius = this.fixedBR;
         this.gridIconBorderWidth = Math.min(Math.max(2, Math.ceil(this.clientWidth / 225)), 4);
     }
 }
 
-const DROWS = 4;
-const DCOLS = 5;
-const FROWS = 1;
-const GAP = 4;
+
+
 
 class Featured extends FixedGridLayout {
     constructor() {
@@ -151,9 +156,10 @@ class Featured extends FixedGridLayout {
         this.buttons = this.addGridIcons(rows.slice(0, FROWS).map((row, r) => 
             row.map((i, c) => ({
                 displayValue: i.title, 
-                colorTheme: "topic", 
+                colorTheme: "white", 
                 type: "folder",
-                symbol: i.img,
+                labelOnBottom: true,
+                // symbol: i.img,
                 events: {
                     "access-click": (e) => {
                         this.selectCategory(r, c);
@@ -187,34 +193,114 @@ class Featured extends FixedGridLayout {
     }
 }
 
-
-const colors = [
-    "",
-    "#675041",
-    "#5b6741",
-    "#416367",
-    "#534167",
-]
-
-
 class SearchableList extends FixedGridLayout {
+    #page = 0;
+    #lastSet = [];
+    #lastSize = 0;
     constructor() {
         super(DROWS, DCOLS);
 
-        this.add(new GridCard('access-button', "plain", "textarea"), [0,0], [1,3])
-            .content.createChild(AccessTextarea)
+        this.navigation = new GridLayout(1, DCOLS);
+        this.textCard = new GridCard('access-button', "plain", "textarea")
+        this.pageIndicator = this.textCard.content.createChild("div", {class: "page-progress"});
+        this.pageIndicator.createChild("div");
+        this.pageIndicator.createChild("div");
+        this.textInput = this.textCard.content.createChild(AccessTextarea, {
+            events: {
+                "input": (e) => {
+                    this.setList(this.#lastSet);
+                    console.log("Search input changed");
+                }
+            }
+        });
+        this.navigation.add(this.textCard, [0,0], [1,3])
 
-        this.addGridIcon({
-            displayValue: "Search",
+
+        this.previousButton = this.navigation.addGridIcon({
+            // displayValue: "Search",
             colorTheme: "action",
+            symbol: "leftArrow",
+            events: {
+                "access-click": (e) => {
+                    this.previousPage();
+                }
+            }
         }, 0,0)
-        this.addGridIcon({
-            displayValue: "Search",
-            colorTheme: "action"
+        this.nextButton = this.navigation.addGridIcon({
+            // displayValue: "Search",
+            symbol: "rightArrow",
+            colorTheme: "action",
+            events: {
+                "access-click": (e) => {
+                    this.nextPage();
+                }
+            }
         }, 0,4)
+
+
+        this.searchMain = this.add(new GridLayout(DROWS - 1, DCOLS), [1, DROWS - 1], [0, DCOLS - 1]);
     }
-    async getList() {
-        return [];
+
+    nextPage() {
+        this.#page++;
+        this.setList(this.#lastSet);
+
+    }
+
+    previousPage() {
+        this.#page--;
+        this.setList(this.#lastSet);
+    }
+    
+
+    /**
+     * @param {Object<string, BoardMetadata>} boards
+     */
+    setList(boards) {
+        this.#lastSet = boards;
+        let ids = Object.keys(boards);
+        ids =[...ids, ...ids, ...ids, ...ids];
+        let length = ids.length;
+
+        if (ids.length < DCOLS * DROWS) {
+
+            this.innerHTML = "";
+            this.addItemInstances(BoardGridIcon, toRows(ids, DCOLS), 0, 0);
+
+        } else {
+            
+            const search = this.textInput.value.toLowerCase().trim().split(/\s+/);
+            if (search && search.length > 0) {
+                ids = ids.filter(id => {
+                    let boardPath = new Path(boards[id].path).parts;
+                    let words = boardPath.flatMap(part => part.toLowerCase().trim().split(/\s+/));
+                    return search.some(term => words.some(word => word.startsWith(term)));
+                });
+            }
+
+            let pages = toRows(toRows(ids, DCOLS), DROWS - 1); 
+            if (this.#page >= pages.length) {
+                this.#page = 0;
+            }
+            
+            this.pageIndicator.setAttribute("page-num", this.#page + 1);
+            this.pageIndicator.setAttribute("total-pages", pages.length);
+            this.pageIndicator.style.setProperty("--p", (this.#page + 1) / pages.length);
+            this.nextButton.disabled = this.#page >= pages.length - 1;
+            this.previousButton.disabled = this.#page <= 0;
+
+            if (this.#lastSize < DCOLS * DROWS) {
+                console.log("Resetting innerHTML and adding navigation and searchMain");
+                this.innerHTML = "";
+                this.add(this.navigation, 0, [0,DCOLS-1]);
+                this.add(this.searchMain, [1, DROWS - 1 ], [0,DCOLS-1]);
+            }
+            this.searchMain.innerHTML = "";
+            if (pages[this.#page].length > 0) {
+                this.searchMain.addItemInstances(BoardGridIcon, pages[this.#page], 0, 0);
+            }
+        }
+        this.#lastSize = length;
     }
 
     async load() {
@@ -229,88 +315,84 @@ class AACExplore extends ShadowElement {
     constructor(el) {
         super(el, "aac-explore-root");
 
-        const SP = 3;
-        const BR = 20;
+        
         this.root.styles = {"--space": `${SP}px`}
 
-        // const root =this.createChild("main");
-        // this.svg = root.createChild("svg");
-
-        // let resizeObserver = new ResizeObserver(this.onresize.bind(this)); 
-        // resizeObserver.observe(root);
-
-        // const tabs = root.createChild(FixedGridLayout, {
-        //     styles: {"padding-bottom": `${GAP/2}px`}
-        // }, 1, 5);
-        // tabs.addGridIcons([
-        //     [
-        //         {
-        //             displayValue: "Exit",
-        //             colorTheme: "action"
-        //         },
-        //         {
-        //             displayValue: "Featured",
-        //             colorTheme: "featured"
-        //         },
-        //         {
-        //             displayValue: "Public",
-        //             colorTheme: "public"
-        //         },
-        //         {
-        //             displayValue: "Favourites",
-        //             colorTheme: "favourites"
-        //         },
-        //         {
-        //             displayValue: "Search",
-        //             colorTheme: "noun"
-        //         }
-        //     ].map((v, i) => {
-        //         v.events = {
-        //             "access-click": (e) => {
-        //                 this.selectedTab = i;
-        //                 console.log(`Selected tab: ${i.displayValue}`);
-        //                 this.onresize(
-        //                     [{contentRect: root.getBoundingClientRect()}]
-        //                 );
-        //             }
-        //         }
-        //         return v
-        //     })
-        // ])
-        // const main = root.createChild(Featured);
-        // this.selectedTab = 4;
-        // tabs[0]
+       
         class GI extends GridIcon {
             getCardBorderRadius() {
                 return BR - this.getCardBorderWidth() * 0.5 - SP;
             }
         }
 
+        const publicList = new SearchableList("div");
+        const favourite = new SearchableList("div");
+        const all = new SearchableList("div");
+
+
+        watchPublicBoards((boards) => {
+            let notFeatured = {}
+            for (let id in boards) {
+                if (!FEATURED_BOARD_SET.has(id)) {
+                    notFeatured[id] = boards[id];
+                }
+            }
+            publicList.setList(notFeatured);
+        })
+
+        let unsubscribe = null;
+        addAuthChangeListener((u) => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+            unsubscribe = watchMyFavouriteBoards(u.uid, (boards) => {
+                favourite.setList(boards);
+            });
+        })
+
+
+
         this.tabs = this.createChild(RoundedTabs, {}, [
             {
-                title: new GI({displayValue: "Close", colorTheme: "action"})  ,
+                title: new GI({
+                    displayValue: "Close", 
+                    colorTheme: "action",
+                    events: {
+                        click: () => {
+                            this.close();
+                            console.log("Closing AAC Explore");
+                        },
+                        "access-click": () => {
+                            console.log("Access-click closing AAC Explore");
+                            this.close();
+                        }
+                    }
+                }) ,
                 noSelect: true,
                 content: new SvgPlus("div"),
             },
             {
-                title: new GI({displayValue: "Featured", colorTheme: "normal"}) ,
+                title: new GI({displayValue: "Featured", colorTheme: "featured"}) ,
                 content: new Featured(),
                 key: "featured",
             },
             {
-                title: new GI({displayValue: "Public", colorTheme: "starter"}) ,
-                content: new SearchableList("div"),
+                title: new GI({displayValue: "Public", colorTheme: "public"}) ,
+                content: publicList,
                 key: "public",
             },
             {
-                title: new GI({displayValue: "Favourite", colorTheme: "adjective"}) ,
-                content: new SearchableList("div"),
+                title: new GI({displayValue: "Favourite", colorTheme: "favourite"}) ,
+                content: favourite,
                 key: "favourite",
             },
             {
-                content: new SearchableList("div"),
-                title: new GI({displayValue: "Search", colorTheme: "noun"}) ,
-                key: "search",
+                // content: all,
+                title: "",
+
+                // title: new GI({displayValue: "Search", colorTheme: "noun"}) ,
+                // key: "search",
+                noSelect: true
 
             }
         ]);
@@ -321,53 +403,17 @@ class AACExplore extends ShadowElement {
     }
 
 
-    // onresize(e) {
-    //     let rect = e[0].contentRect;
-    //     console.log(rect);
-    //     const {width, height} = rect;
-    //     if (width ==0 || height == 0) return;   
+    close() {
+        this.root.style.transform = "translateY(100%)";
+    }
 
-    //     let si = this.selectedTab;
-    //     let topY = 0;
-    //     let ySplit = height * 6 / 46;
-    //     let tabW = width / DCOLS - GAP; // width = (tabW) * DCOLS
-    //     let x1 = si == 0 ? 0 : (tabW + GAP) * si;
-    //     let x2 = si == DCOLS - 1 ? width : (tabW + GAP) * (si + 1);
-
-    //     this.svg.props = {
-    //         "viewBox": `0 0 ${width} ${height}`
-    //     }
-
-    //     let points = [
-    //         [0, ySplit],
-    //         [x1, ySplit],
-    //         [x1, topY],
-    //         [x2, topY],
-    //         [x2, ySplit],
-    //         [width, ySplit],
-    //         [width, height],
-    //         [0, height],
-    //     ].map(p => new Vector(p));
-
-    //     // If two consecutive points are the same, remove them both
-    //     for (let i = 0; i < points.length - 1; i++) {
-    //         if (points[i].sub(points[i + 1]).isZero) {
-    //             points.splice(i, 2);
-    //             i -= 2; // Step back to check the new consecutive points
-    //         }
-    //     }
-
-    //     this.svg.innerHTML = `
-    //     <path d="${roundedPolygon( points, 19)}" fill="${colors[si]}"/>
-
-    //     `;
-    // }
 
     static get usedStyleSheets() {
         return [
             ...AccessTextarea.usedStyleSheets,
             ...RoundedTabs.usedStyleSheets,
             ...GridIcon.usedStyleSheets,
+            import.meta.resolve("../Assets/AACIcons/icons.css"),
             import.meta.resolve("./index.css"),
         ]
     }

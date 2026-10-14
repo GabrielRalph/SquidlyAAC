@@ -171,6 +171,8 @@ class AACGrid extends GridLayout {
 
 class AACBoard extends ShadowElement {
     keepCornerFree = false;
+    showSearchButton = true;
+
     #history = [];
     #renderedBoardID = null;
     #boardCache = {};
@@ -183,6 +185,7 @@ class AACBoard extends ShadowElement {
 
     #closeButton = null;
     #backspaceButton = null;
+    #searchButton = null;
 
     /** @type {AccessTextarea} */
     #textArea = null;
@@ -215,7 +218,12 @@ class AACBoard extends ShadowElement {
             accessGroup: "apps",
             // labelOnBottom: true,
         });
-       
+
+        this.#searchButton = this.#rootGrid.addGridIcon({
+            colorTheme: "action",
+            symbol: "search",
+        })
+    
         this.#textAreaCard = this.#rootGrid.createChild(GridCard, {}, "div", "plain", "textarea");
         this.#textArea = this.#textAreaCard.content.createChild(AccessTextarea, {});
     }
@@ -288,14 +296,27 @@ class AACBoard extends ShadowElement {
         if (this.#renderedBoardID !== board.id) {
             let {columns, rows} = board.grid;
             rows = Math.max(rows + 1, 4)
-            columns = Math.max(columns, 5)
+
+
+            columns = Math.max(columns, 5) 
+
+            let halfButton = columns < 8 && this.showSearchButton;
+            columns *= (halfButton ? 2 : 1)
 
             this.#rootGrid.innerHTML = "";
             this.#rootGrid.size = [rows+1, columns];
             let x = this.keepCornerFree ? 1 : 0;
-            this.#rootGrid.add(this.#closeButton, 0, x);
-            this.#rootGrid.add(this.#backspaceButton, 0, columns-1);
-            this.#rootGrid.add(this.#textAreaCard, 0, [1 + x, columns-2]);
+            this.#rootGrid.add(this.#closeButton, 0, [x, x + halfButton?0:1 ]);
+
+            let end = columns - 3;
+            if (this.showSearchButton) {
+                this.#rootGrid.add(this.#backspaceButton, 0, columns-1);
+                this.#rootGrid.add(this.#searchButton, 0, columns-2);
+            } else {
+                this.#rootGrid.add(this.#backspaceButton, 0, columns-1);
+                end = columns - 2;
+            }   
+            this.#rootGrid.add(this.#textAreaCard, 0, [x + (halfButton?1:2), end]);
 
             let grid;
             if (board.id in this.#boardCache) {
