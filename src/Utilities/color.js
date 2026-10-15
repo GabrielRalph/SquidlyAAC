@@ -19,7 +19,7 @@ export class Color {
                 [h,s,l] = Color.rgbToHsl(r,g,b);
             } else if (typeof value === "string") {
                 if (value === "transparent") {
-                    a = 0;
+                    [h,s,l,r,g,b,a] = [0,0,0,0,0,0,0];
                 } else {
                     let match = value.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*(\d+(\.\d+)?))?\s*\)/);
                     if (match) {
