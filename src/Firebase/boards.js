@@ -1,5 +1,5 @@
 import * as FB from "./firebase.js";
-import { OBBoard } from "../OpenBoard/openboard.js";
+import { OBBoard, OBButton } from "../OpenBoard/openboard.js";
 import { FirestoreFrame } from "./firestore-frame.js";
 import { OBBoardManager } from "../OpenBoard/openboard-manager.js";
 import { DataClass } from "../OpenBoard/dataclass.js";
@@ -7,7 +7,9 @@ import { copy, Debugger, isEqual, timerLogger } from "../Utilities/shared.js";
 import { Path } from "../FileTree/FileSystem/Path.js";
 const {FStore: {where}} = FB;
 
-
+/** 
+ * @typedef {OBBoard<OBButton>} OBBoardType
+ */
 /***********************
  * CONSTANTS AND CAHCES
  /**********************/
@@ -254,7 +256,7 @@ function needsReload(boardID, metadata) {
  * Loads a board by its ID, either from a URL or from Firestore.
  * @param {string} id
  * 
- * @returns {Promise<OBBoard>}
+ * @returns {Promise<OBBoardType>}
  */
 async function _loadBoard(id) {
     let board = null;
@@ -355,7 +357,9 @@ async function _setupMetadataListener(id, callback = null) {
                     metadata.error = new MetadataError(404);
                 } else if (!metadata.updatedAt.valid) {
                     metadata.error = new MetadataError(204);
-                } 
+                } else if (metadata.deletedAt.valid) {
+                    metadata.error = new MetadataError(410);
+                }
 
                 // Store metadata in the cache.
                 BOARD_META_CACHE[id] = metadata;
@@ -409,7 +413,7 @@ async function _setupMetadataListener(id, callback = null) {
  * If the board cannot be found or loaded, the promise resolves to null.
  * 
  * @param {string} id
- * @returns {Promise<?OBBoard>}
+ * @returns {Promise<?OBBoardType>}
  */
 async function _getSquidlyBoard(id) {
     // Ensure the metadata listener is set up before proceeding.
@@ -484,7 +488,7 @@ async function setupMetadataListener(id, callback) {
  * 
  * @param {string} id
  * 
- * @returns {Promise<OBBoard>}
+ * @returns {Promise<OBBoardType>}
  */
 async function getBoard(id) {
     if (id.startsWith("http")) {
@@ -702,12 +706,33 @@ class BoardWatcher {
  * BOARD SET WATCHER
  *****************************************/
 
+const REPLACEMENT_BOARDS = {
+    410: {"id":"410","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board has been deleted","image_id":"PFREWmqwNlOtWgm0gES4","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"PFREWmqwNlOtWgm0gES4","width":72,"height":72,"url":"deleted-board","content_type":"image/svg","name":"delete"}]},
+    403: {"id":"403","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"You do not have access to this board","image_id":"ERJvjORWjgjBI7gKXkfM","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"ERJvjORWjgjBI7gKXkfM","width":72,"height":72,"url":"lock","content_type":"image/svg","name":"locked"}]},
+    404: {"id":"404","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board no longer exists","image_id":"XjRJeDtwU55bUR1RjmNB","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"XjRJeDtwU55bUR1RjmNB","width":72,"height":72,"url":"no-board","content_type":"image/svg","name":"broken chain"}]},
+    204: OBBoard.makeEmptyBoard(4, 5, "204")
+}
+
 class BoardSetWatcher {
+    /** @type {string} - The ID of the root board. */
     #rootID = null;
+
+    /**  @type {Object<string, OBBoardType>} - A map of board IDs to OBBoard instances. */
     #boards = {}
+
+    /** @type {Object<string, Array<string>>} - A map of board IDs to their paths from the root board. */
+    #boardPaths = {};
+
+    /** @type {Object<string, Promise<OBBoardType>>} - A map of board IDs to their loading promises. */
+    #boardPromises = {};
+
     constructor(rootID) {
         this.#rootID = rootID;
+
+         window.bsw = this;
     }
+
+
 
     get rootBoardID() {
         return this.#rootID;
@@ -717,37 +742,164 @@ class BoardSetWatcher {
         return this.#boards[this.#rootID];
     }
 
+    
     /**
-     * @param {string} id - The board ID to load.
+     * @param {string} boardID - The board ID to load.
      * @param {boolean} waitForLinkedBoards - Whether to wait for all linked boards to be loaded before returning.
-     * @returns {Promise<OBBoard>} - A promise that resolves to the loaded board.
+     * @returns {Promise<OBBoardType>} - A promise that resolves to the loaded board.
      */
-    async getBoard(id, waitForLinkedBoards = false) {
-        const board = await this.#loadBoard(id);
-        
+    async getBoard(boardID, waitForLinkedBoards = false) {
+        const board = await this.#loadBoard(boardID);
         if (board) {
-            // Load all linked boards in the background
-            let childrenBoards = board.linkedBoards.map(b => b.data_url || b.id)
-            let proms = childrenBoards.map(id => this.#loadBoard(id));
-            if (waitForLinkedBoards) await Promise.all(proms);
+            let childrenPromise = this.#loadChildren(board);
+            if (waitForLinkedBoards) await childrenPromise;
         }
-
         return board;
     }
 
     /**
-     * @param {string} id - The board ID to load.
-     * @returns {Promise<OBBoard>} - A promise that resolves to the loaded board.
+     * @param {string} word - The word to search for.
+     * @returns {Array<{boardID: string, button: Object, path: Array<string>}>} - An array of matches, each containing the board ID, the button object, and the path to the button.
      */
-    async #loadBoard (id) {
+    findWord(word) {
+        let matches = []
+        for (const boardID in this.#boards) {
+            const board = this.#boards[boardID];
+            for (const button of board.buttons) {
+                let text = button.label || "";
+                if (text.startsWith(word) || (word.length > 4 && text.includes(word))) {
+                    matches.push({ boardID, button });
+                }
+            }
+        }
+
+        matches.forEach(m => {
+            m.path = [...this.#boardPaths[m.boardID], m.button.id];
+        })
+        return matches;
+    }
+
+    searchWord(word) {
+        console.log(this.findWord(word).map(m => {
+            let path = m.path;
+            let buttons = []
+            for (let i = 0; i < path.length; i+= 2) {
+                buttons.push(this.#boards[path[i]].getButtonByID(path[i+1])?.label );
+            }
+            return buttons.join(" -> ")
+        }).join("\n"))
+    }
+
+
+    
+    #buildBoardPathMap() {
+        const parentsOf = {};
+        for (const id in this.#boards) {
+            const board = this.#boards[id];
+            for (const linked of board.linkedBoards) {
+                const linkedID = linked.id || linked.data_url;
+                if (!parentsOf[linkedID]) parentsOf[linkedID] = new Set()
+                parentsOf[linkedID].add(id);
+            }
+        }
+
+        // Perform a breadth-first search to build paths from the root board to all other boards.
+        const visited = new Set();
+        const boardPaths = { [this.#rootID]: [this.#rootID] };
+        const queue = [this.#rootID];
+        while (queue.length > 0) {
+            const currentID = queue.shift();
+            if (!visited.has(currentID)) {
+                visited.add(currentID);
+                if (!boardPaths[currentID]) {
+                    let parentPath = [...parentsOf[currentID]]
+                        .map(pid => boardPaths[pid])
+                        .reduce((a, b) => 
+                            (a?.length ?? Infinity) <= (b?.length ?? Infinity) ? a : b
+                        ); // Choose the shortest path among the parents
+                    
+                    let parentID = parentPath[parentPath.length - 1];
+                    let parent = this.#boards[parentID];
+                    let button = parent.buttons.find(b => (b.load_board?.id || b.load_board?.data_url) === currentID);
+                    boardPaths[currentID] = [...parentPath, button.id, currentID];
+                }
+                
+                queue.push(...(this.#boards[currentID]
+                        ?.linkedBoards || [])
+                        .map(b => b.id || b.data_url)
+                )
+            }
+        }
+        this.#boardPaths = boardPaths;
+    }
+
+
+    /**
+     * @param {string} id - The board ID to load.
+     * @returns {Promise<OBBoardType>} - A promise that resolves to the loaded board.
+     */
+    async #loadBoard(id) {
         try {
             if (!(id in this.#boards)) {
-                this.#boards[id] = await getBoard(id);
+                if (!(id in this.#boardPromises)) {
+                    this.#boardPromises[id] = (async () => {
+                        const board = await getBoard(id);
+                        if (board == null) {
+                            const metadata = await getBoardMetadata(id);
+                            const errorCode = metadata.error?.code;
+                            if (errorCode in REPLACEMENT_BOARDS) {
+                                this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[errorCode]);
+                            } else {
+                                throw new Error(`Failed to load board with ID ${id} and no replacement available.`);
+                            }
+                        } else {
+                            this.#boards[id] = board;
+                        }
+                    })()
+                }
+                await this.#boardPromises[id];
             }
         } catch (error) {
             console.error(`Failed to load board with ID ${id}:`, error);
+            this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]);
         }
+      
+        console.log(id, this.#boards[id]);
+       
         return this.#boards[id];
+    }
+
+    async #loadSet(boardSet) {
+
+        const newBoards = await Promise.all(
+            boardSet.filter(id => !this.#boards[id])
+                    .map(id => this.#loadBoard(id))
+        )
+        this.#buildBoardPathMap();
+        return newBoards.flatMap(board => board.linkedBoards)
+                        .map(linked => linked.id || linked.data_url);
+    }
+
+    async #deepLoad(rootBoards) {
+        let newSet = rootBoards.flatMap(board => board.linkedBoards)
+                        .map(linked => linked.id || linked.data_url);
+        while (newSet.length > 0) {
+            newSet = await this.#loadSet(newSet);
+        }
+       
+    }
+
+    async #loadChildren(board) {
+        const linkedBoards = board.linkedBoards || [];
+        const newSet = linkedBoards.map(linked => linked.id || linked.data_url);
+        await this.#loadSet(newSet);
+    }
+
+
+
+    async forceFullLoad() {
+        let boards = Object.values(this.#boards);
+        await this.#deepLoad(boards);
     }
     
     async load(bool = false) {

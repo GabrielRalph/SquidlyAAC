@@ -81,6 +81,16 @@ const ERROR_SCREENS = {
         Please check the URL <br> 
         and try again. <br> 
     </p>
+    `,
+    410: `
+    <i-bw deleted-board></i-bw>
+    <h1>
+        Board Deleted
+    </h1>
+    <p>
+        This board has been deleted <br>
+        and is no longer available.
+    </p>
     `
 }
 
@@ -94,7 +104,9 @@ class AACViewer extends ShadowElement {
     constructor(el) {
         super(el, "aac-viewer-root");
 
-        this.accBoard = this.createChild(AACBoard, {}, "aac-board");
+        this.aacBoard = this.createChild(AACBoard, {}, "aac-board");
+        this.aacBoard.showSearchButton = false;
+
         this.preview = this.createChild(AACGridWrapper, {}, "aac-board-preview");
         this.errorWindow = this.createChild("div", {class: "error-window"});
         this.root.setAttribute("mode", this.#mode);
@@ -195,7 +207,7 @@ class AACViewer extends ShadowElement {
         } else {
             let name = meta.path.name;
             document.head.querySelector("title").innerHTML = `${name} | Board Viewer | Squidly`;
-            this.accBoard.manager = manager;
+            this.aacBoard.manager = manager;
             FB.logEvent("view_board", {board_id: rootID});
         }
 
