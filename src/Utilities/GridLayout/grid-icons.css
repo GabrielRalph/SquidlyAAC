@@ -1,23 +1,39 @@
-:host {
-    --_grid-icon-border: 4px;
-    --_grid-layout-gap: var(--grid-layout-gap, calc(0.5 * var(--_grid-icon-border)));
-    --_content-padding: var(--card-padding, calc( 1.25 * var(--_grid-icon-border)));
-}
+
 
 
 grid-layout {
     --_W: var(--width, 100vw);
     --_H: var(--height, 100vh);
+    --_grid-icon-border: var(--grid-icon-border, 4px);
+    
+    
     --_min: min(var(--_W), var(--_H));
-    
-    --_content-padding: calc( 1.25 * var(--_grid-icon-border));
-    
-    --_cell-width: calc( (var(--_W) - (var(--cols) - 1) * var(--_grid-layout-gap) ) / var(--cols) - 2 * var(--_content-padding) );
-    --_cell-height: calc( (var(--_H) - (var(--rows) - 1) * var(--_grid-layout-gap) ) / var(--rows) - 2 * var(--_content-padding) );
+    --_cpad-top: calc( 1.25 * var(--grid-icon-border));
+    --_cpad-side: var(--grid-icon-border-radius, var(--_p1));
 
+    --_cell-width: calc( (var(--_W) - (var(--cols) - 1) * var(--_grid-layout-gap) ) / var(--cols) - 2 * var(--_cpad-side) );
+    --_cell-height: calc( (var(--_H) - (var(--rows) - 1) * var(--_grid-layout-gap) ) / var(--rows) - 2 * var(--_cpad-top) );
+    --_grid-layout-gap: var(--grid-layout-gap, calc(0.5 * var(--grid-icon-border)));
+    
     display: grid;
     gap: var(--_grid-layout-gap);
 
+}
+
+grid-layout[scale-font] {
+    --columns-min: 2;
+    --columns-max: 16;
+    --max-font-to-height-ratio: 0.2;
+    --min-font-to-width-ratio: 0.080;
+    --max-font-to-width-ratio: 0.147;
+
+    --_capped_cols: clamp(var(--columns-min), var(--cols), var(--columns-max));
+    --_cols-scaler: calc((var(--_capped_cols) - var(--columns-min)) / (var(--columns-max) - var(--columns-min)));
+    --_fs-w-ratio: calc( var(--min-font-to-width-ratio) + (var(--max-font-to-width-ratio) - var(--min-font-to-width-ratio)) * var(--_cols-scaler) );
+
+    --_font-size-w: calc( var(--_cell-width) * var(--_fs-w-ratio) );
+    --_font-size-h: calc( var(--_cell-height) * var(--max-font-to-height-ratio));
+    font-size: min( var(--_font-size-w), var(--_font-size-h) );
 }
 
 
@@ -82,11 +98,11 @@ grid-layout {
     user-select: none;
     gap: 0.3em;
 
-    padding: var(--_content-padding);
+    padding: var(--_cpad-top) var(--_cpad-side);
 }
 
 .grid-icon[card="folder"] .content {
-    padding-top: calc(var(--_content-padding) + var(--_H) / 10 / var(--rows));
+    padding-top: calc(var(--_cpad-top) + var(--top-padding, 0));
 }
 
 .grid-icon:not([label-at-bottom]) .content {
@@ -104,6 +120,8 @@ grid-layout {
     justify-content: center;
     color: var(--icon-color);
 }
+
+
 
 .grid-icon .symbol > * {
     height: 100%;
@@ -147,7 +165,6 @@ grid-layout {
     font-size: 1.2em;
     font-weight: 300;
     text-align: center;
-    width: 90%;
     word-wrap: break-word;
 }
 
@@ -240,4 +257,16 @@ grid-layout {
     display: none;
 }
 
+/* Action buttons */
 
+.grid-icon[color-theme="action"] .symbol {
+    height: 75%;
+    width: 75%;
+}
+.grid-icon[color-theme="action"] .content {
+    padding: var(--_cpad-top);
+}
+
+.grid-icon[color-theme="textarea"] {
+    font-size: calc((var(--height) - 2 * var(--_cpad-top)) / 2.35 / var(--lines, 3));
+}

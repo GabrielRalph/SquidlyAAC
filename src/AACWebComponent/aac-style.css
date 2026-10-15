@@ -6,13 +6,6 @@ grid-layout {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-
-    --_capped_cols: clamp(4, var(--cols), 16);
-    --_fs-w-ratio: calc( 0.1 + 0.02 * (( var(--_capped_cols) - 4 ) / 12) );
-    --_font-size-w: calc( var(--_cell-width) * var(--_fs-w-ratio) );
-    --_font-size-h: calc( var(--_cell-height) * 0.2);
-
-    font-size: min( var(--_font-size-w), var(--_font-size-h) );
 }
 
 access-textarea {
@@ -34,7 +27,7 @@ access-textarea textarea {
 
 .grid-icon[label-at-bottom] .content,
 .grid-icon[card="folder"][label-at-bottom] .content {
-    padding-bottom: calc( 2 * var(--_content-padding));
+    padding-bottom: calc( 2 * var(--_cpad-top));
 }
 
 .grid-icon .outline {

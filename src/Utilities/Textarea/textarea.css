@@ -4,12 +4,11 @@ access-textarea {
     display: flex;
     position: relative;
     --caret-width: 3px;
-    --caret-height: 2.5em;
+    --caret-height: 1.5em;
 }
 
 access-textarea textarea {
     font: inherit;
-    font-size: 1.5em;
     line-height: 1.5;
     caret-color: transparent;
 

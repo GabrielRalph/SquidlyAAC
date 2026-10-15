@@ -1,6 +1,6 @@
 bg-img {
-    background-size: contain;
     background-image: var(--bg-i);
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     display: inline-block;
