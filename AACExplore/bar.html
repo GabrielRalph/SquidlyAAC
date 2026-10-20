@@ -6,16 +6,39 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="page-progress" page-num="5" total-pages="10"  style="--p: 0.5;">
-        <!-- Inactive background layer -->
-        <div></div>
-        <div></div>
-    
-    </div>
 
+    <div class = "pad max" name = "a">
+        <div class = "pad" name = "b">
+            <div class = "pad" name = "c">
+            </div>
+        </div>
+    </div>
 </body>
 
 <style>
- 
+ body {
+    font-size: 2vw;
+ }
+ .pad {
+    border: 1px solid black;
+    padding: 1em;
+    display: flex;
+    width: 100%;
+ }
+ .max {
+    width: 20em;
+    height: 20em;
+ }
 </style>
+<script>
+ let pads = document.querySelectorAll('.pad');
+ pads.forEach(pad => {
+    let rs = new ResizeObserver(() => {
+        pad.title = Math.round((Math.random() * 1000)).toString(16);
+        console.log(pad.getAttribute('name') + ' resized, title = ' + pad.title);
+        console.log("parent title = ", pad.parentNode.title)
+    }); 
+    rs.observe(pad);
+ });
+</script>
 </html>

@@ -130,15 +130,21 @@ class BoardGridIcon extends GridIcon {
         const metadata = await getBoardMetadata(id);
         this.displayValue = metadata.path.name;
         this.symbol = metadata.thumbnail || import.meta.resolve("../Assets/Icons/grid.svg");
+        const creator = await metadata.getOwnerName()
+        console.log(creator);
+        this.subtitle = "By " + creator.name;
+        // let dp = new SvgPlus("bg-img");
+        // dp.props = {src: creator.displayPhoto};
+        // this.subtitleElement.prepend(dp)
     }
 }
 
 class FixedGridLayout extends GridLayout {
-
     fixedBR = 15;
-    onresize(){
-        this.gridIconBorderRadius = this.fixedBR;
-        this.gridIconBorderWidth = Math.min(Math.max(2, Math.ceil(this.clientWidth / 225)), 4);
+    computeIconBorderRadiusAndWidth() {
+        let old = super.computeIconBorderRadiusAndWidth();
+        old[0] = this.fixedBR;
+        return old;
     }
 }
 
@@ -149,6 +155,7 @@ class Featured extends FixedGridLayout {
     constructor() {
         super(DROWS,DCOLS)
         this.class = "featured"
+        this.toggleAttribute("scale-font", true)
 
         const rows = toRows(FEATURED_BOARDS, DCOLS);
         
@@ -199,12 +206,10 @@ class SearchableList extends FixedGridLayout {
     #lastSize = 0;
     constructor() {
         super(DROWS, DCOLS);
+        this.toggleAttribute("scale-font", true)
 
         this.navigation = new GridLayout(1, DCOLS);
         this.textCard = new GridCard('access-button', "plain", "textarea")
-        this.pageIndicator = this.textCard.content.createChild("div", {class: "page-progress"});
-        this.pageIndicator.createChild("div");
-        this.pageIndicator.createChild("div");
         this.textInput = this.textCard.content.createChild(AccessTextarea, {
             events: {
                 "input": (e) => {
@@ -213,6 +218,9 @@ class SearchableList extends FixedGridLayout {
                 }
             }
         });
+        this.pageIndicator = this.textCard.content.createChild("div", {class: "page-progress"});
+        this.pageIndicator.createChild("div");
+        this.pageIndicator.createChild("div");
         this.navigation.add(this.textCard, [0,0], [1,3])
 
 
@@ -226,6 +234,7 @@ class SearchableList extends FixedGridLayout {
                 }
             }
         }, 0,0)
+
         this.nextButton = this.navigation.addGridIcon({
             // displayValue: "Search",
             symbol: "rightArrow",
@@ -320,8 +329,10 @@ class AACExplore extends ShadowElement {
 
        
         class GI extends GridIcon {
-            getCardBorderRadius() {
-                return BR - this.getCardBorderWidth() * 0.5 - SP;
+            getCardBorderRadiusAndWidth() {
+                let old = super.getCardBorderRadiusAndWidth();
+                old[0] = BR - old[1] * 0.5 - SP;
+                return old;
             }
         }
 

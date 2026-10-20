@@ -855,7 +855,6 @@ class BoardSetWatcher {
         try {
             if (!(id in this.#watchedBoardsPromises)) {
                 let callback = async (metadata) => {
-                    // console.log("got board set metadata for ID:", id);
                     this.#boardPromises[id] = getBoard(id);
                     this.#boards[id] = await this.#boardPromises[id];
                 }
@@ -869,8 +868,6 @@ class BoardSetWatcher {
             console.error(`Failed to load board with ID ${id}:`, error);
             // this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]);
         }
-      
-        console.log(id, this.#boards[id]);
        
         return this.#boards[id];
     }
