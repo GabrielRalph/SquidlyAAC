@@ -238,15 +238,19 @@ const CARD_RENDERERS = {
     plain(size, border, borderRadius) {
         let inSize = size.sub(border);
         let g = borderRadius;;
-        return `
-            <rect class = "card" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
-            
-            <rect class = "card for-hover" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
-            <rect class = "outline for-hover" stroke-width = "${border}"  x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
-            
-            <rect class = "card for-active" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
-            <rect class = "outline for-active" stroke-width = "${border}"  x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+        return [
+
             `
+                <rect class = "card" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+                
+                <rect class = "card for-hover" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+                <rect class = "outline for-hover" stroke-width = "${border}"  x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+                
+                <rect class = "card for-active" x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+                <rect class = "outline for-active" stroke-width = "${border}"  x = "${border/2}" y = "${border/2}" width = "${inSize.x}"  height = "${inSize.y}" rx = "${g}" ry = "${g}" />
+            `,
+            0
+        ]
     },
     
     folder(size, border, borderRadius) {
@@ -285,8 +289,8 @@ const CARD_RENDERERS = {
         let tabPath = `M${p1}L${p2}A${g},0,0,1,${p3}L${p4}A${g},0,0,1,${p5}L${p6}A${g},0,0,0,${p7}L${p8}A${g},0,0,1,${p9}Z`;
         let card = `M${p9}L${p10}A${g},0,0,1,${p11}L${p12}A${g},0,0,1,${p13}L${p1}Z`;
         let outline = `M${p1}L${p2}A${g},0,0,1,${p3}L${p4}A${g},0,0,1,${p5}L${p6}A${g},0,0,0,${p7}L${p8}A${g},0,0,1,${p9}L${p10}A${g},0,0,1,${p11}L${p12}A${g},0,0,1,${p13}Z`;
-        return  `
-    
+        return  [
+            `
                 <path class = "card" d = "${card}" />
                 <path class = "tab" d = "${tabPath}" />
                 
@@ -297,7 +301,9 @@ const CARD_RENDERERS = {
                 <path class = "card for-active" d = "${card}" />
                 <path class = "tab for-active" d = "${tabPath}" />
                 <path class = "outline for-active" stroke-width = "${border}" d = "${outline}" />
-                `
+            `,
+            2 * g.x
+        ]
     }
 };
 
@@ -331,6 +337,7 @@ class GridIconSymbol extends SvgPlus{
 }
 
 class GridCard extends SvgPlus { 
+    borderRadiusToCellHeightRatio = 0.05;
     #type = "plain";
     /**
      * @param {HTMLElement|string} el - The element or tag name to create for the grid card.
@@ -346,7 +353,7 @@ class GridCard extends SvgPlus {
 
         let rs = new ResizeObserver(this.onresize.bind(this));
         rs.observe(this);
-
+        this.resizeObserver = rs;
         this.type = type;
         this.colorTheme = colorTheme || "white";
     }
@@ -437,28 +444,37 @@ class GridCard extends SvgPlus {
             }
             if (width > 0 && height > 0) {
                 let size = new Vector(width, height);
+                const [borderRadius, borderWidth] = this.getCardBorderRadiusAndWidth(width, height);
+                const [svg, padTop] = this.cardRenderer(
+                    size, 
+                    borderWidth,
+                    borderRadius
+                ) // Recompute the svg content.
                 this.cardIcon.props = {
                     viewBox: `0 0 ${size.x} ${size.y}`,      // Update the svg viewBox.
-                    content: this.cardRenderer(
-                      size, 
-                      this.getCardBorderWidth(width, height), 
-                      this.getCardBorderRadius(width, height)
-                    ) // Recompute the svg content.
+                    content: svg,
                 };
+                this.styles = {
+                    "--top-padding": padTop + "px"
+                }
             }
         }
         return [bbox.width, bbox.height];
     }
 
-    getCardBorderRadius(w, h) {
-      return h/20;
+    getCardBorderRadiusAndWidth(w, h) {
+        let borderRadius = h * this.borderRadiusToCellHeightRatio;
+        let width = 4;
+        let gridLayout = this.parentElement?.closest("grid-layout");
+        if (gridLayout) {
+            borderRadius = gridLayout.gridIconBorderRadius;
+            width = gridLayout.gridIconBorderWidth;
+        } else {
+            width = window.innerWidth < 450 ? 2 : 4
+        }
+        return [borderRadius, width];
     }
     
-    getCardBorderWidth() {
-      return window.innerWidth < 450 ? 2 : 4;
-    }
-
-
     static getCardRenderer(type) {
       if (CARD_RENDERERS[type] instanceof Function) {
         return CARD_RENDERERS[type].bind(CARD_RENDERERS);
@@ -670,6 +686,14 @@ function parseCellPosition(rowStart, colStart, rowEnd = rowStart, colEnd = colSt
  * @extends SvgPlus
 */
 class GridLayout extends SvgPlus {
+    useAncestorsForResize = true;
+    borderRadiusToCellHeightRatio = 0.06;
+    minRowsForBorderRadius = 1;
+
+    #gridIconBorderWidth = 2;
+    #gridIconBorderRadius = 2;
+
+
     #resizeForced = false;
 
     /**
@@ -729,10 +753,6 @@ class GridLayout extends SvgPlus {
         let [row, col, rowEnd, colEnd] = parseCellPosition(...posArgs);
 
         this.#forceResize();
-        if (SvgPlus.is(item, GridIcon)) {
-            item.getCardBorderRadius = () => this.gridIconBorderRadius;
-            item.getCardBorderWidth = () => this.gridIconBorderWidth;
-        }
         if (SvgPlus.is(item, SvgPlus) && row !== null) {
             item.styles = {
                 "grid-row-start": row + 1,
@@ -861,11 +881,47 @@ class GridLayout extends SvgPlus {
         return this.addItemInstances(GridIcon, items, ...posArgs);
     }
 
+
+    get gridIconBorderWidth() { return this.#gridIconBorderWidth }
+    get gridIconBorderRadius() { return this.#gridIconBorderRadius }
+
+    computeIconBorderRadiusAndWidth() {
+        return [
+            this.clientHeight * this.borderRadiusToCellHeightRatio / Math.max(this.size[0], this.minRowsForBorderRadius),
+            Math.min(Math.max(2, Math.ceil(this.clientWidth / 225)), 4)
+        ]
+    }
+
+
+    forceResize() {
+        this.onresize();
+        let recurse = (el) => {
+            for (let child of el.children) {
+                if (SvgPlus.is(child, GridCard)) {
+                    child.onresize();
+                } else if (SvgPlus.is(child, GridLayout)) {
+                    child.forceResize();
+                } else {
+                    recurse(child);
+                }
+            }
+        }
+        recurse(this);
+    }
+
+
     onresize() {
-        this.gridIconBorderRadius = this.clientHeight / 20 / this.size[0];
-        this.gridIconBorderWidth = Math.min(Math.max(2, Math.ceil(this.clientWidth / 225)), 4);
+        [this.#gridIconBorderRadius, this.#gridIconBorderWidth] = this.computeIconBorderRadiusAndWidth();
+        if (this.useAncestorsForResize) {
+            const ancestor = this.parentElement?.closest("grid-layout");
+            if (ancestor) {
+                this.#gridIconBorderRadius = ancestor.gridIconBorderRadius;
+                this.#gridIconBorderWidth = ancestor.gridIconBorderWidth;
+            }
+        }
         this.styles = {
-            "--_grid-icon-border": `${this.gridIconBorderWidth}px`,
+            "--grid-icon-border-radius": `${this.gridIconBorderRadius}px`,
+            "--grid-icon-border": `${this.gridIconBorderWidth}px`,
             "--width": `${this.clientWidth}px`,
             "--height": `${this.clientHeight}px`
         }

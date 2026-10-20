@@ -188,6 +188,10 @@ class AACViewer extends ShadowElement {
     }
 
     async #setAACBoard(rootID) {
+        if (this.aacBoard && this.aacBoard.manager) {
+            this.aacBoard.manager.destroy();
+        }
+
         document.body.toggleAttribute("loaded", false);  
 
         const manager = new BoardSetWatcher(rootID);

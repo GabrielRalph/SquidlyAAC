@@ -449,6 +449,11 @@ class OBButton extends OpenBoardObject {
                 styles["outline"] = tabCol.toHex();
             }
         }
+
+        styles['icon-color'] = 'currentColor'
+        styles['icon-color-hover'] = 'currentColor'
+
+
         return styles;
     }
 

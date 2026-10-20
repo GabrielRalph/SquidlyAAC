@@ -112,6 +112,8 @@ class AACButton extends GridIcon {
  * @fires AACClick
  */
 class AACGrid extends GridLayout {
+    #board = null;
+
     /**
      * @param {OBBoard} board
      */
@@ -163,10 +165,16 @@ class AACGrid extends GridLayout {
             for (let {rowRange, colRange, buttonID} of buttonLocations) {
                 this.add(new bClass(buttonID, rowRange[0]), rowRange, colRange)
             }
+            this.#board = board;
         } else {
             this.size = [1, 1];
         }
         this.onBoardSet(board);
+
+    }
+
+    same(board) {
+        return this.#board && this.#board.same(board);
     }
 }
 
@@ -304,14 +312,31 @@ class AACBoard extends ShadowElement {
         await loadUtterances(utterances);
     }
 
+    async #getBoardGrid(id) {
+        let board = typeof id === "string" ? await this.#manager.getBoard(id) : id;
+         if (!(board instanceof OBBoard)) {
+            console.warn("Invalid board:", board, id);
+        }
+
+        // Retrieve the grid for the current board from the cache,
+        // or create a new one if it doesn't exist.
+        let grid;
+        if (board.id in this.#boardCache && this.#boardCache[board.id].same(board)) {
+            // debug.log("Cache hit for board:", board.id);
+            grid = this.#boardCache[board.id];
+        } else {
+            grid = new AACGrid();
+            grid.board = board;
+            this.#boardCache[board.id] = grid;
+        }
+        return [board, grid];
+    }
+
     /**
      * @param  {OBBoard|string} board
      */
     async #setBoard(id) {
-        let board = typeof id === "string" ? await this.#manager.getBoard(id) : id;
-        if (!(board instanceof OBBoard)) {
-            console.warn("Invalid board:", board, id);
-        }
+        const [board, grid] = await this.#getBoardGrid(id);
         if (this.#renderedBoardID !== board.id) {
             let {columns, rows} = board.grid;
 
@@ -369,18 +394,7 @@ class AACBoard extends ShadowElement {
             }   
             // Add the text area card to the controls grid.
             this.#controlsGrid.add(this.#textAreaCard, 0, [this.showSearchButton?2:1, end]);
-
-            // Retrieve the grid for the current board from the cache,
-            // or create a new one if it doesn't exist.
-            let grid;
-            if (board.id in this.#boardCache) {
-                grid = this.#boardCache[board.id];
-            } else {
-                grid = new AACGrid();
-                grid.board = board;
-                this.#boardCache[board.id] = grid;
-            }
-
+            
             // Load the utterances for the current board.
             this.#loadBoardUtterances(board);
             
@@ -574,6 +588,9 @@ class AACBoard extends ShadowElement {
         this.#boardCache = {};
         this.#setBoard(manager.rootBoard)
         this.#onStateChange(new AccessEvent("manager-set"), "history", "holdBoard", "text", "caretPosition");
+    }
+    get manager() {
+        return this.#manager;
     }
 
     /**

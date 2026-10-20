@@ -315,11 +315,14 @@ function _registerMetadataCallback(id, callback) {
  * @param {string} id
  * @param {(metadata: BoardMetadata) => void} callback
  */
-function _unregisterMetadataCallback(id, callback) {
+function _unregisterMetadataCallback(id, callback, stopListener = false) {
     if (callback instanceof Function && id in META_DATA_CALLBACKS) {
         META_DATA_CALLBACKS[id].delete(callback);
         if (META_DATA_CALLBACKS[id].size === 0) {
             delete META_DATA_CALLBACKS[id];
+            if (stopListener) {
+                _stopMetadataListener(id);
+            }
         }
     }
 }
@@ -381,7 +384,7 @@ async function _setupMetadataListener(id, callback = null) {
         // Otherwise if the listener has not yet been resolved, 
         // wait for it to resolve. In this case the callback will 
         // be called once the listener resolves.
-        } else if (BOARD_LISTENERS_RESOLVED[id] !=- true) {
+        } else if (BOARD_LISTENERS_RESOLVED[id] != true) {
             await BOARD_LISTENERS[id];
         }
 
@@ -406,6 +409,14 @@ async function _setupMetadataListener(id, callback = null) {
     timerLogger.toc("get metadata " + id);
 
     return deregister;
+}
+
+async function _stopMetadataListener(id) {
+    if (BOARD_LISTENERS[id]) {
+        (await BOARD_LISTENERS[id])()
+        BOARD_LISTENERS_RESOLVED[id] = false;
+        BOARD_LISTENERS[id] = null;
+    }
 }
 
 /**
@@ -725,6 +736,9 @@ class BoardSetWatcher {
 
     /** @type {Object<string, Promise<OBBoardType>>} - A map of board IDs to their loading promises. */
     #boardPromises = {};
+    #watchedBoards = {};
+    #watchedBoardsPromises = {};
+    #callbacks = {};
 
     constructor(rootID) {
         this.#rootID = rootID;
@@ -790,7 +804,6 @@ class BoardSetWatcher {
         }).join("\n"))
     }
 
-
     
     #buildBoardPathMap() {
         const parentsOf = {};
@@ -840,28 +853,21 @@ class BoardSetWatcher {
      */
     async #loadBoard(id) {
         try {
-            if (!(id in this.#boards)) {
-                if (!(id in this.#boardPromises)) {
-                    this.#boardPromises[id] = (async () => {
-                        const board = await getBoard(id);
-                        if (board == null) {
-                            const metadata = await getBoardMetadata(id);
-                            const errorCode = metadata.error?.code;
-                            if (errorCode in REPLACEMENT_BOARDS) {
-                                this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[errorCode]);
-                            } else {
-                                throw new Error(`Failed to load board with ID ${id} and no replacement available.`);
-                            }
-                        } else {
-                            this.#boards[id] = board;
-                        }
-                    })()
+            if (!(id in this.#watchedBoardsPromises)) {
+                let callback = async (metadata) => {
+                    // console.log("got board set metadata for ID:", id);
+                    this.#boardPromises[id] = getBoard(id);
+                    this.#boards[id] = await this.#boardPromises[id];
                 }
-                await this.#boardPromises[id];
+                this.#callbacks[id] = callback;
+                this.#watchedBoardsPromises[id] = setupMetadataListener(id, callback);
+                this.#watchedBoardsPromises[id].then((a) => this.#watchedBoards[id] = a);
             }
+            await this.#watchedBoardsPromises[id];
+            await this.#boardPromises[id];
         } catch (error) {
             console.error(`Failed to load board with ID ${id}:`, error);
-            this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]);
+            // this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]);
         }
       
         console.log(id, this.#boards[id]);
@@ -896,6 +902,14 @@ class BoardSetWatcher {
     }
 
 
+    async destroy() {
+        for (const id in this.#callbacks) {
+            _unregisterMetadataCallback(id, this.#callbacks[id], true);
+        }
+        this.#callbacks = {};
+        this.#watchedBoardsPromises = {};
+        this.#watchedBoards = {};
+    }
 
     async forceFullLoad() {
         let boards = Object.values(this.#boards);
