@@ -263,15 +263,22 @@ class AddTextAction extends Action {
 		r.createChild("div", {class: "no-select", content: "New word"});
 
 		r = this.main.createChild("div", {class: "row"})
+		let lastValue = !!addText.utterance;
 		let cb2 = r.createChild(Checkbox, {events: {
 			click: () => {
 				this.utteranceInput.styles = {display: cb2.checked ? null : "none"}
+				if (lastValue && !cb2.checked) {
+					this.onValueChange()
+				}
+				lastValue = cb2.checked;
 			}
 		}})
 		cb2.checked = addText.utterance;
+		this.utteranceCheckbox = cb2;
+
 		r.createChild("div", {class: "no-select", content: "Different Vocalisation"});
 		this.utteranceInput = this.main.createChild("input", {
-			styles: {display: "none"},
+			styles: {display: cb2.checked ? null : "none"},
 			placeholder: addText.value || label,
 			value: addText.utterance || "",
 			events: {
@@ -287,7 +294,7 @@ class AddTextAction extends Action {
 			on: this.on.checked,
 			value: value.length == 0 ? null : value,
 			newWord: this.newWordCB.checked,
-			utterance: utt.length == 0 ? null : utt
+			utterance: this.utteranceCheckbox.checked ? (utt.length == 0 ? null : utt) : null
 		}
 	}
 	get key() {

@@ -207,9 +207,9 @@ class ActionsSimple {
                 value = ActionsSimple.sameAsLabel(value, button) ? null : value;
                 actions.push({mode, value});
 
-                if (this.addText.utterance) {
-                    button.setProperty("vocalization", this.addText.utterance);
-                }
+                // if (this.addText.utterance) {
+                button.setProperty("vocalization", this.addText.utterance ?? null);
+                // } 
             }
         },
 
