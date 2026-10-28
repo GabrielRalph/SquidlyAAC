@@ -269,14 +269,13 @@ function needsReload(boardID, metadata) {
  * @returns {Promise<OBBoardType>}
  */
 async function _loadBoard(id) {
-    let board = REPLACEMENT_BOARDS[404];;
+    let board = REPLACEMENT_BOARDS[404];
 
     timerLogger.tic("download " + id); 
     if (id.startsWith("http")) {
         let json = null;
 
         try {
-            console.log(`Fetching board from URL: ${id}`)
             const response = await fetch(id);
             const text = await response.text();
             json = JSON.parse(text);
@@ -410,7 +409,7 @@ async function _setupMetadataListener(id, callback = null) {
         // If the listener has already been resolved, and a callback 
         // is provided, call the provided callback immediately.
         if (BOARD_LISTENERS_RESOLVED[id] === true && callback instanceof Function) {
-            _callMetadataCallbacks(id);
+            callback(id);
 
         // Otherwise if the listener has not yet been resolved, 
         // wait for it to resolve. In this case the callback will 
@@ -420,6 +419,8 @@ async function _setupMetadataListener(id, callback = null) {
         }
 
     } catch (e) {
+        BOARD_LISTENERS_RESOLVED[id] = true;
+
         // If an error occurs while fetching the metadata the
         // default code is 500.
         let newError = new MetadataError(500, e);
@@ -464,7 +465,7 @@ async function _getSquidlyBoard(id) {
     // Get the current metadata for the board from the cache.
     const metadata = BOARD_META_CACHE[id];
 
-    let board = null;
+    let board = REPLACEMENT_BOARDS[404];
 
     // If metadata exists, there is no error and it is valid, 
     // proceed to check if the board needs updating.
@@ -484,7 +485,11 @@ async function _getSquidlyBoard(id) {
 
         // Wait for the board to be loaded from the cache or server.
         board = await BOARD_CACHE[id].board;
+    } else if (metadata && metadata.error) {
+        board = REPLACEMENT_BOARDS[metadata.error.code] ?? REPLACEMENT_BOARDS[404];
     }
+
+    board = OBBoard.make(board);
 
     return board;
 }
@@ -855,7 +860,6 @@ class BoardSetWatcher {
             }
         }
 
-        console.log(parentsOf, this.#boards)
         // Perform a breadth-first search to build paths from the root board to all other boards.
         const visited = new Set();
         const boardPaths = { [this.#rootID]: [this.#rootID] };
@@ -900,11 +904,7 @@ class BoardSetWatcher {
                     this.#boardPromises[id].then(board => this.#boards[id] = board);
                 } else {
                     let callback = async (metadata) => {
-                        if (metadata?.error) {
-                            this.#boardPromises[id] = Promise.resolve(OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]));
-                        } else {
-                            this.#boardPromises[id] = getBoard(id);
-                        }
+                        this.#boardPromises[id] = getBoard(id);
                         this.#boards[id] = await this.#boardPromises[id];
                     }
                     this.#callbacks[id] = callback;
@@ -916,21 +916,16 @@ class BoardSetWatcher {
             await this.#boardPromises[id];
         } catch (error) {
             console.error(`Failed to load board with ID ${id}:`, error);
-            // this.#boards[id] = OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]);
         }
        
         return this.#boards[id];
     }
 
     async #loadSet(boardSet) {
-
-        const boardsToLoad = boardSet.filter(id => !this.#boards[id]);
-        console.log(boardsToLoad);
         const newBoards = await Promise.all(
             boardSet.filter(id => !this.#boards[id])
                     .map(id => this.#loadBoard(id))
         )
-        console.log(newBoards);
         this.#buildBoardPathMap();
         return newBoards.flatMap(board => board.linkedBoards)
                         .map(linked => linked.getDataURL());
