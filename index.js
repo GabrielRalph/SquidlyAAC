@@ -205,7 +205,6 @@ class AACHomePage extends ShadowElement {
         if (!(mode in PAGE_TO_IDX)) {
             mode = "explore";
         }
-        console.log("Setting view mode to:", mode);
         this.radio.select(PAGE_TO_IDX[mode] ?? 0, false);
         window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}#${mode}`);
         this.explore.styles = mode === "explore" ? SHOW_STYLE : HIDE_STYLE;

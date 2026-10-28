@@ -7,6 +7,9 @@ import { copy, Debugger, isEqual, timerLogger } from "../Utilities/shared.js";
 import { Path } from "../FileTree/FileSystem/Path.js";
 const {FStore: {where}} = FB;
 
+
+
+
 /** 
  * @typedef {OBBoard<OBButton>} OBBoardType
  */
@@ -35,7 +38,13 @@ const USER_NAME_CACHE = {
     })
 };
 
-let RECENT_BOARDS = [];
+const REPLACEMENT_BOARDS = {
+    410: {"id":"410","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board has been deleted","image_id":"PFREWmqwNlOtWgm0gES4","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"PFREWmqwNlOtWgm0gES4","width":72,"height":72,"url":"deleted-board","content_type":"image/svg","name":"delete"}]},
+    403: {"id":"403","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"You do not have access to this board","image_id":"ERJvjORWjgjBI7gKXkfM","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"ERJvjORWjgjBI7gKXkfM","width":72,"height":72,"url":"lock","content_type":"image/svg","name":"locked"}]},
+    404: {"id":"404","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board no longer exists","image_id":"XjRJeDtwU55bUR1RjmNB","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"XjRJeDtwU55bUR1RjmNB","width":72,"height":72,"url":"no-board","content_type":"image/svg","name":"broken chain"}]},
+    204: OBBoard.makeEmptyBoard(4, 5, "204")
+}
+
 
 
 async function getUserInfo(uid) {
@@ -64,6 +73,7 @@ async function getUserInfo(uid) {
 /***************
  * RECENT BOARDS
  ***************/
+let RECENT_BOARDS = [];
 
 try {
     RECENT_BOARDS = JSON.parse(window.localStorage.getItem("recentBoards") || "[]");
@@ -259,17 +269,38 @@ function needsReload(boardID, metadata) {
  * @returns {Promise<OBBoardType>}
  */
 async function _loadBoard(id) {
-    let board = null;
+    let board = REPLACEMENT_BOARDS[404];;
 
     timerLogger.tic("download " + id); 
     if (id.startsWith("http")) {
+        let json = null;
+
         try {
+            console.log(`Fetching board from URL: ${id}`)
             const response = await fetch(id);
             const text = await response.text();
-            board = OBBoard.make(JSON.parse(text));
+            json = JSON.parse(text);
         } catch (e) {
-            console.warn(`Error loading board from URL ${id}:`, e);
+            console.warn(`Error fetching board from URL ${id}:`, e);
         }
+
+        try {
+            if (json.error) {
+                board = REPLACEMENT_BOARDS[json.status] ?? REPLACEMENT_BOARDS[404]; // Use the 404 replacement board if there is an error in the JSON
+            } else {
+                if ("board" in json) {
+                    json = json.board;
+                    if ("image_urls" in json) {
+                        json.images = Object.entries(json.image_urls).map(([id, url]) => ({id, url, width: 100, height: 100}));
+                    }
+                }
+                board = json;
+            }
+        } catch (e) {
+            console.warn(`Error loading board from URL ${id}:`, e, json);
+        }
+
+        board = OBBoard.make(board);
     } else {
         try {
             const blob = await FB.getFile(`boards/${id}`);
@@ -538,10 +569,14 @@ class BoardWatcher {
 
     #editable = false;
 
+    #external = false;
+
     constructor(id, callback) {
         if (id.startsWith("http")) {
-            throw new Error("Drafts cannot be watched from URL");
+            // throw new Error("Drafts cannot be watched from URL");
+            this.#external = true;
         }
+
 
         this.#id = id;
         this.#callback = callback;
@@ -550,7 +585,7 @@ class BoardWatcher {
 
    
     #triggerCallback() { 
-        this.#isPendingChanges =!isEqual(this.#draftBoard, this.#savedBoard);
+        this.#isPendingChanges = !isEqual(this.#draftBoard, this.#savedBoard);
         if (this.#initalised && this.#callback instanceof Function) {
             this.log("Call")
             this.#callback();
@@ -596,31 +631,40 @@ class BoardWatcher {
     }
 
     async watch() { 
-        if (!this.#watchProm) {
-            this.#editable = true;
+        if (this.#external) {
             this.#watchProm = (async () => {
-                this.#enders = await Promise.all([
-                    (async () => {
-                        try {
-                            return await DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this))
-                        } catch (e) {
-                            this.#editable = false;
-                            return () => {};
-                        }
-                    })(),
-                    setupMetadataListener(this.#id, this.#onMetadataUpdate.bind(this))
-                ])
-                await this.#savedBoardPromise
+                this.#savedBoardPromise = getBoard(this.#id); 
+                this.#savedBoard = await this.#savedBoardPromise;
                 this.#initalised = true;
                 this.#triggerCallback();
             })();
-        } 
+        } else {
+            if (!this.#watchProm) {
+                this.#editable = true;
+                this.#watchProm = (async () => {
+                    this.#enders = await Promise.all([
+                        (async () => {
+                            try {
+                                return await DRAFTS.onValuePromise(this.#id, this.#onDraftUpdate.bind(this))
+                            } catch (e) {
+                                this.#editable = false;
+                                return () => {};
+                            }
+                        })(),
+                        setupMetadataListener(this.#id, this.#onMetadataUpdate.bind(this))
+                    ])
+                    await this.#savedBoardPromise
+                    this.#initalised = true;
+                    this.#triggerCallback();
+                })();
+            } 
+        }
         await this.#watchProm;
     }
    
 
     async save() {
-        if (this.#saving) return;
+        if (this.#external || this.#saving) return;
         this.#saving = true;
         this.log("Calling update function");
         let response = await FB.callFunction('OBBoards-update', {
@@ -631,6 +675,8 @@ class BoardWatcher {
     }
 
     async updateDraft(data) {
+        if (this.#external) return;
+
         this.#version = (this.#version || 0) + 1;
         this.#draftBoard = OBBoard.make(data);
 
@@ -716,13 +762,6 @@ class BoardWatcher {
 /*****************************************
  * BOARD SET WATCHER
  *****************************************/
-
-const REPLACEMENT_BOARDS = {
-    410: {"id":"410","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board has been deleted","image_id":"PFREWmqwNlOtWgm0gES4","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"PFREWmqwNlOtWgm0gES4","width":72,"height":72,"url":"deleted-board","content_type":"image/svg","name":"delete"}]},
-    403: {"id":"403","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"You do not have access to this board","image_id":"ERJvjORWjgjBI7gKXkfM","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"ERJvjORWjgjBI7gKXkfM","width":72,"height":72,"url":"lock","content_type":"image/svg","name":"locked"}]},
-    404: {"id":"404","grid":{"rows":4,"columns":5,"order":[[null,null,null,null,null],[null,"a","a","a",null],[null,"a","a","a",null],[null,null,null,null,null]]},"name":"empty board","buttons":[{"id":"a","font_size":"huge","label":"This board no longer exists","image_id":"XjRJeDtwU55bUR1RjmNB","actions":[":home"],"label_at_bottom":true,"background_color":"transparent","border_color":"transparent","text_color":"#ffffff"}],"images":[{"id":"XjRJeDtwU55bUR1RjmNB","width":72,"height":72,"url":"no-board","content_type":"image/svg","name":"broken chain"}]},
-    204: OBBoard.makeEmptyBoard(4, 5, "204")
-}
 
 class BoardSetWatcher {
     /** @type {string} - The ID of the root board. */
@@ -810,12 +849,13 @@ class BoardSetWatcher {
         for (const id in this.#boards) {
             const board = this.#boards[id];
             for (const linked of board.linkedBoards) {
-                const linkedID = linked.id || linked.data_url;
+                const linkedID = linked.getDataURL();
                 if (!parentsOf[linkedID]) parentsOf[linkedID] = new Set()
                 parentsOf[linkedID].add(id);
             }
         }
 
+        console.log(parentsOf, this.#boards)
         // Perform a breadth-first search to build paths from the root board to all other boards.
         const visited = new Set();
         const boardPaths = { [this.#rootID]: [this.#rootID] };
@@ -833,13 +873,13 @@ class BoardSetWatcher {
                     
                     let parentID = parentPath[parentPath.length - 1];
                     let parent = this.#boards[parentID];
-                    let button = parent.buttons.find(b => (b.load_board?.id || b.load_board?.data_url) === currentID);
+                    let button = parent.buttons.find(b => b?.load_board?.getDataURL() === currentID);
                     boardPaths[currentID] = [...parentPath, button.id, currentID];
                 }
                 
                 queue.push(...(this.#boards[currentID]
                         ?.linkedBoards || [])
-                        .map(b => b.id || b.data_url)
+                        .map(b => b.getDataURL())
                 )
             }
         }
@@ -854,13 +894,23 @@ class BoardSetWatcher {
     async #loadBoard(id) {
         try {
             if (!(id in this.#watchedBoardsPromises)) {
-                let callback = async (metadata) => {
-                    this.#boardPromises[id] = getBoard(id);
-                    this.#boards[id] = await this.#boardPromises[id];
+                if (id.startsWith("http")) {
+                    this.#watchedBoardsPromises[id] = Promise.resolve();
+                    this.#boardPromises[id] = getBoard(id)
+                    this.#boardPromises[id].then(board => this.#boards[id] = board);
+                } else {
+                    let callback = async (metadata) => {
+                        if (metadata?.error) {
+                            this.#boardPromises[id] = Promise.resolve(OBBoard.make(REPLACEMENT_BOARDS[metadata.error.code]));
+                        } else {
+                            this.#boardPromises[id] = getBoard(id);
+                        }
+                        this.#boards[id] = await this.#boardPromises[id];
+                    }
+                    this.#callbacks[id] = callback;
+                    this.#watchedBoardsPromises[id] = setupMetadataListener(id, callback);
+                    this.#watchedBoardsPromises[id].then((a) => this.#watchedBoards[id] = a);
                 }
-                this.#callbacks[id] = callback;
-                this.#watchedBoardsPromises[id] = setupMetadataListener(id, callback);
-                this.#watchedBoardsPromises[id].then((a) => this.#watchedBoards[id] = a);
             }
             await this.#watchedBoardsPromises[id];
             await this.#boardPromises[id];
@@ -874,18 +924,21 @@ class BoardSetWatcher {
 
     async #loadSet(boardSet) {
 
+        const boardsToLoad = boardSet.filter(id => !this.#boards[id]);
+        console.log(boardsToLoad);
         const newBoards = await Promise.all(
             boardSet.filter(id => !this.#boards[id])
                     .map(id => this.#loadBoard(id))
         )
+        console.log(newBoards);
         this.#buildBoardPathMap();
         return newBoards.flatMap(board => board.linkedBoards)
-                        .map(linked => linked.id || linked.data_url);
+                        .map(linked => linked.getDataURL());
     }
 
     async #deepLoad(rootBoards) {
         let newSet = rootBoards.flatMap(board => board.linkedBoards)
-                        .map(linked => linked.id || linked.data_url);
+                        .map(linked => linked.getDataURL());
         while (newSet.length > 0) {
             newSet = await this.#loadSet(newSet);
         }
@@ -894,7 +947,7 @@ class BoardSetWatcher {
 
     async #loadChildren(board) {
         const linkedBoards = board.linkedBoards || [];
-        const newSet = linkedBoards.map(linked => linked.id || linked.data_url);
+        const newSet = linkedBoards.map(linked => linked.getDataURL());
         await this.#loadSet(newSet);
     }
 

@@ -679,7 +679,7 @@ board-finder  {
     border-radius: 1em;
     box-shadow: 0 0 3em #0000002c;
     border: 1px solid var(--border-color);
-    
+    overflow: hidden;
     color: white;
     --header-color: rgba(255, 255, 255, 0.871);
     --button-background: rgba(255, 255, 255, 0.871);

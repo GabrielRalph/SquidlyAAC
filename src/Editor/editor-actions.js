@@ -193,7 +193,7 @@ class NavigationPanel extends SvgPlus {
           	if (loadBoard) {
 				let path = await editor.getBoardPath(loadBoard.id)
                 path = (path ? path.toString() : "").replace(/\\/g, " ▸ ")
-                this.modes.preview.setBoard(loadBoard.id, path);
+                this.modes.preview.setBoard(loadBoard.getDataURL(), path);
                 this.modes.preview.styles = { display: null }
 			} else {
 				let navigations = selection.map(id => editor.getButtonProperty(id, "actionsSimple").navigation);

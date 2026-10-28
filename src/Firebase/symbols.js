@@ -653,7 +653,6 @@ async function uploadSymbol(file, name, pub, cb) {
     }
 
     let dataBuffer = await toBufferString(file);
-    console.log("Data buffer:", dataBuffer.length);
 
     const pushRef = FB.push(FB.ref(`file-status/${FB.getUID()}`))
     const uploadID = pushRef.key;
@@ -661,14 +660,12 @@ async function uploadSymbol(file, name, pub, cb) {
     // watch file status
     let end = FB.onValue(FB.ref(`file-status/${FB.getUID()}/${uploadID}`), (snap) => {
         let data = snap.val();
-        console.log("File status update:", data);
         if (data) {
             cb(data);
         }
     })
 
     // Ensure auth is ready before calling the Cloud Function
-    console.log(FB.getUser())
     if (!FB.getUser()) {
         throw new Error("User must be authenticated to upload symbols.");
     } 
@@ -873,7 +870,6 @@ async function querySymbols(text, isEqual = false, includePublic = true) {
             
             let promise = (async () => {
                 let docs = await getDocs(textQuery);
-                console.log("Fetched documents for text query", text, docs.docs.length, docs.docs.map(d => d.get("search_phrase")));
                 return new Set(docs.docs.map(doc => {
                     let image = doc.data();
                     SymbolCache[doc.id] = image;
@@ -916,7 +912,6 @@ async function textSearch(text, includePublic = true) {
             // If the text is less than 4 characters, we search for icons that start with that text
             // and are followed by a non-letter e.g. "IN-1" 
             symbols = await querySymbols(text, false, includePublic);
-            console.log("Symbols after initial query:", symbols);
             symbols = symbols.filter(i => exactMatch(i.name, text.length));
 
         } else if (text.length <= MAX_TEXT_LENGTH) {

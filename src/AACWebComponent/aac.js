@@ -291,7 +291,7 @@ class AACBoard extends ShadowElement {
         debug.logStart("button click", button.id, button)
         let gotoProm = null;
         if (load_board) {
-            const id = load_board.id;
+            const id = load_board.getDataURL();
             gotoProm = this.gotoBoard(id, e);
             debug.log("gotoBoard", id, this.historyString);
         }
