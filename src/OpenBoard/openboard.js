@@ -35,19 +35,32 @@ class OBLoadBoard extends DataClass {
     url = null;         
     
     /** @type {?string} */
-    path = null;        
+    path = null;    
+    
+    getDataURL() {
+        if (this.data_url) {
+            return this.data_url;
+        } else if (this.id) {
+            return this.id;
+        } else {
+            return null;
+        }
+    }
 }
 
 
 class OBSymbol extends DataClass {
     /** @type {string} */
-    set;                
+    set = null;                
     
     /** @type {string} */
-    name;  
+    name = null;  
+
+    /** @type {string} */
+    filename = null; 
     
     get path() {
-        return `${this.set}/${this.name}`;
+        return `${this.set}/${this.filename}`;
     }
 }
 
@@ -99,6 +112,13 @@ class OBImage extends OpenBoardObject {
      * @type {?string}
      */
     name = null;
+
+
+    /**
+     * The name of the image, which can be used for display or reference.
+     * @type {?string}
+     */
+    data = null;
     
 
     get resolvedURL() {
@@ -106,6 +126,8 @@ class OBImage extends OpenBoardObject {
             return this.path;
         } else if (this.url) {
             return this.url
+        } else if (this.data) {
+            return this.data;
         } else if (this.symbol) {
             const safe = this.symbol.path.split("/").map(encodeURIComponent).join("/");
             return "../IconSets/" + safe;

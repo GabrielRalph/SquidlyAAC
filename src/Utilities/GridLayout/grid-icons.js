@@ -323,7 +323,7 @@ class GridIconSymbol extends SvgPlus{
         }
 
         if (typeof url === "string") {
-            let isURL = (url.startsWith("http://") || url.startsWith("https://"));
+            let isURL = (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:"));
             if (isURL) {
                 this.createChild("bg-img", {
                     src: url,

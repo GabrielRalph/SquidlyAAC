@@ -231,7 +231,6 @@ class SearchWindow extends SvgPlus {
         // searches from triggering unnecessary semantic searches
         } else {
             await new Promise((r) => setTimeout(r, 300));
-            console.log(`Waited before performing semantic search for: ${text} == ${this.#currentSearchValue}`);
             if (this.#currentSearchValue === text) {
                 semanticResults = await semanticSearch(text);
             }

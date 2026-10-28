@@ -131,7 +131,6 @@ class BoardGridIcon extends GridIcon {
         this.displayValue = metadata.path.name;
         this.symbol = metadata.thumbnail || import.meta.resolve("../Assets/Icons/grid.svg");
         const creator = await metadata.getOwnerName()
-        console.log(creator);
         this.subtitle = "By " + creator.name;
         // let dp = new SvgPlus("bg-img");
         // dp.props = {src: creator.displayPhoto};
@@ -180,10 +179,8 @@ class Featured extends FixedGridLayout {
     }
 
     selectCategory(ri, ci) {
-        console.log(`Selected category: row ${ri}, column ${ci}`);
         this.buttons.forEach((row, r) => {
             row.forEach((button, c) => {
-                console.log(button,r === ri && c === ci)
                 button.toggleAttribute("hover", r === ri && c === ci);
             });
         });
@@ -214,7 +211,6 @@ class SearchableList extends FixedGridLayout {
             events: {
                 "input": (e) => {
                     this.setList(this.#lastSet);
-                    console.log("Search input changed");
                 }
             }
         });
@@ -299,7 +295,6 @@ class SearchableList extends FixedGridLayout {
             this.previousButton.disabled = this.#page <= 0;
 
             if (this.#lastSize < DCOLS * DROWS) {
-                console.log("Resetting innerHTML and adding navigation and searchMain");
                 this.innerHTML = "";
                 this.add(this.navigation, 0, [0,DCOLS-1]);
                 this.add(this.searchMain, [1, DROWS - 1 ], [0,DCOLS-1]);
@@ -371,10 +366,8 @@ class AACExplore extends ShadowElement {
                     events: {
                         click: () => {
                             this.close();
-                            console.log("Closing AAC Explore");
                         },
                         "access-click": () => {
-                            console.log("Access-click closing AAC Explore");
                             this.close();
                         }
                     }

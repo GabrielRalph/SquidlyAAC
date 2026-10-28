@@ -1050,14 +1050,12 @@ class OpenBoardEditor extends ShadowElement {
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ UDPATE METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
     
     #updateBoard(commitToHistory = true) {
-        console.log("Updating board");
         if (this.onBeforeUpdate instanceof Function) {
             this.onBeforeUpdate();
         }
         let t0 = performance.now();
         this.grid.board = this.#board;
         let t1 = performance.now();
-        console.log(`Board updated in ${t1 - t0} ms`);
 
         if (commitToHistory) {
             const lastState = this.#history[this.#historyIndex];
@@ -1127,13 +1125,10 @@ class OpenBoardEditor extends ShadowElement {
     setSelectionProperty(prop, value) {
         const {selection} = this;
         if (selection.length > 0) {
-            let t0 = performance.now();
 
             const buttons = this.#board.getButtonsByID(selection);
             buttons.forEach(b => { b.setProperty(prop, value) });
 
-            let t1 = performance.now();
-            console.log(`Selection property updated in ${t1 - t0} ms`);
             this.#updateBoard();
         }
     }
@@ -1467,7 +1462,6 @@ class OpenBoardEditor extends ShadowElement {
                 console.warn("clipboard.write failed, falling back to writeText", e);
                 try {
                     await navigator.clipboard.writeText(taggedText);
-                    console.log("Copied to clipboard using writeText fallback");
                 } catch (e2) {
                     console.warn("clipboard.writeText failed; in-memory fallback clipboard is still available.", e2);
                 }

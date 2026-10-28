@@ -234,7 +234,6 @@ class EditorSession extends SvgPlus {
                     started = true;
                     this.editor.board = currentBoard;
                 } else {
-                    console.log("updating current Board")
                     this.editor.updateBoard(currentBoard);
                 }
 
@@ -250,7 +249,6 @@ class EditorSession extends SvgPlus {
                 addBoardIDToURL(null);
                 this.updateSaveStatus();
                 this.updateTitle();
-                console.log("Board not found, redirecting to no board state");
             } else if (metadata.error?.code == 403 || this.boardWatcher.editable === false) {
                 this.errorOverlay.styles = SHOW_STYLE;
             } else {
