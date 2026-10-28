@@ -18,14 +18,37 @@ import { ShadowElement } from "../SvgPlus/shadow-element.js";
  *****************************************************************************/
 
 // #region DROP DOWN MENUS
-class FontSizeList extends SvgPlus {
+
+class DropDownBasic extends SvgPlus {
     constructor(onSelect) {
         super("div");
         this.class = "selection-list";
+        this.onSelect = onSelect;
+    }
+
+    getOptionByValue(value) {
+        
+    }
+
+    set value(value) {
+        const option = this.getOptionByValue(value);
+        for (const child of this.children) {
+            child.toggleAttribute("selected", child === option);
+        }
+    }
+
+    select(value) {
+        this.onSelect(value);
+    }
+}
+
+class FontSizeList extends DropDownBasic {
+    constructor(onSelect) {
+        super(onSelect);
         Object.keys(this.value2idx).map((k, i) => {
             let kCap = k[0].toUpperCase() + k.slice(1);
             this.createChild("div", {
-                class: "b-bottom pad",
+                class: "pad",
                 events: {click: () => this.select(k)},
             }).createChild("span", {
                 content: kCap, 
@@ -33,6 +56,11 @@ class FontSizeList extends SvgPlus {
             })
         })
         this.onSelect = onSelect;
+    }
+
+    getOptionByValue(value) {
+        value = (value || "medium").toLowerCase();
+        return [...this.children].find((child, idx) => idx === this.value2idx[value]);
     }
 
     get value2idx() {
@@ -55,20 +83,22 @@ class FontSizeList extends SvgPlus {
             "tiny": "0.75em"
         }
     }
+}
 
-    set value(value) {
-        if (value !== undefined) {
-            value = (value || "medium").toLowerCase();
-            [...this.children].forEach((child, idx) => {
-                child.toggleAttribute("selected", idx === this.value2idx[value]);
+class ExportOptions extends DropDownBasic {
+    constructor(onSelect) {
+        super(onSelect);
+        const options = ["PNG", "OBF"];
+        options.forEach((opt, idx) => {
+            this.createChild("div", {
+                class: "pad",
+                events: {click: () => this.select(opt)},
+                content: opt
             });
-        }
-    }
-
-    select(value) {
-        this.onSelect(value);
+        });
     }
 }
+
 // #endregion DROP DOWN MENUS
 
 
@@ -427,11 +457,17 @@ const TOP_TOOLS = [
                 name: "export",
                 icon: "print",
                 async onClick(editor) {
-                    const board = editor.board;
-                    const name = editor.metadata?.path?.name || "board";
-                    this.toggleAttribute("loading", true);
-                    await AACGridCanvas.exportBoard(board, name);
-                    this.toggleAttribute("loading", false);
+                    editor.exportBoard(this);
+                },
+                build(element) {
+                    element.createChild("loader", {class: "loader"})
+                }
+            },
+            {
+                name: "import",
+                icon: "e-import",
+                async onClick(editor) {
+                    editor.importBoard(this);
                 },
                 build(element) {
                     element.createChild("loader", {class: "loader"})
@@ -1351,7 +1387,7 @@ class OpenBoardEditor extends ShadowElement {
         });
 
         // If a value was selected, apply it to all selected buttons
-        if (value !== undefined) {
+        if (value !== undefined && typeof key === "string") {
             this.setSelectionProperty(key, value);
         }
 
@@ -1369,6 +1405,7 @@ class OpenBoardEditor extends ShadowElement {
 
     async #createDropDown(tool, key, dropDownClass) {
         let lastTool = null;
+        let value;
 
         // If a color picker is already open, close it and wait
         // for it to finish closing before opening a new one.
@@ -1383,8 +1420,9 @@ class OpenBoardEditor extends ShadowElement {
         // If the last tool is different from the current tool, open a new color picker.
         if (lastTool !== tool) {
             this.#dropDownPromise = this.#createDropDownPromise(tool, key, dropDownClass);
-            await this.#dropDownPromise;
+            value = await this.#dropDownPromise;
         } 
+        return value;
     }
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ COLOR PICKER METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -1404,6 +1442,8 @@ class OpenBoardEditor extends ShadowElement {
         await this.#createDropDown(tool, key, FontSizeList);
     }
 
+
+
     increaseFontSize() {
         const buttons = this.#board.getButtonsByID(this.selection);
         for (let button of buttons) {
@@ -1419,6 +1459,51 @@ class OpenBoardEditor extends ShadowElement {
         }
         this.#updateBoard();
     }   
+
+    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ EXPORT BOARD ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+    async exportBoard(tool) {
+       const mode = await this.#createDropDown(tool, null, ExportOptions);
+        console.log("Export mode selected:", mode);
+        const board = this.board;
+        const name = this.metadata?.path?.name || "board";
+        switch (mode) {
+            case "PNG": {
+                    tool.toggleAttribute("loading", true);
+                    await AACGridCanvas.exportBoard(board, name);
+                    tool.toggleAttribute("loading", false);
+            } break;
+            case "OBF": {
+                let text = JSON.stringify(board);
+                const blob = new Blob([text], { type: "application/json" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = name + ".obf";
+                a.click();
+            }  break;
+        }
+    }
+
+    async importBoard(tool) {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".obf,application/json";
+        tool.toggleAttribute("loading", true);
+        input.onchange = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const board = JSON.parse(text);
+                console.log(board)
+                this.updateBoard(board);
+            } catch (e) {
+                console.error("Failed to import board:", e);    
+            }
+            tool.toggleAttribute("loading", false);
+        };
+        input.click();
+    }
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~ COPY/PASTE METHODS ~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 

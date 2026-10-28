@@ -594,6 +594,9 @@ color-picker .inputs {
     background-color: var(--c-dark);
     cursor: pointer;
 }
+.selection-list > div:nth-of-type(n+2) {
+    border-top: var(--panel-border);
+}
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

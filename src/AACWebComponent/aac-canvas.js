@@ -197,6 +197,30 @@ async function drawBoardButton(ctx, origin, size, button, image, props) {
     ctx.drawImage(loadedImage, drawX, drawY, drawWidth, drawHeight);
 }
 
+function computeFontSize(rows, cols, width, height) {
+    console.log(width, height, rows, cols)
+    const cMin = 2;
+    const cMax = 16;
+    const fontToHeightRatio = 0.2;
+    const minFontToWidthRatio = 0.080;
+    const maxFontToWidthRatio = 0.147;
+
+    const cappedCols = Math.min(Math.max(cols, cMin), cMax);
+    const colsScaler = (cappedCols - cMin) / (cMax - cMin);
+    const fsWRatio = minFontToWidthRatio + (maxFontToWidthRatio - minFontToWidthRatio) * colsScaler;
+
+    console.log("fsWRatio:", fsWRatio);
+    const cellWidth = width / cols;
+    const cellHeight = height / rows;
+
+    console.log(cellWidth, cellHeight);
+
+    const fsW = cellWidth * fsWRatio;
+    const fsH = cellHeight * fontToHeightRatio;
+
+    return Math.min(fsW, fsH);
+}
+
 export class AACGridCanvas extends SvgPlus {
     #board = null;
     #drawToken = 0;
@@ -214,6 +238,7 @@ export class AACGridCanvas extends SvgPlus {
         this.style.height = "100%";
         this.style.display = "block";
     }
+
 
     async renderBoard(board, name = "Untitled Board") {
         const token = ++this.#drawToken;
@@ -235,6 +260,9 @@ export class AACGridCanvas extends SvgPlus {
         const rows = board.grid.rows;
         const columns = board.grid.columns;
         const gap = this.gap;
+
+        this.fontSize = computeFontSize(columns, rows, this.size.x, this.size.y);
+        console.log("computed font size:", this.fontSize);
 
         const borderRadius = this.size.y / 20 / rows;
 
