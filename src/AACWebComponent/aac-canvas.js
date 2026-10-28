@@ -20,13 +20,13 @@ const IMAGE_CACHE = new Map();
 function loadImage(src) {
     if (!src) return Promise.resolve(null);
     if (IMAGE_CACHE.has(src)) return IMAGE_CACHE.get(src);
-
+    
     const prom = new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = src;
+        img.src = src + (src.includes("?") ? "&" : "?") + "cors=1";
     });
 
     IMAGE_CACHE.set(src, prom);
@@ -197,8 +197,7 @@ async function drawBoardButton(ctx, origin, size, button, image, props) {
     ctx.drawImage(loadedImage, drawX, drawY, drawWidth, drawHeight);
 }
 
-function computeFontSize(rows, cols, width, height) {
-    console.log(width, height, rows, cols)
+function computeFontSize(rows, cols, cellWidth, cellHeight) {
     const cMin = 2;
     const cMax = 16;
     const fontToHeightRatio = 0.2;
@@ -208,12 +207,6 @@ function computeFontSize(rows, cols, width, height) {
     const cappedCols = Math.min(Math.max(cols, cMin), cMax);
     const colsScaler = (cappedCols - cMin) / (cMax - cMin);
     const fsWRatio = minFontToWidthRatio + (maxFontToWidthRatio - minFontToWidthRatio) * colsScaler;
-
-    console.log("fsWRatio:", fsWRatio);
-    const cellWidth = width / cols;
-    const cellHeight = height / rows;
-
-    console.log(cellWidth, cellHeight);
 
     const fsW = cellWidth * fsWRatio;
     const fsH = cellHeight * fontToHeightRatio;
@@ -261,13 +254,14 @@ export class AACGridCanvas extends SvgPlus {
         const columns = board.grid.columns;
         const gap = this.gap;
 
-        this.fontSize = computeFontSize(columns, rows, this.size.x, this.size.y);
-        console.log("computed font size:", this.fontSize);
 
         const borderRadius = this.size.y / 20 / rows;
 
         const innerSize = this.size.sub(this.padding * 2 + this.side, this.padding * 2 + this.footer);
         const unitSize = innerSize.sub((columns - 1) * gap, (rows - 1) * gap).div(columns, rows);
+        this.fontSize = computeFontSize(columns, rows, unitSize.x, unitSize.y);
+        console.log("computed font size:", this.fontSize);
+
         const props = {
             border: this.border,
             borderRadius: borderRadius,

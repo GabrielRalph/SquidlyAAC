@@ -1491,17 +1491,21 @@ class OpenBoardEditor extends ShadowElement {
         tool.toggleAttribute("loading", true);
         input.onchange = async (event) => {
             const file = event.target.files[0];
-            if (!file) return;
-            try {
-                const text = await file.text();
-                const board = JSON.parse(text);
-                console.log(board)
-                this.updateBoard(board);
-            } catch (e) {
-                console.error("Failed to import board:", e);    
+            if (file) {
+                try {
+                    const text = await file.text();
+                    const board = JSON.parse(text);
+                    console.log(board)
+                    this.updateBoard(board);
+                } catch (e) {
+                    console.error("Failed to import board:", e);    
+                }
             }
             tool.toggleAttribute("loading", false);
         };
+        input.addEventListener("cancel", () => {
+            tool.toggleAttribute("loading", false);
+        })
         input.click();
     }
 
