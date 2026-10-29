@@ -696,6 +696,7 @@ class BoardWatcher {
         try {
             this.log("Updating draft");
             await DRAFTS.set(this.#id, update);
+            this.log("Draft updated successfully");
         } catch (error) {
             this.log("Failed to update draft for board", this.id, "with data", update, "Error:", error);
         }
