@@ -3,7 +3,7 @@
 const FEATURED_BOARDS = [
     {
         boards: [
-            "JLYix9KezJaosLusUhkl",
+            // "JLYix9KezJaosLusUhkl",
             "GPomuZcnGmpn7hNuX2S6",
             "bO8yY3GEkU8o3g0rkcTv",
             "InZgWP9sywxFUwOJO0TQ"
