@@ -118,7 +118,9 @@ const MY_VOICES = {
     翔太: true,
 
     litia: true,
-    josefa: true
+    josefa: true,
+    tala: true,
+    bayani: true
 }
 
 
