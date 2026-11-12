@@ -112,7 +112,10 @@ const MY_VOICES = {
     louis: true,
     amélie: true,
     etienne: true,
-    julia: true
+    julia: true,
+
+    美咲: true,
+    翔太: true
 }
 
 
