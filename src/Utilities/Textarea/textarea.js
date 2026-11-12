@@ -1,88 +1,186 @@
 import { SvgPlus } from "../../SvgPlus/4.js";
 
+const HAS_SEGMENTER = typeof Intl !== "undefined" && typeof Intl.Segmenter === "function";
+const WORD_SEGMENTER = HAS_SEGMENTER ? new Intl.Segmenter(undefined, { granularity: "word" }) : null;
+const GRAPHEME_SEGMENTER = HAS_SEGMENTER ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
+
 /**
- * Splits a sing word into multiple lines if it exceeds the max width.
- * This is used to split long words that cannot fit in the text area, 
- * such as "supercalifragilisticexpialidocious".
- * @param {string} word the word to split
- * @param {number} maxWidth the maximum width of a line
- * @param {CanvasRenderingContext2D} ctx the canvas context used to measure text width
- * @returns {string[]} an array of lines that form the word,
- *  split at appropriate points to fit within the max width.
+ * Scripts that browsers may break between any two characters
+ * (CSS `word-break: normal`), i.e. no spaces are needed to wrap.
  */
-function splitWord(word, maxWidth, ctx) {
-    const letters = [...word];
-    const lines = [];
-    let currentLine = "";
-    for (let i = 0; i < letters.length; i++) {
-        const testLine = currentLine + letters[i];
-        const width = ctx.measureText(testLine).width;
-        if (width > maxWidth) {
-            if (currentLine) {
-                lines.push(currentLine);
-                currentLine = letters[i];
-            }
+const BREAK_ANYWHERE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+
+/**
+ * Characters that may not start a line (Japanese kinsoku + closing punctuation).
+ * These are kept on the same line as the character before them.
+ */
+const NO_BREAK_BEFORE = new Set([
+    ..."ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ",
+    ..."ー〜～ゝゞヽヾ々〻",
+    ..."、。，．・：；？！‼⁇⁈⁉）〕］｝〉》」』】〙〗〟’”｠»",
+    ...",.!?:;)]}%"
+]);
+
+/**
+ * Characters that may not end a line (opening brackets).
+ * These are kept on the same line as the character after them.
+ */
+const NO_BREAK_AFTER = new Set([..."（〔［｛〈《「『【〘〖〝‘“｟«([{"]);
+
+/**
+ * Splits a string into grapheme clusters (what a user sees as one character),
+ * so that emoji and combining marks are never split apart.
+ * @param {string} str
+ * @returns {{segment: string, index: number}[]}
+ */
+function graphemes(str) {
+    if (GRAPHEME_SEGMENTER) {
+        return [...GRAPHEME_SEGMENTER.segment(str)];
+    }
+    const res = [];
+    let index = 0;
+    for (const segment of str) {
+        res.push({ segment, index });
+        index += segment.length;
+    }
+    return res;
+}
+
+/**
+ * Splits text into segments using Intl.Segmenter (word granularity),
+ * falling back to a whitespace split if it is unavailable.
+ * @param {string} text
+ * @returns {{segment: string, index: number}[]}
+ */
+function wordSegments(text) {
+    if (WORD_SEGMENTER) {
+        return [...WORD_SEGMENTER.segment(text)];
+    }
+    return [...text.matchAll(/\s+|\S+/g)].map(m => ({ segment: m[0], index: m.index }));
+}
+
+/**
+ * Breaks a single line of text (no "\n") into units that cannot be split
+ * by the browser's line breaking (unless a unit is wider than the whole line).
+ * A line break is allowed between any two units.
+ *
+ * - Whitespace runs become their own "space" units (these hang at the end of a line).
+ * - Text in scripts like Japanese/Chinese/Korean is broken per character, as the
+ *   browser does, while respecting the kinsoku rules above.
+ * - Other text (e.g. English) is only broken at whitespace.
+ * - Scripts without spaces such as Thai are broken at the word boundaries
+ *   found by Intl.Segmenter.
+ *
+ * @param {string} text
+ * @returns {{start: number, end: number, space: boolean, anywhere: boolean}[]}
+ */
+function getBreakUnits(text) {
+    const units = [];
+
+    const add = (str, start, anywhere) => {
+        const end = start + str.length;
+        const prev = units[units.length - 1];
+        const canMerge = prev && !prev.space;
+        const mustJoin = canMerge && (
+            NO_BREAK_BEFORE.has(str[0]) ||
+            NO_BREAK_AFTER.has(text[prev.end - 1]) ||
+            (!prev.anywhere && !anywhere)  // e.g. "hello" + "," or "don" + "'t"
+        );
+        if (mustJoin) {
+            prev.end = end;
+            prev.anywhere = anywhere;
         } else {
-            currentLine = testLine;
+            units.push({ start, end, space: false, anywhere });
+        }
+    };
+
+    for (const { segment, index } of wordSegments(text)) {
+        if (/^\s+$/.test(segment)) {
+            units.push({ start: index, end: index + segment.length, space: true, anywhere: false });
+        } else if (BREAK_ANYWHERE.test(segment)) {
+            for (const g of graphemes(segment)) {
+                add(g.segment, index + g.index, BREAK_ANYWHERE.test(g.segment));
+            }
+        } else if (WORD_SEGMENTER && isDictionaryScript(segment)) {
+            // Thai, Lao, Khmer, Myanmar: break at the word boundaries the segmenter gives.
+            add(segment, index, true);
+        } else {
+            add(segment, index, false);
         }
     }
-    if (currentLine) {
-        lines.push(currentLine);
+
+    return units;
+}
+
+/**
+ * Scripts that do not use spaces and are broken by the browser using a dictionary.
+ * @param {string} str
+ */
+function isDictionaryScript(str) {
+    return /[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u.test(str);
+}
+
+/**
+ * Wraps a single line of text (no "\n") the same way a textarea does,
+ * returning the start and end index of every wrapped line.
+ *
+ * Whitespace at a wrap point stays at the end of the line (it "hangs" past the
+ * edge, as in the browser), so the lines are contiguous: each line's end is the
+ * next line's start, and no characters are dropped.
+ *
+ * @param {string} text the text to wrap (must not contain "\n")
+ * @param {number} maxWidth the maximum width of a line
+ * @param {CanvasRenderingContext2D} ctx the canvas context used to measure text width
+ * @returns {{start: number, end: number}[]}
+ */
+function wrapTextRanges(text, maxWidth, ctx) {
+    const measure = (start, end) => ctx.measureText(text.slice(start, end).trimEnd()).width;
+
+    if (measure(0, text.length) <= maxWidth) {
+        return [{ start: 0, end: text.length }];
     }
+
+    const lines = [];
+    let lineStart = 0;
+
+    for (const unit of getBreakUnits(text)) {
+        // Spaces never cause a wrap, they hang at the end of the line.
+        if (unit.space || measure(lineStart, unit.end) <= maxWidth) continue;
+
+        // Wrap before this unit.
+        if (unit.start > lineStart) {
+            lines.push({ start: lineStart, end: unit.start });
+            lineStart = unit.start;
+            if (measure(lineStart, unit.end) <= maxWidth) continue;
+        }
+
+        // The unit alone is wider than a line (e.g. a very long word),
+        // so split it between characters.
+        for (const g of graphemes(text.slice(unit.start, unit.end))) {
+            const gStart = unit.start + g.index;
+            const gEnd = gStart + g.segment.length;
+            if (gStart > lineStart && measure(lineStart, gEnd) > maxWidth) {
+                lines.push({ start: lineStart, end: gStart });
+                lineStart = gStart;
+            }
+        }
+    }
+
+    lines.push({ start: lineStart, end: text.length });
     return lines;
 }
 
 /**
- * Wrap text breaks text into multiple lines, follwing the same 
- * wrapping algorithm as a text are. 
- * Text is initially split into lines by "\n".
- * If a line exceeds the max width it is split at 
- * the last space character that allows the line 
- * to fit within the max width. If there is no space character, 
- * i.e. a single word exceeds the max width, 
- * the word is split using the splitWord function.
- * 
- * @param {string} text the text to wrap
+ * Wraps text into multiple lines, following the same
+ * wrapping algorithm as a textarea (see wrapTextRanges).
+ *
+ * @param {string} text the text to wrap (must not contain "\n")
  * @param {number} maxWidth the maximum width of a line
  * @param {CanvasRenderingContext2D} ctx the canvas context used to measure text width
  * @returns {string[]} an array of lines that fit within the max width
  */
 function wrapText(text, maxWidth, ctx) {
-    const lines = [];
-    const width = ctx.measureText(text).width;
-
-    if (width <= maxWidth) {
-        lines.push(text);
-    } else {
-        let current = "";
-        let words = text.split(" ");
-    
-        let i = 0;
-        while (i < words.length) {
-            const nextWord = words[i];
-            const test = current + (current ? " " : "") + nextWord;
-            const width = ctx.measureText(test).width;
-            if (width > maxWidth) {
-                if (current) {
-                    lines.push(current);
-                    current = "";
-                } else {
-                    splitWord(nextWord, maxWidth, ctx).forEach(line => lines.push(line));
-                    current = lines.pop();
-                    i++;
-                }
-            } else {
-                current = test;
-                i ++;
-            }
-        }
-    
-        if (current) {
-            lines.push(current);
-        }
-    }
-
-    return lines
+    return wrapTextRanges(text, maxWidth, ctx).map(({ start, end }) => text.slice(start, end).trimEnd());
 }
 
 
@@ -293,12 +391,11 @@ class AccessTextarea extends SvgPlus {
         let yPos = this._lastLineCount - 1;
         let newYPos = Math.max(0, Math.min(this._wrapedLines.length - 1, yPos + dir));
         let newLine = this._wrapedLines[newYPos];
-        let newXPos = Math.min(newLine.length, xPos);
-        let charCount = 0;
-        for (let i = 0; i < newYPos; i++) {
-            charCount += this._wrapedLines[i].length + 1;
-        }
-        this.caret = charCount + newXPos;
+        // On a soft wrapped line the end index is also the start of the next line,
+        // so the furthest the caret can go while staying on this line is end - 1.
+        let maxX = newLine.end - newLine.start - (newLine.soft ? 1 : 0);
+        let newXPos = Math.max(0, Math.min(maxX, xPos));
+        this.caret = newLine.start + newXPos;
     }
 
     /**
@@ -374,11 +471,25 @@ class AccessTextarea extends SvgPlus {
         const text = this.textArea.value;
         let compStyles = null;
         if (text !== this._lastText || force) {
-            let lines = text.split("\n");
             compStyles = getComputedStyle(this.textArea);
             const font = compStyles.font;
             this.ctx.font = font;
-            let wrappedLines = lines.flatMap(l => wrapText(l, this.textArea.clientWidth, this.ctx));
+            const maxWidth = this.textArea.clientWidth;
+
+            // Wrap each paragraph, converting the ranges to indices in the full text.
+            // Lines are stored as {start, end, soft} where soft is true if the line
+            // was wrapped (i.e. not ended by a "\n" or the end of the text).
+            const wrappedLines = [];
+            let offset = 0;
+            for (const paragraph of text.split("\n")) {
+                const ranges = wrapTextRanges(paragraph, maxWidth, this.ctx);
+                ranges.forEach(({start, end}, i) => wrappedLines.push({
+                    start: offset + start,
+                    end: offset + end,
+                    soft: i < ranges.length - 1,
+                }));
+                offset += paragraph.length + 1;
+            }
             this._wrapedLines = wrappedLines;
             this._lastText = text;
         }
@@ -390,24 +501,24 @@ class AccessTextarea extends SvgPlus {
         }
         this._lastCaret = caret;
 
-        let charCount = 0;
-        let lineCount = 1;
-        let subString = "";
-        for (let line of this._wrapedLines) {
-            if (charCount + line.length >= caret) {
-                subString = line.substring(0, caret - charCount);
-                break;
-            }
-            lineCount++;
-            charCount += line.length + 1;
+        // The caret is on the last line that starts at or before it. When the caret
+        // sits exactly on a soft wrap, this puts it at the start of the next line,
+        // matching the browser.
+        let lineIndex = 0;
+        while (lineIndex + 1 < this._wrapedLines.length && this._wrapedLines[lineIndex + 1].start <= caret) {
+            lineIndex++;
         }
+        const caretLine = this._wrapedLines[lineIndex];
+        const lineCount = lineIndex + 1;
+        const subString = text.slice(caretLine.start, Math.min(caret, caretLine.end));
 
-        
+
         if (subString !== this._lastSubString || force) {
             let x = 0;
             if (subString !== "") {
                 const res = this.ctx.measureText(subString);
-                x = res.width;
+                // Trailing spaces hang past the edge of the line, keep the caret inside.
+                x = Math.min(res.width, this.textArea.clientWidth);
             }
             this.styles = {
                 "--caret-x": x + "px",
@@ -444,4 +555,4 @@ class AccessTextarea extends SvgPlus {
 }
 
 
-export { AccessTextarea, wrapText, splitWord };
+export { AccessTextarea, wrapText, wrapTextRanges };
