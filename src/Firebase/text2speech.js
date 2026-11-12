@@ -115,7 +115,10 @@ const MY_VOICES = {
     julia: true,
 
     美咲: true,
-    翔太: true
+    翔太: true,
+
+    litia: true,
+    josefa: true
 }
 
 
